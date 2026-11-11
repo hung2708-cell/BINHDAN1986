@@ -1,1 +1,518 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#1a0606">
+    <title>TRỌNG TÀI - BÍNH DẦN 1986</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,600;0,700;1,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'], score: ['Chakra Petch', 'sans-serif'] },
+                    colors: {
+                        pickle: { lime: '#ccff00', limeDark: '#a3cc00', court: '#10b981', dark: '#180606', card: '#2b0c0c', border: '#541b1b' },
+                        slate: { 700: '#5c2018', 800: '#421410', 900: '#260a08', 950: '#160403' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #180606;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(220, 38, 38, 0.28) 0%, transparent 55%),
+                radial-gradient(circle at 85% 90%, rgba(245, 158, 11, 0.16) 0%, transparent 50%),
+                linear-gradient(180deg, #240808 0%, #160404 60%, #0f0202 100%);
+            background-attachment: fixed;
+            color: #f8fafc;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        button, input, select, label { touch-action: manipulation; cursor: pointer; }
+        @keyframes pulse-live { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.9); } }
+        .live-dot { animation: pulse-live 1.2s infinite; }
+        @keyframes serve-blink {
+            0%, 100% { opacity: 1; filter: drop-shadow(0 0 9px #ccff00); }
+            50% { opacity: 0.3; filter: drop-shadow(0 0 15px #ffffff); }
+        }
+        .serve-blinking { animation: serve-blink 0.75s ease-in-out infinite; }
+        @keyframes dash-flow { to { stroke-dashoffset: -24; } }
+        .serve-trajectory-line { stroke-dasharray: 8 4; animation: dash-flow 0.65s linear infinite; }
+        @media (max-width: 768px) {
+            body { padding: 4px; }
+            .ref-score-btn { height: 68px !important; font-size: 1.35rem !important; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col p-3 max-w-md mx-auto space-y-3 selection:bg-pickle-lime selection:text-slate-950">
 
+    <!-- HEADER TRỌNG TÀI -->
+    <header class="bg-slate-900/98 border border-amber-500/40 rounded-xl p-2.5 flex items-center justify-between gap-2 shadow-lg shrink-0">
+        <div class="flex items-center gap-2.5 min-w-0">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-red-600 to-amber-500 border border-amber-300 flex items-center justify-center font-score font-bold text-white text-xs shrink-0 shadow">86</div>
+            <div class="min-w-0">
+                <div class="text-[10px] text-amber-300 font-extrabold uppercase tracking-wide truncate">App Trọng Tài Sân Đấu</div>
+                <div class="flex items-center gap-1.5 truncate mt-0.5">
+                    <span id="syncStatusDot" class="w-2 h-2 rounded-full bg-amber-400 live-dot shrink-0"></span>
+                    <span class="text-xs font-bold text-white truncate" id="refereeCourtTitle">Đang chọn sân...</span>
+                </div>
+            </div>
+        </div>
+        <div class="shrink-0 flex items-center gap-1.5">
+            <select id="refereeCourtSelect" onchange="changeRefereeCourt(this.value)" class="bg-slate-950 border-2 border-amber-400 rounded-xl px-3 py-2 text-amber-300 font-extrabold text-xs shadow-inner focus:outline-none">
+                <option value="Sân 1">Sân 1</option>
+                <option value="Sân 2">Sân 2</option>
+                <option value="Sân 3">Sân 3</option>
+                <option value="Sân 4">Sân 4</option>
+            </select>
+        </div>
+    </header>
+
+    <!-- CHỌN TRẬN ĐẤU -->
+    <div class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 space-y-1.5 shadow">
+        <div class="flex justify-between items-center text-[11px] text-slate-400 font-bold">
+            <span>Trận đấu trên sân:</span>
+            <span id="liveCurrentCourtBadge" class="text-pickle-lime uppercase">Sân 1</span>
+        </div>
+        <select id="liveMatchSelector" onchange="selectMatchForScoreboard(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-xs font-bold text-white focus:outline-none focus:border-pickle-lime"></select>
+    </div>
+
+    <!-- KHUNG TỶ SỐ TRỰC TIẾP -->
+    <div class="bg-pickle-card border-2 border-pickle-lime/80 rounded-2xl p-4 space-y-3 shadow-xl">
+        <div class="flex justify-between items-center border-b border-white/10 pb-2">
+            <span id="liveMatchStageBadge" class="px-2.5 py-1 rounded bg-red-600 text-white font-extrabold text-[11px] uppercase">Đang tải...</span>
+            <div class="font-score font-extrabold text-amber-300 text-base tracking-widest bg-slate-950 px-3 py-1 rounded-lg border border-amber-400/40" id="officialScoreCallout">0 - 0</div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+            <!-- ĐỘI 1 -->
+            <div class="bg-slate-950 border border-rose-500/40 rounded-xl p-3 space-y-2.5 relative flex flex-col justify-between">
+                <div id="team1ServeBadge" class="hidden absolute -top-2.5 -left-2 bg-pickle-lime text-slate-950 px-2 py-0.5 rounded-md font-extrabold text-[9px] shadow uppercase">Phát bóng (<span id="team1ServerNum">2</span>)</div>
+                <div>
+                    <div id="liveTeam1ClubLabel" class="text-[10px] text-rose-400 font-extrabold uppercase truncate">Đội 1</div>
+                    <div id="liveTeam1Name" class="text-xs font-bold text-white truncate mt-0.5">---</div>
+                </div>
+                <div class="text-center font-score text-5xl font-extrabold text-pickle-lime py-1" id="liveTeam1Score">0</div>
+                <div class="grid grid-cols-3 gap-1.5 pt-1" id="team1ScoreActionArea"></div>
+            </div>
+
+            <!-- ĐỘI 2 -->
+            <div class="bg-slate-950 border border-sky-500/40 rounded-xl p-3 space-y-2.5 relative flex flex-col justify-between">
+                <div id="team2ServeBadge" class="hidden absolute -top-2.5 -left-2 bg-pickle-lime text-slate-950 px-2 py-0.5 rounded-md font-extrabold text-[9px] shadow uppercase">Phát bóng (<span id="team2ServerNum">2</span>)</div>
+                <div>
+                    <div id="liveTeam2ClubLabel" class="text-[10px] text-sky-400 font-extrabold uppercase truncate">Đội 2</div>
+                    <div id="liveTeam2Name" class="text-xs font-bold text-white truncate mt-0.5">---</div>
+                </div>
+                <div class="text-center font-score text-5xl font-extrabold text-sky-400 py-1" id="liveTeam2Score">0</div>
+                <div class="grid grid-cols-3 gap-1.5 pt-1" id="team2ScoreActionArea"></div>
+            </div>
+        </div>
+
+        <!-- ĐIỀU KHIỂN -->
+        <div class="grid grid-cols-3 gap-2 pt-1">
+            <button type="button" onclick="triggerSideOutOrNextServer()" class="py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-amber-300 font-extrabold text-xs shadow hover:bg-slate-800 transition">
+                <i class="fa-solid fa-arrows-rotate mr-1"></i>Đổi Phát Bóng
+            </button>
+            <button type="button" onclick="swapCourtEnds()" class="py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-pickle-lime font-extrabold text-xs shadow hover:bg-slate-800 transition">
+                <i class="fa-solid fa-right-left mr-1"></i>Đổi Sân
+            </button>
+            <button type="button" onclick="finishCurrentLiveMatchAndAdvance()" class="py-2.5 rounded-xl bg-emerald-600 text-white font-extrabold text-xs shadow hover:bg-emerald-500 transition">
+                <i class="fa-solid fa-flag-checkered mr-1"></i>Chốt Trận
+            </button>
+        </div>
+    </div>
+
+    <!-- SƠ ĐỒ SÂN 2D -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 space-y-2 shadow-xl">
+        <div class="flex justify-between items-center text-xs font-extrabold text-amber-400">
+            <span><i class="fa-solid fa-court mr-1"></i>Sơ Đồ Sân 2D & Hướng Phát Bóng</span>
+            <button type="button" onclick="openRefereePlayerSetupModal()" class="px-2.5 py-1 rounded-lg bg-pickle-lime text-slate-950 font-extrabold text-[10px]">Chọn VĐV</button>
+        </div>
+        <div class="relative w-full aspect-[2/1] bg-emerald-950 rounded-xl border-2 border-emerald-500/50 overflow-hidden shadow-inner flex items-center justify-center">
+            <svg class="absolute inset-0 w-full h-full" viewBox="0 0 440 210" preserveAspectRatio="none">
+                <rect x="15" y="15" width="410" height="180" fill="none" stroke="#ffffff" stroke-width="3" opacity="0.85"/>
+                <line x1="220" y1="15" x2="220" y2="195" stroke="#ffffff" stroke-width="2.5" stroke-dasharray="6 4" opacity="0.8"/>
+                <line x1="15" y1="75" x2="135" y2="75" stroke="#ffffff" stroke-width="2" opacity="0.7"/>
+                <line x1="15" y1="135" x2="135" y2="135" stroke="#ffffff" stroke-width="2" opacity="0.7"/>
+                <line x1="305" y1="75" x2="425" y2="75" stroke="#ffffff" stroke-width="2" opacity="0.7"/>
+                <line x1="305" y1="135" x2="425" y2="135" stroke="#ffffff" stroke-width="2" opacity="0.7"/>
+                <g id="courtDynamicVectors"></g>
+            </svg>
+            <div id="courtSvgPlayers" class="absolute inset-0 pointer-events-none"></div>
+        </div>
+    </div>
+
+    <!-- BANNER HOÀN TẤT -->
+    <div id="matchFinishedCelebrationBanner" class="hidden p-3 rounded-xl bg-emerald-950 border border-emerald-500 text-emerald-300 text-xs font-extrabold text-center flex items-center justify-between">
+        <span>🏆 Trận đấu đã hoàn tất!</span>
+        <button type="button" onclick="reopenFinishedMatch()" class="px-3 py-1 rounded bg-emerald-500 text-slate-950">Mở lại</button>
+    </div>
+
+    <!-- MODAL CHỌN VĐV -->
+    <div id="refereePlayerSetupModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/90 p-4">
+        <div class="bg-pickle-card border-2 border-pickle-lime rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl max-h-[85vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                <h3 class="text-xs font-extrabold text-pickle-lime uppercase">Chọn VĐV Thi Đấu</h3>
+                <button type="button" onclick="closeRefereePlayerSetupModal()" class="text-slate-400"><i class="fa-solid fa-xmark text-base"></i></button>
+            </div>
+            <div id="refereePlayerSetupContent" class="space-y-3"></div>
+            <button type="button" onclick="closeRefereePlayerSetupModal()" class="w-full py-2.5 rounded-xl bg-pickle-lime text-slate-950 font-extrabold text-xs uppercase">Xong</button>
+        </div>
+    </div>
+
+    <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <script>
+        const STORAGE_KEY = 'CAY_COI_TEAM_LINEUP_V28_PERMANENT';
+        const ROOM_KEY_STORAGE = 'CAY_COI_SYNC_ROOM_CODE';
+        window.__deviceClientId = 'REF_' + Math.random().toString(36).slice(2, 9);
+        window.__currentSyncRoomCode = 'BINHDAN';
+
+        function loadState() {
+            try {
+                let raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) return JSON.parse(raw);
+            } catch (e) {}
+            return { ties: [], clubs: [] };
+        }
+
+        let state = loadState();
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        let currentAssignedCourt = urlParams.get('court') || localStorage.getItem('REF_STANDALONE_COURT') || 'Sân 1';
+        
+        const courtSel = document.getElementById('refereeCourtSelect');
+        if (courtSel) courtSel.value = currentAssignedCourt;
+        document.getElementById('refereeCourtTitle').textContent = `Đang bắt chính: ${currentAssignedCourt}`;
+        document.getElementById('liveCurrentCourtBadge').textContent = currentAssignedCourt;
+
+        function changeRefereeCourt(courtName) {
+            currentAssignedCourt = courtName;
+            localStorage.setItem('REF_STANDALONE_COURT', courtName);
+            document.getElementById('refereeCourtTitle').textContent = `Đang bắt chính: ${courtName}`;
+            document.getElementById('liveCurrentCourtBadge').textContent = courtName;
+            
+            const courtMatches = getAllMatchesFlat().filter(x => x.court === courtName);
+            const active = courtMatches.find(x => x.status !== 'FINISHED') || courtMatches[0];
+            if (active) state.activeLiveMatchId = active.id;
+            renderRefereeApp();
+        }
+
+        function showToast(msg) {
+            const c = document.getElementById('toastContainer');
+            if (!c) return;
+            const el = document.createElement('div');
+            el.className = 'px-3.5 py-2.5 rounded-xl bg-slate-900 border border-pickle-lime text-pickle-lime text-xs font-extrabold shadow-xl';
+            el.textContent = msg;
+            c.appendChild(el);
+            setTimeout(() => el.remove(), 2200);
+        }
+
+        let mqttClient = null;
+        function connectRealtimeSync() {
+            if (typeof mqtt === 'undefined') return;
+            mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt', { clientId: 'ref_' + window.__deviceClientId, clean: true });
+            mqttClient.on('connect', () => {
+                const dot = document.getElementById('syncStatusDot');
+                if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-400 live-dot';
+                mqttClient.subscribe(`caycoi/pickleball/v28/${window.__currentSyncRoomCode}/state`, { qos: 1 });
+            });
+            mqttClient.on('message', (topic, message) => {
+                try {
+                    const pkt = JSON.parse(message.toString());
+                    if (!pkt || pkt.sender === window.__deviceClientId) return;
+                    if (pkt.state) {
+                        state = pkt.state;
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                        renderRefereeApp();
+                    }
+                } catch (e) {}
+            });
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                if (mqttClient && mqttClient.connected) {
+                    mqttClient.publish(`caycoi/pickleball/v28/${window.__currentSyncRoomCode}/state`, JSON.stringify({ sender: window.__deviceClientId, state }), { qos: 1, retain: true });
+                }
+            } catch (e) {}
+        }
+
+        function getClubById(clubId) { return state.clubs.find(c => c.id === clubId) || { id: clubId, name: 'CLB', players: [] }; }
+        function getPlayerById(clubId, playerId) { return (getClubById(clubId).players || []).find(p => p.id === playerId) || null; }
+        function getAllMatchesFlat() {
+            const list = [];
+            (state.ties || []).forEach(tie => (tie.matches || []).forEach(m => list.push(m)));
+            return list;
+        }
+        function findMatchById(matchId) {
+            for (const tie of (state.ties || [])) {
+                const found = (tie.matches || []).find(m => m.id === matchId);
+                if (found) return { tie, match: found };
+            }
+            const firstTie = state.ties?.[0];
+            return { tie: firstTie, match: firstTie?.matches?.[0] || null };
+        }
+
+        function evaluateMatchWinCondition(m) {
+            const target = parseInt(m.targetPoints) || 11;
+            const winByTwo = Boolean(m.winByTwo);
+            const s1 = parseInt(m.score1) || 0, s2 = parseInt(m.score2) || 0;
+            if (s1 >= target || s2 >= target) {
+                const diff = Math.abs(s1 - s2);
+                if (!winByTwo || diff >= 2) return { isWon: true, winnerScore: Math.max(s1, s2), loserScore: Math.min(s1, s2) };
+            }
+            return { isWon: false };
+        }
+
+        function syncMatchCourtStateFromLineup(m) {
+            const p1List = (m.team1PlayerIds || []).map(pid => getPlayerById(m.club1Id, pid)?.name || 'VĐV').filter(Boolean);
+            const p2List = (m.team2PlayerIds || []).map(pid => getPlayerById(m.club2Id, pid)?.name || 'VĐV').filter(Boolean);
+            if (m.catKey === 'DON') {
+                const activeP1 = p1List[0] || 'VĐV Đơn 1';
+                const activeP2 = p2List[0] || 'VĐV Đơn 2';
+                m.team1Name = activeP1; m.team2Name = activeP2;
+                m.courtState = { swappedEnds: false, t1Right: activeP1, t2Right: activeP2 };
+                return;
+            }
+            m.team1Name = p1List.length ? p1List.join(' / ') : 'Chưa chọn VĐV';
+            m.team2Name = p2List.length ? p2List.join(' / ') : 'Chưa chọn VĐV';
+            m.courtState = { swappedEnds: false, t1Right: p1List[0] || 'VĐV 1A', t1Left: p1List[1] || p1List[0] || 'VĐV 1B', t2Right: p2List[0] || 'VĐV 2A', t2Left: p2List[1] || p2List[0] || 'VĐV 2B' };
+        }
+
+        function selectMatchForScoreboard(matchId) {
+            state.activeLiveMatchId = matchId;
+            saveState();
+            renderRefereeApp();
+        }
+
+        function openRefereePlayerSetupModal() {
+            const { match: m } = findMatchById(state.activeLiveMatchId);
+            if (!m) return;
+            const c1 = getClubById(m.club1Id), c2 = getClubById(m.club2Id);
+            const req = m.maxPlayers || 2;
+
+            const renderTeamPlayerSelectors = (club, side, selectedIds) => {
+                return (club.players || []).map(p => {
+                    const isSelected = selectedIds.includes(p.id);
+                    return `<button type="button" onclick="toggleRefereePlayerSelection('${m.id}', ${side}, '${p.id}', ${req})" class="px-2.5 py-1.5 rounded-lg border text-xs font-bold transition ${isSelected ? 'bg-pickle-lime text-slate-950 border-white shadow' : 'bg-slate-900 text-slate-300 border-slate-700'}">${p.name}</button>`;
+                }).join('');
+            };
+
+            document.getElementById('refereePlayerSetupContent').innerHTML = `
+                <div class="space-y-3">
+                    <div class="p-3 rounded-xl bg-slate-950 border border-rose-500/30 space-y-2">
+                        <div class="font-extrabold text-rose-400 text-xs">${c1.name} (Chọn ${req} VĐV)</div>
+                        <div class="flex flex-wrap gap-1.5">${renderTeamPlayerSelectors(c1, 1, m.team1PlayerIds || [])}</div>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-950 border border-sky-500/30 space-y-2">
+                        <div class="font-extrabold text-sky-400 text-xs">${c2.name} (Chọn ${req} VĐV)</div>
+                        <div class="flex flex-wrap gap-1.5">${renderTeamPlayerSelectors(c2, 2, m.team2PlayerIds || [])}</div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('refereePlayerSetupModal').classList.remove('hidden');
+            document.getElementById('refereePlayerSetupModal').classList.add('flex');
+        }
+
+        function closeRefereePlayerSetupModal() {
+            document.getElementById('refereePlayerSetupModal').classList.add('hidden');
+            document.getElementById('refereePlayerSetupModal').classList.remove('flex');
+        }
+
+        function toggleRefereePlayerSelection(matchId, side, playerId, maxReq) {
+            const { match: m } = findMatchById(matchId);
+            if (!m) return;
+            const arrKey = side === 1 ? 'team1PlayerIds' : 'team2PlayerIds';
+            let cur = m[arrKey] || [];
+
+            if (cur.includes(playerId)) {
+                m[arrKey] = cur.filter(id => id !== playerId);
+            } else {
+                if (cur.length >= maxReq) {
+                    showToast(`Tối đa ${maxReq} VĐV!`);
+                    return;
+                }
+                cur.push(playerId);
+                m[arrKey] = cur;
+            }
+            syncMatchCourtStateFromLineup(m);
+            saveState();
+            openRefereePlayerSetupModal();
+            renderRefereeApp();
+        }
+
+        function adjustLiveScore(teamNum, delta) {
+            const { match: m } = findMatchById(state.activeLiveMatchId);
+            if (!m || m.status === 'FINISHED' || teamNum !== (m.servingTeam || 1)) return;
+            m.status = 'LIVE';
+            if (!m.courtState) syncMatchCourtStateFromLineup(m);
+            const cs = m.courtState;
+
+            if (teamNum === 1) {
+                m.score1 = Math.max(0, (parseInt(m.score1) || 0) + delta);
+                if (cs && m.catKey !== 'DON') { const tmp = cs.t1Left; cs.t1Left = cs.t1Right; cs.t1Right = tmp; }
+            } else {
+                m.score2 = Math.max(0, (parseInt(m.score2) || 0) + delta);
+                if (cs && m.catKey !== 'DON') { const tmp = cs.t2Left; cs.t2Left = cs.t2Right; cs.t2Right = tmp; }
+            }
+
+            const res = evaluateMatchWinCondition(m);
+            if (res.isWon) {
+                m.status = 'FINISHED';
+                showToast(`Trận kết thúc! Tỷ số ${res.winnerScore}-${res.loserScore}`);
+            }
+            saveState();
+            renderRefereeApp();
+        }
+
+        function triggerSideOutOrNextServer() {
+            const { match: m } = findMatchById(state.activeLiveMatchId);
+            if (!m) return;
+            if ((m.serverNum || 1) === 1 && m.catKey !== 'DON') m.serverNum = 2;
+            else { m.servingTeam = m.servingTeam === 1 ? 2 : 1; m.serverNum = 1; }
+            saveState();
+            renderRefereeApp();
+        }
+
+        function finishCurrentLiveMatchAndAdvance() {
+            const { match: m } = findMatchById(state.activeLiveMatchId);
+            if (!m) return;
+            m.status = 'FINISHED';
+            saveState();
+            renderRefereeApp();
+            showToast('Đã chốt kết quả trận!');
+        }
+
+        function reopenFinishedMatch() {
+            const { match: m } = findMatchById(state.activeLiveMatchId);
+            if (!m) return;
+            m.status = 'LIVE';
+            saveState();
+            renderRefereeApp();
+        }
+
+        function swapCourtEnds() {
+            const { match: m } = findMatchById(state.activeLiveMatchId);
+            if (!m || !m.courtState) return;
+            m.courtState.swappedEnds = !m.courtState.swappedEnds;
+            saveState();
+            renderRefereeApp();
+        }
+
+        function renderRefereeApp() {
+            const courtMatches = getAllMatchesFlat().filter(x => x.court === currentAssignedCourt);
+            let { match: m } = findMatchById(state.activeLiveMatchId);
+            
+            if (!m || m.court !== currentAssignedCourt) {
+                m = courtMatches.find(x => x.status !== 'FINISHED') || courtMatches[0];
+                if (m) state.activeLiveMatchId = m.id;
+            }
+
+            const selector = document.getElementById('liveMatchSelector');
+            if (selector) {
+                selector.innerHTML = courtMatches.map(x => `<option value="${x.id}">[${x.court}] ${x.catLabel}: (${x.score1}-${x.score2})</option>`).join('');
+                if (m) selector.value = m.id;
+            }
+
+            if (!m) {
+                document.getElementById('officialScoreCallout').textContent = "Chưa có trận";
+                return;
+            }
+
+            if (!m.courtState) syncMatchCourtStateFromLineup(m);
+            const cs = m.courtState;
+
+            const isMatchFinished = (m.status === 'FINISHED');
+            document.getElementById('matchFinishedCelebrationBanner').classList.toggle('hidden', !isMatchFinished);
+
+            const isSingles = (m.catKey === 'DON');
+            const cl1 = getClubById(m.club1Id).name, cl2 = getClubById(m.club2Id).name;
+            document.getElementById('liveMatchStageBadge').textContent = `${m.catLabel} • ${cl1} vs ${cl2}`;
+            document.getElementById('liveTeam1ClubLabel').textContent = cl1;
+            document.getElementById('liveTeam2ClubLabel').textContent = cl2;
+            document.getElementById('liveTeam1Name').textContent = m.team1Name || cs.t1Right;
+            document.getElementById('liveTeam2Name').textContent = m.team2Name || cs.t2Right;
+            document.getElementById('liveTeam1Score').textContent = m.score1 || 0;
+            document.getElementById('liveTeam2Score').textContent = m.score2 || 0;
+
+            const servingTeam = m.servingTeam || 1;
+            const serverNum = isSingles ? 1 : (m.serverNum || 2);
+            const servingScore = servingTeam === 1 ? (parseInt(m.score1) || 0) : (parseInt(m.score2) || 0);
+            const receivingScore = servingTeam === 1 ? (parseInt(m.score2) || 0) : (parseInt(m.score1) || 0);
+            document.getElementById('officialScoreCallout').textContent = isSingles ? `${servingScore} - ${receivingScore}` : `${servingScore} - ${receivingScore} - ${serverNum}`;
+
+            const isTeam1Serving = (servingTeam === 1);
+            document.getElementById('team1ServeBadge').classList.toggle('hidden', !isTeam1Serving);
+            document.getElementById('team1ServerNum').textContent = serverNum;
+            const isTeam2Serving = (servingTeam === 2);
+            document.getElementById('team2ServeBadge').classList.toggle('hidden', !isTeam2Serving);
+            document.getElementById('team2ServerNum').textContent = serverNum;
+
+            if (isMatchFinished) {
+                document.getElementById('team1ScoreActionArea').innerHTML = `<div class="col-span-3 h-14 rounded-xl bg-emerald-950/60 text-emerald-300 font-extrabold text-xs flex items-center justify-center">🏆 XONG</div>`;
+                document.getElementById('team2ScoreActionArea').innerHTML = `<div class="col-span-3 h-14 rounded-xl bg-emerald-950/60 text-emerald-300 font-extrabold text-xs flex items-center justify-center">🏆 XONG</div>`;
+            } else {
+                document.getElementById('team1ScoreActionArea').innerHTML = isTeam1Serving ? `
+                    <button type="button" onclick="adjustLiveScore(1, -1)" class="col-span-1 ref-score-btn h-14 rounded-xl bg-slate-800 text-slate-200 font-bold text-lg">-1</button>
+                    <button type="button" onclick="adjustLiveScore(1, 1)" class="col-span-2 ref-score-btn h-14 rounded-xl bg-gradient-to-r from-rose-500 to-amber-500 text-slate-950 font-extrabold text-xs uppercase shadow-lg">+ ĐIỂM</button>
+                ` : `<div class="col-span-3 h-14 rounded-xl bg-slate-900 text-sky-400 text-xs font-bold flex items-center justify-center">🔒 Khóa</div>`;
+
+                document.getElementById('team2ScoreActionArea').innerHTML = isTeam2Serving ? `
+                    <button type="button" onclick="adjustLiveScore(2, -1)" class="col-span-1 ref-score-btn h-14 rounded-xl bg-slate-800 text-slate-200 font-bold text-lg">-1</button>
+                    <button type="button" onclick="adjustLiveScore(2, 1)" class="col-span-2 ref-score-btn h-14 rounded-xl bg-gradient-to-r from-sky-400 to-cyan-300 text-slate-950 font-extrabold text-xs uppercase shadow-lg">+ ĐIỂM</button>
+                ` : `<div class="col-span-3 h-14 rounded-xl bg-slate-900 text-sky-400 text-xs font-bold flex items-center justify-center">🔒 Khóa</div>`;
+            }
+
+            // Sân 2D
+            const isEvenScore = (servingScore % 2 === 0);
+            const leftIsT1 = !cs.swappedEnds;
+            let dots = [
+                { team: leftIsT1 ? 1 : 2, x: 75, y: 52, name: String(leftIsT1 ? cs.t1Left : cs.t2Left), color: leftIsT1 ? '#f43f5e' : '#0ea5e9', isServer: (servingTeam === (leftIsT1 ? 1 : 2)) && !isEvenScore },
+                { team: leftIsT1 ? 1 : 2, x: 75, y: 158, name: String(leftIsT1 ? cs.t1Right : cs.t2Right), color: leftIsT1 ? '#f43f5e' : '#0ea5e9', isServer: (servingTeam === (leftIsT1 ? 1 : 2)) && isEvenScore },
+                { team: leftIsT1 ? 2 : 1, x: 365, y: 52, name: String(leftIsT1 ? cs.t2Right : cs.t1Right), color: leftIsT1 ? '#0ea5e9' : '#0ea5e9', isServer: (servingTeam === (leftIsT1 ? 2 : 1)) && isEvenScore },
+                { team: leftIsT1 ? 2 : 1, x: 365, y: 158, name: String(leftIsT1 ? cs.t2Left : cs.t2Left), color: leftIsT1 ? '#0ea5e9' : '#0ea5e9', isServer: (servingTeam === (leftIsT1 ? 2 : 1)) && !isEvenScore }
+            ];
+
+            const serverDot = dots.find(d => d.isServer) || dots[0];
+            const receiverDot = dots[dots.length - 1];
+            const dx = receiverDot.x - serverDot.x, dy = receiverDot.y - serverDot.y;
+            const dist = Math.hypot(dx, dy) || 1;
+            const startX = serverDot.x + (dx / dist) * 24, startY = serverDot.y + (dy / dist) * 24;
+            const endX = receiverDot.x - (dx / dist) * 26, endY = receiverDot.y - (dy / dist) * 26;
+
+            document.getElementById('courtDynamicVectors').innerHTML = `
+                <line x1="${startX}" y1="${startY}" x2="${endX}" y2="${endY}" stroke="#ccff00" stroke-width="2.8" class="serve-trajectory-line" />
+            `;
+
+            document.getElementById('courtSvgPlayers').innerHTML = dots.map(d => `
+                <div class="absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-none" style="left: ${(d.x / 440) * 100}%; top: ${(d.y / 210) * 100}%;">
+                    ${d.isServer ? `<div class="absolute w-10 h-10 rounded-full border-2 border-pickle-lime serve-blinking"></div>` : ''}
+                    <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-md border-2 border-white" style="background-color: ${d.color};">
+                        <i class="fa-solid fa-user text-[10px]"></i>
+                    </div>
+                    <div class="mt-0.5 px-1.5 py-0.5 rounded bg-slate-950/90 border border-white/20 text-[9px] font-bold text-white whitespace-nowrap shadow">
+                        ${String(d.name).slice(0, 12)}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            connectRealtimeSync();
+            renderRefereeApp();
+        });
+    </script>
+</body>
+</html>
