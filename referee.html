@@ -18,17 +18,8 @@
                 extend: {
                     fontFamily: { sans: ['Inter', 'sans-serif'], score: ['Chakra Petch', 'sans-serif'] },
                     colors: {
-                        brand: {
-                            50: '#fff1f2',
-                            100: '#ffe4e6',
-                            500: '#f43f5e', // Đỏ nhiệt huyết (Mệnh Hỏa)
-                            600: '#e11d48',
-                            700: '#be123c',
-                            900: '#881337',
-                        },
-                        fengshui: {
-                            wood: '#22c55e', // Xanh lá cây tương sinh (Mộc sinh Hỏa)
-                        }
+                        brand: { 500: '#f43f5e', 600: '#e11d48' },
+                        fengshui: { wood: '#22c55e' }
                     }
                 }
             }
@@ -37,10 +28,7 @@
     <style>
         body {
             background-color: #0f0202;
-            background-image: 
-                radial-gradient(circle at 50% 0%, rgba(225, 29, 72, 0.22) 0%, transparent 55%),
-                radial-gradient(circle at 85% 90%, rgba(34, 197, 94, 0.12) 0%, transparent 50%),
-                linear-gradient(180deg, #160403 0%, #0f0202 100%);
+            background-image: radial-gradient(circle at 50% 0%, rgba(225, 29, 72, 0.22) 0%, transparent 55%), linear-gradient(180deg, #160403 0%, #0f0202 100%);
             background-attachment: fixed;
             color: #f8fafc;
             overflow-x: hidden;
@@ -57,15 +45,12 @@
         .serve-blinking { animation: serve-blink 0.7s ease-in-out infinite; }
         @keyframes dash-flow { to { stroke-dashoffset: -24; } }
         .serve-trajectory-line { stroke-dasharray: 8 4; animation: dash-flow 0.65s linear infinite; }
-        @media (max-width: 768px) {
-            body { padding: 4px; }
-            .ref-score-btn { height: 68px !important; font-size: 1.35rem !important; }
-        }
+        @media (max-width: 768px) { body { padding: 4px; } .ref-score-btn { height: 68px !important; font-size: 1.35rem !important; } }
     </style>
 </head>
 <body class="min-h-screen flex flex-col p-2.5 max-w-md mx-auto space-y-2.5 selection:bg-brand-500 selection:text-white">
 
-    <!-- HEADER TRỌNG TÀI -->
+    <!-- HEADER -->
     <header class="bg-slate-900/95 border border-brand-500/30 rounded-xl p-2.5 flex items-center justify-between gap-2 shadow-xl shrink-0 backdrop-blur-md">
         <div class="flex items-center gap-2 min-w-0">
             <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-600 to-amber-500 flex items-center justify-center font-score font-bold text-white text-xs shrink-0 shadow">86</div>
@@ -96,21 +81,18 @@
         <select id="liveMatchSelector" onchange="selectMatchForScoreboard(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-brand-500"></select>
     </div>
 
-    <!-- 1. SƠ ĐỒ SÂN 2D (ĐÃ ĐƯA LÊN TRÊN) -->
+    <!-- 1. SƠ ĐỒ SÂN 2D (ĐÃ ĐƯA LÊN TRÊN & CHUẨN ĐƯỜNG CHÉO) -->
     <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-2.5 space-y-1.5 shadow-xl backdrop-blur-sm">
         <div class="flex justify-between items-center text-[11px] font-extrabold text-amber-400">
-            <span><i class="fa-solid fa-court mr-1"></i>Sơ Đồ Sân 2D & Hướng Phát Bóng</span>
+            <span><i class="fa-solid fa-court mr-1"></i>Sơ Đồ Sân 2D & Hướng Phát Bóng Chéo</span>
             <button type="button" onclick="openRefereePlayerSetupModal()" class="px-2 py-0.5 rounded bg-brand-600 text-white font-extrabold text-[10px] shadow">Chọn VĐV</button>
         </div>
         <div class="relative w-full aspect-[2/1] bg-emerald-950/90 rounded-lg border-2 border-emerald-500/40 overflow-hidden shadow-inner flex items-center justify-center">
             <svg class="absolute inset-0 w-full h-full" viewBox="0 0 440 210" preserveAspectRatio="none">
-                <!-- Sân Pickleball -->
                 <rect x="15" y="15" width="410" height="180" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.85"/>
                 <line x1="220" y1="15" x2="220" y2="195" stroke="#ffffff" stroke-width="2" stroke-dasharray="6 4" opacity="0.75"/>
-                <!-- Vùng Non-Volley Zone (Kitchen) -->
                 <line x1="135" y1="15" x2="135" y2="195" stroke="#ffffff" stroke-width="1.8" opacity="0.7"/>
                 <line x1="305" y1="15" x2="305" y2="195" stroke="#ffffff" stroke-width="1.8" opacity="0.7"/>
-                <!-- Đường chia ô giao bóng Service Courts -->
                 <line x1="15" y1="105" x2="135" y2="105" stroke="#ffffff" stroke-width="1.5" opacity="0.6"/>
                 <line x1="305" y1="105" x2="425" y2="105" stroke="#ffffff" stroke-width="1.5" opacity="0.6"/>
                 <g id="courtDynamicVectors"></g>
@@ -280,7 +262,8 @@
         }
 
         function evaluateMatchWinCondition(m) {
-            const target = parseInt(m.targetPoints) || 11;
+            const isSingles = (m.catKey === 'DON');
+            const target = parseInt(m.targetPoints) || (isSingles ? 21 : 11);
             const winByTwo = Boolean(m.winByTwo);
             const s1 = parseInt(m.score1) || 0, s2 = parseInt(m.score2) || 0;
             if (s1 >= target || s2 >= target) {
@@ -394,19 +377,29 @@
 
             if (teamNum === 1) {
                 m.score1 = Math.max(0, (parseInt(m.score1) || 0) + delta);
-                if (cs && m.catKey !== 'DON') { const tmp = cs.t1Left; cs.t1Left = cs.t1Right; cs.t1Right = tmp; }
+                if (cs && m.catKey !== 'DON' && delta > 0) { const tmp = cs.t1Left; cs.t1Left = cs.t1Right; cs.t1Right = tmp; }
             } else {
                 m.score2 = Math.max(0, (parseInt(m.score2) || 0) + delta);
-                if (cs && m.catKey !== 'DON') { const tmp = cs.t2Left; cs.t2Left = cs.t2Right; cs.t2Right = tmp; }
+                if (cs && m.catKey !== 'DON' && delta > 0) { const tmp = cs.t2Left; cs.t2Left = cs.t2Right; cs.t2Right = tmp; }
             }
 
             const res = evaluateMatchWinCondition(m);
             if (res.isWon) {
                 m.status = 'FINISHED';
                 showToast(`Trận kết thúc! Tỷ số ${res.winnerScore}-${res.loserScore}`);
+                autoAdvanceToNextMatchOrTie(m);
             }
             saveState();
             renderRefereeApp();
+        }
+
+        function autoAdvanceToNextMatchOrTie(finishedMatch) {
+            const courtMatches = getAllMatchesFlat().filter(x => x.court === currentAssignedCourt);
+            const idx = courtMatches.findIndex(x => x.id === finishedMatch.id);
+            if (idx >= 0 && idx + 1 < courtMatches.length) {
+                state.activeLiveMatchId = courtMatches[idx + 1].id;
+                showToast('Chuyển sang nội dung tiếp theo!');
+            }
         }
 
         function triggerSideOutOrNextServer() {
@@ -422,6 +415,7 @@
             const { match: m } = findMatchById(state.activeLiveMatchId);
             if (!m) return;
             m.status = 'FINISHED';
+            autoAdvanceToNextMatchOrTie(m);
             saveState();
             renderRefereeApp();
             showToast('Đã chốt kết quả trận!');
@@ -496,18 +490,19 @@
                 document.getElementById('team1ScoreActionArea').innerHTML = `<div class="col-span-3 h-12 rounded-lg bg-emerald-950/60 text-emerald-300 font-extrabold text-xs flex items-center justify-center">🏆 XONG</div>`;
                 document.getElementById('team2ScoreActionArea').innerHTML = `<div class="col-span-3 h-12 rounded-lg bg-emerald-950/60 text-emerald-300 font-extrabold text-xs flex items-center justify-center">🏆 XONG</div>`;
             } else {
+                // Đội phát bóng hiển thị nút +-, Đội đỡ bóng hiển thị khóa
                 document.getElementById('team1ScoreActionArea').innerHTML = isTeam1Serving ? `
                     <button type="button" onclick="adjustLiveScore(1, -1)" class="col-span-1 ref-score-btn h-12 rounded-lg bg-slate-800 text-slate-200 font-bold text-base">-1</button>
                     <button type="button" onclick="adjustLiveScore(1, 1)" class="col-span-2 ref-score-btn h-12 rounded-lg bg-gradient-to-r from-brand-600 to-amber-500 text-white font-extrabold text-xs uppercase shadow-lg">+ ĐIỂM</button>
-                ` : `<div class="col-span-3 h-12 rounded-lg bg-slate-900 text-brand-400 text-[11px] font-bold flex items-center justify-center">🔒 Khóa</div>`;
+                ` : `<div class="col-span-3 h-12 rounded-lg bg-slate-900 text-slate-500 text-[11px] font-bold flex items-center justify-center">🔒 Khóa</div>`;
 
                 document.getElementById('team2ScoreActionArea').innerHTML = isTeam2Serving ? `
                     <button type="button" onclick="adjustLiveScore(2, -1)" class="col-span-1 ref-score-btn h-12 rounded-lg bg-slate-800 text-slate-200 font-bold text-base">-1</button>
                     <button type="button" onclick="adjustLiveScore(2, 1)" class="col-span-2 ref-score-btn h-12 rounded-lg bg-gradient-to-r from-fengshui-wood to-emerald-400 text-slate-950 font-extrabold text-xs uppercase shadow-lg">+ ĐIỂM</button>
-                ` : `<div class="col-span-3 h-12 rounded-lg bg-slate-900 text-fengshui-wood text-[11px] font-bold flex items-center justify-center">🔒 Khóa</div>`;
+                ` : `<div class="col-span-3 h-12 rounded-lg bg-slate-900 text-slate-500 text-[11px] font-bold flex items-center justify-center">🔒 Khóa</div>`;
             }
 
-            // Sân 2D: Căn chỉnh vị trí 2 VĐV mỗi bên và đường chéo phát bóng
+            // SƠ ĐỒ SÂN 2D & ĐƯỜNG CHÉO PHÁT BÓNG CHUẨN XÁC
             const isEvenScore = (servingScore % 2 === 0);
             const leftIsT1 = !cs.swappedEnds;
             let dots = [
@@ -518,11 +513,12 @@
             ];
 
             const serverDot = dots.find(d => d.isServer) || dots[0];
-            const receiverDot = dots[dots.length - 1];
+            const receiverDot = dots.find(d => d.team !== serverDot.team && ((serverDot.y < 105 && d.y > 105) || (serverDot.y > 105 && d.y < 105))) || dots[dots.length - 1];
+            
             const dx = receiverDot.x - serverDot.x, dy = receiverDot.y - serverDot.y;
             const dist = Math.hypot(dx, dy) || 1;
-            const startX = serverDot.x + (dx / dist) * 20, startY = serverDot.y + (dy / dist) * 20;
-            const endX = receiverDot.x - (dx / dist) * 22, endY = receiverDot.y - (dy / dist) * 22;
+            const startX = serverDot.x + (dx / dist) * 18, startY = serverDot.y + (dy / dist) * 18;
+            const endX = receiverDot.x - (dx / dist) * 20, endY = receiverDot.y - (dy / dist) * 20;
 
             document.getElementById('courtDynamicVectors').innerHTML = `
                 <line x1="${startX}" y1="${startY}" x2="${endX}" y2="${endY}" stroke="#22c55e" stroke-width="3" class="serve-trajectory-line" />
