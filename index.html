@@ -195,7 +195,7 @@
             </div>
         </section>
 
-        <!-- TAB 3: KNOCKOUT BRACKET (NEW) -->
+        <!-- TAB 3: KNOCKOUT BRACKET -->
         <section id="tab-bracket" class="tab-content hidden space-y-6">
             <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
@@ -209,17 +209,13 @@
                 </button>
             </div>
 
-            <!-- Bracket UI Container -->
             <div class="bg-slate-900/40 border border-slate-800 p-6 rounded-2xl overflow-x-auto">
                 <div class="min-w-[700px] grid grid-cols-3 gap-8 items-center py-4">
-                    
-                    <!-- Column 1: Bán kết (Semi-Finals) -->
+                    <!-- Column 1: Bán kết -->
                     <div class="space-y-6">
                         <div class="text-center pb-2 border-b border-slate-800">
                             <span class="text-xs font-bold uppercase tracking-wider text-brand-400">Vòng Bán Kết</span>
                         </div>
-                        
-                        <!-- Semi Match 1 -->
                         <div id="bracket-sf1" class="bg-slate-950/80 border border-slate-800 rounded-xl p-3 shadow-lg relative">
                             <div class="text-[10px] text-slate-500 mb-1 flex justify-between">
                                 <span>BK 1 • Sân 1</span>
@@ -235,7 +231,6 @@
                             </div>
                         </div>
 
-                        <!-- Semi Match 2 -->
                         <div id="bracket-sf2" class="bg-slate-950/80 border border-slate-800 rounded-xl p-3 shadow-lg relative">
                             <div class="text-[10px] text-slate-500 mb-1 flex justify-between">
                                 <span>BK 2 • Sân 2</span>
@@ -252,15 +247,13 @@
                         </div>
                     </div>
 
-                    <!-- Column 2: Chung kết (Final) -->
+                    <!-- Column 2: Chung kết -->
                     <div class="space-y-6">
                         <div class="text-center pb-2 border-b border-amber-500/30">
                             <span class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center justify-center">
                                 <i class="fa-solid fa-trophy mr-1.5"></i> Trận Chung Kết
                             </span>
                         </div>
-                        
-                        <!-- Final Match -->
                         <div id="bracket-final" class="bg-gradient-to-br from-slate-950 to-amber-950/20 border border-amber-500/40 rounded-xl p-4 shadow-2xl relative">
                             <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-slate-950 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow">
                                 Tranh Vô Địch
@@ -280,13 +273,11 @@
                         </div>
                     </div>
 
-                    <!-- Column 3: Nhà Vô Địch (Champion) -->
+                    <!-- Column 3: Nhà Vô Địch -->
                     <div class="space-y-6 text-center">
                         <div class="pb-2 border-b border-amber-500/30">
                             <span class="text-xs font-bold uppercase tracking-wider text-amber-400">Vinh Danh</span>
                         </div>
-                        
-                        <!-- Champion Card -->
                         <div class="bg-gradient-to-b from-amber-500/10 via-slate-950 to-slate-950 border border-amber-500/50 rounded-2xl p-5 shadow-2xl space-y-3">
                             <div class="w-14 h-14 mx-auto rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-2xl shadow-lg shadow-amber-500/20 border border-amber-500/30">
                                 <i class="fa-solid fa-crown"></i>
@@ -297,7 +288,6 @@
                             </div>
                         </div>
                     </div>
-
                 </div>
             </div>
         </section>
@@ -350,8 +340,8 @@
 
         <!-- TAB 6: ADMIN PANEL -->
         <section id="tab-admin" class="tab-content hidden space-y-6">
-            <div class="bg-gradient-to-r from-amber-950/40 to-slate-950 border border-amber-900/30 p-6 rounded-2xl">
-                <div class="flex items-center space-x-3 mb-2">
+            <div class="bg-gradient-to-r from-amber-950/40 to-slate-950 border border-amber-900/30 p-6 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center">
                         <i class="fa-solid fa-lock-open"></i>
                     </div>
@@ -360,6 +350,10 @@
                         <p class="text-xs text-slate-400">Quản lý đội tuyển, tạo trận đấu và cập nhật tỷ số trực tiếp.</p>
                     </div>
                 </div>
+                <!-- Nút Khôi phục dữ liệu mẫu (Đã bảo mật bằng mật khẩu) -->
+                <button onclick="promptResetDefault()" class="px-4 py-2 rounded-xl bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 text-xs font-semibold transition border border-rose-500/20 flex items-center">
+                    <i class="fa-solid fa-rotate-right mr-2"></i> Khôi phục dữ liệu mẫu
+                </button>
             </div>
 
             <!-- Admin Forms Grid -->
@@ -427,14 +421,9 @@
 
             <!-- Manage Matches & Score Board -->
             <div class="bg-slate-900/50 border border-slate-800 p-5 rounded-2xl space-y-4">
-                <div class="flex justify-between items-center">
-                    <h3 class="font-bold text-white flex items-center text-base">
-                        <i class="fa-solid fa-pen-to-square text-amber-400 mr-2"></i> Cập nhật tỷ số & Trạng thái trận đấu
-                    </h3>
-                    <button onclick="resetDefaultData()" class="px-3 py-1.5 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 text-xs font-medium transition border border-rose-500/20">
-                        <i class="fa-solid fa-rotate-right mr-1"></i> Khôi phục dữ liệu mẫu
-                    </button>
-                </div>
+                <h3 class="font-bold text-white flex items-center text-base">
+                    <i class="fa-solid fa-pen-to-square text-amber-400 mr-2"></i> Cập nhật tỷ số & Trạng thái trận đấu
+                </h3>
                 <div id="admin-matches-list" class="space-y-3">
                     <!-- Dynamic populated -->
                 </div>
@@ -443,6 +432,37 @@
 
     </main>
 
+    <!-- CUSTOM PASSWORD MODAL (Căn giữa màn hình, bảo mật *****) -->
+    <div id="password-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
+        <div class="bg-slate-950 border border-slate-800 w-full max-w-md p-6 rounded-2xl shadow-2xl space-y-4 animate-in fade-in zoom-in duration-200">
+            <div class="flex items-center space-x-3 text-brand-400">
+                <div class="w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <div>
+                    <h3 id="modal-title" class="font-bold text-white text-base">Xác nhận bảo mật</h3>
+                    <p class="text-xs text-slate-400">Vui lòng nhập mật khẩu quản trị để tiếp tục.</p>
+                </div>
+            </div>
+            
+            <div class="space-y-2">
+                <label class="block text-xs font-medium text-slate-400">Mật khẩu xác nhận</label>
+                <!-- type="password" đảm bảo hiển thị dạng ***** -->
+                <input type="password" id="modal-password-input" placeholder="Nhập mật khẩu..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500 font-mono tracking-widest">
+                <p id="modal-error-msg" class="text-xs text-rose-500 hidden">Mật khẩu không chính xác! (Mật khẩu mặc định: 1986)</p>
+            </div>
+
+            <div class="flex items-center justify-end space-x-3 pt-2 border-t border-slate-800">
+                <button onclick="closePasswordModal()" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold transition">
+                    Hủy bỏ
+                </button>
+                <button onclick="confirmPasswordAction()" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold transition shadow-lg shadow-brand-600/30">
+                    Xác nhận
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- FOOTER -->
     <footer class="bg-slate-950 border-t border-slate-800 py-6 mt-12 text-center text-xs text-slate-500">
         <p>© 2026 Giải Pickleball Đồng Đội Bính Dần 1986. Mệnh Lô Trung Hỏa - Thi đấu hết mình!</p>
@@ -450,6 +470,9 @@
 
     <!-- JAVASCRIPT LOGIC -->
     <script>
+        // Mật khẩu quản trị cho các thao tác nhạy cảm (Bạn có thể sửa lại tùy ý)
+        const ADMIN_PASSWORD = "1986";
+
         const DEFAULT_TEAMS = [
             { id: 1, name: 'Bính Dần A', members: ['Lâm Anh Hùng', 'Đức Cường', 'Văn Minh'] },
             { id: 2, name: 'Hổ Phách FC', members: ['Hoàng Nam', 'Quốc Tuấn', 'Thanh Hải'] },
@@ -466,19 +489,61 @@
         let teams = JSON.parse(localStorage.getItem('pb_teams_1986')) || DEFAULT_TEAMS;
         let matches = JSON.parse(localStorage.getItem('pb_matches_1986')) || DEFAULT_MATCHES;
 
+        // Quản lý Modal Mật khẩu
+        let pendingAction = null;
+
+        function openPasswordModal(title, actionCallback) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-password-input').value = '';
+            document.getElementById('modal-error-msg').classList.add('hidden');
+            document.getElementById('password-modal').classList.remove('hidden');
+            document.getElementById('modal-password-input').focus();
+            pendingAction = actionCallback;
+        }
+
+        function closePasswordModal() {
+            document.getElementById('password-modal').classList.add('hidden');
+            pendingAction = null;
+        }
+
+        function confirmPasswordAction() {
+            const pwd = document.getElementById('modal-password-input').value;
+            if(pwd === ADMIN_PASSWORD) {
+                closePasswordModal();
+                if(pendingAction) pendingAction();
+            } else {
+                document.getElementById('modal-error-msg').classList.remove('hidden');
+                document.getElementById('modal-password-input').focus();
+            }
+        }
+
+        // Cho phép ấn Enter để xác nhận mật khẩu nhanh
+        document.getElementById('modal-password-input').addEventListener('keypress', function(e) {
+            if(e.key === 'Enter') confirmPasswordAction();
+        });
+
         function saveData() {
             localStorage.setItem('pb_teams_1986', JSON.stringify(teams));
             localStorage.setItem('pb_matches_1986', JSON.stringify(matches));
             initApp();
         }
 
-        function resetDefaultData() {
-            if(confirm('Bạn có chắc chắn muốn khôi phục dữ liệu mẫu ban đầu?')) {
+        // Khôi phục dữ liệu mẫu (Yêu cầu mật khẩu)
+        function promptResetDefault() {
+            openPasswordModal("Khôi phục dữ liệu mẫu", () => {
                 teams = JSON.parse(JSON.stringify(DEFAULT_TEAMS));
                 matches = JSON.parse(JSON.stringify(DEFAULT_MATCHES));
                 saveData();
                 alert('Đã khôi phục dữ liệu mẫu thành công!');
-            }
+            });
+        }
+
+        // Xóa trận đấu (Yêu cầu mật khẩu)
+        function promptDeleteMatch(id) {
+            openPasswordModal("Xác nhận xóa trận đấu", () => {
+                matches = matches.filter(m => m.id !== id);
+                saveData();
+            });
         }
 
         function switchTab(tabId) {
@@ -583,29 +648,23 @@
                 </div>`;
         }
 
-        // Render Bracket from Matches data
         function renderBracket() {
-            const sf1 = matches.find(m => m.stage === 'semifinal_1') || { team1: 'Bán kết 1 (Đội A)', team2: 'Bán kết 1 (Đội B)', score1: '-', score2: '-', status: 'upcoming' };
-            const sf2 = matches.find(m => m.stage === 'semifinal_2') || { team1: 'Bán kết 2 (Đội C)', team2: 'Bán kết 2 (Đội D)', score1: '-', score2: '-', status: 'upcoming' };
+            const sf1 = matches.find(m => m.stage === 'semifinal_1') || { team1: 'Bán kết 1', team2: 'Bán kết 1', score1: '-', score2: '-', status: 'upcoming' };
+            const sf2 = matches.find(m => m.stage === 'semifinal_2') || { team1: 'Bán kết 2', team2: 'Bán kết 2', score1: '-', score2: '-', status: 'upcoming' };
             const final = matches.find(m => m.stage === 'final') || { team1: 'Thắng BK 1', team2: 'Thắng BK 2', score1: '-', score2: '-', status: 'upcoming' };
 
-            // Render SF1
-            document.getElementById('sf1-status.innerHTML')
             document.getElementById('sf1-status').innerText = sf1.status === 'finished' ? 'Kết thúc' : (sf1.status === 'live' ? 'Đang đấu' : 'Sắp đấu');
             document.getElementById('sf1-t1').innerHTML = `<span>${sf1.team1}</span> <span class="font-black ${sf1.score1 > sf1.score2 ? 'text-brand-400' : 'text-slate-400'}">${sf1.score1}</span>`;
             document.getElementById('sf1-t2').innerHTML = `<span>${sf1.team2}</span> <span class="font-black ${sf1.score2 > sf1.score1 ? 'text-brand-400' : 'text-slate-400'}">${sf1.score2}</span>`;
 
-            // Render SF2
             document.getElementById('sf2-status').innerText = sf2.status === 'finished' ? 'Kết thúc' : (sf2.status === 'live' ? 'Đang đấu' : 'Sắp đấu');
             document.getElementById('sf2-t1').innerHTML = `<span>${sf2.team1}</span> <span class="font-black ${sf2.score1 > sf2.score2 ? 'text-brand-400' : 'text-slate-400'}">${sf2.score1}</span>`;
             document.getElementById('sf2-t2').innerHTML = `<span>${sf2.team2}</span> <span class="font-black ${sf2.score2 > sf2.score1 ? 'text-brand-400' : 'text-slate-400'}">${sf2.score2}</span>`;
 
-            // Render Final
             document.getElementById('final-status').innerText = final.status === 'finished' ? 'Đã có nhà vô địch' : (final.status === 'live' ? 'Đang tranh tài' : 'Sắp đấu');
             document.getElementById('final-t1').innerHTML = `<span>${final.team1}</span> <span class="font-black ${final.score1 > final.score2 ? 'text-amber-400' : 'text-slate-400'}">${final.score1}</span>`;
             document.getElementById('final-t2').innerHTML = `<span>${final.team2}</span> <span class="font-black ${final.score2 > final.score1 ? 'text-amber-400' : 'text-slate-400'}">${final.score2}</span>`;
 
-            // Determine Champion
             const champEl = document.getElementById('champion-name');
             if(final.status === 'finished') {
                 if(final.score1 > final.score2) champEl.innerText = final.team1;
@@ -732,7 +791,8 @@
                         <button onclick="updateMatch(${m.id})" class="px-3 py-1 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-xs font-medium transition">
                             Lưu
                         </button>
-                        <button onclick="deleteMatch(${m.id})" class="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-xs transition border border-rose-500/20">
+                        <!-- Gọi hàm promptDeleteMatch thay vì confirm() -->
+                        <button onclick="promptDeleteMatch(${m.id})" class="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-xs transition border border-rose-500/20" title="Xóa trận đấu">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
@@ -791,13 +851,6 @@
                 match.status = status;
                 saveData();
                 alert('Đã cập nhật trận đấu thành công!');
-            }
-        }
-
-        function deleteMatch(id) {
-            if(confirm('Bạn có chắc chắn muốn xóa trận đấu này?')) {
-                matches = matches.filter(m => m.id !== id);
-                saveData();
             }
         }
 
