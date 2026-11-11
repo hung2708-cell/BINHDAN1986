@@ -434,30 +434,31 @@
     </main>
 
     <!-- CUSTOM PASSWORD MODAL -->
-    <div id="password-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
-        <div class="bg-slate-950 border border-slate-800 w-full max-w-md p-6 rounded-2xl shadow-2xl space-y-4">
-            <div class="flex items-center space-x-3 text-brand-400">
-                <div class="w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center text-lg">
-                    <i class="fa-solid fa-lock"></i>
-                </div>
-                <div>
-                    <h3 id="modal-title" class="font-bold text-white text-base">Xác nhận bảo mật</h3>
-                    <p class="text-xs text-slate-400">Vui lòng nhập mật khẩu quản trị để tiếp tục.</p>
-                </div>
+<div id="password-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
+    <div class="bg-slate-950 border border-slate-800 w-full max-w-md p-6 rounded-2xl shadow-2xl space-y-4">
+        <div class="flex items-center space-x-3 text-brand-400">
+            <div class="w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center text-lg">
+                <i class="fa-solid fa-lock"></i>
             </div>
-            
-            <div class="space-y-2">
-                <label class="block text-xs font-medium text-slate-400">Mật khẩu xác nhận</label>
-                <input type="password" id="modal-password-input" placeholder="Nhập mật khẩu..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500 font-mono tracking-widest">
-                <p id="modal-error-msg" class="text-xs text-rose-500 hidden font-semibold">Mật khẩu không chính xác! (Mật khẩu mặc định: 1986)</p>
-            </div>
-
-            <div class="flex items-center justify-end space-x-3 pt-2 border-t border-slate-800">
-                <button onclick="closePasswordModal()" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold transition">Hủy bỏ</button>
-                <button onclick="confirmPasswordAction()" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold transition shadow-lg">Xác nhận</button>
+            <div>
+                <h3 id="modal-title" class="font-bold text-white text-base">Xác nhận bảo mật</h3>
+                <p class="text-xs text-slate-400">Vui lòng nhập mật khẩu quản trị để tiếp tục.</p>
             </div>
         </div>
+        
+        <div class="space-y-2">
+            <label class="block text-xs font-medium text-slate-400">Mật khẩu xác nhận</label>
+            <input type="password" id="modal-password-input" placeholder="Nhập mật khẩu..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500 font-mono tracking-widest">
+            <!-- Chỉ báo lỗi sai mật khẩu, hoàn toàn không hiển thị nhắc nhở -->
+            <p id="modal-error-msg" class="text-xs text-rose-500 hidden font-semibold">Sai mật khẩu!</p>
+        </div>
+
+        <div class="flex items-center justify-end space-x-3 pt-2 border-t border-slate-800">
+            <button onclick="closePasswordModal()" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold transition">Hủy bỏ</button>
+            <button onclick="confirmPasswordAction()" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold transition shadow-lg">Xác nhận</button>
+        </div>
     </div>
+</div>
 
     <!-- TOAST NOTIFICATION CONTAINER -->
     <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
