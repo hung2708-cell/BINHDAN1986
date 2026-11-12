@@ -110,13 +110,13 @@
     <div class="bg-slate-900/80 border-2 border-brand-500/40 rounded-xl p-3 space-y-2.5 shadow-2xl backdrop-blur-md">
         <div class="flex justify-between items-center border-b border-slate-800 pb-2">
             <span id="liveMatchStageBadge" class="px-2 py-0.5 rounded bg-brand-600 text-white font-extrabold text-[10px] uppercase shadow">Đang tải...</span>
-            <div class="font-score font-extrabold text-amber-300 text-sm tracking-widest bg-slate-950 px-2.5 py-0.5 rounded-lg border border-amber-400/30 shadow-inner" id="officialScoreCallout">0 - 0 - 1</div>
+            <div class="font-score font-extrabold text-amber-300 text-sm tracking-widest bg-slate-950 px-2.5 py-0.5 rounded-lg border border-amber-400/30 shadow-inner" id="officialScoreCallout">0 - 0 - 2</div>
         </div>
 
         <div class="grid grid-cols-2 gap-2.5">
             <!-- ĐỘI 1 -->
             <div class="bg-slate-950 border border-brand-500/30 rounded-xl p-2.5 space-y-2 relative flex flex-col justify-between shadow-md">
-                <div id="team1ServeBadge" class="hidden absolute -top-2 -left-1.5 bg-brand-600 text-white px-1.5 py-0.5 rounded font-extrabold text-[8px] shadow uppercase">Phát bóng (<span id="team1ServerNum">1</span>)</div>
+                <div id="team1ServeBadge" class="hidden absolute -top-2 -left-1.5 bg-brand-600 text-white px-1.5 py-0.5 rounded font-extrabold text-[8px] shadow uppercase">Phát bóng (<span id="team1ServerNum">2</span>)</div>
                 <div>
                     <div id="liveTeam1ClubLabel" class="text-[9px] text-brand-400 font-extrabold uppercase truncate">Đội 1</div>
                     <div id="liveTeam1Name" class="text-[11px] font-bold text-white truncate mt-0.5">---</div>
@@ -127,7 +127,7 @@
 
             <!-- ĐỘI 2 -->
             <div class="bg-slate-950 border border-fengshui-wood/30 rounded-xl p-2.5 space-y-2 relative flex flex-col justify-between shadow-md">
-                <div id="team2ServeBadge" class="hidden absolute -top-2 -left-1.5 bg-fengshui-wood text-slate-950 px-1.5 py-0.5 rounded font-extrabold text-[8px] shadow uppercase">Phát bóng (<span id="team2ServerNum">1</span>)</div>
+                <div id="team2ServeBadge" class="hidden absolute -top-2 -left-1.5 bg-fengshui-wood text-slate-950 px-1.5 py-0.5 rounded font-extrabold text-[8px] shadow uppercase">Phát bóng (<span id="team2ServerNum">2</span>)</div>
                 <div>
                     <div id="liveTeam2ClubLabel" class="text-[9px] text-fengshui-wood font-extrabold uppercase truncate">Đội 2</div>
                     <div id="liveTeam2Name" class="text-[11px] font-bold text-white truncate mt-0.5">---</div>
@@ -157,7 +157,7 @@
         <button type="button" onclick="reopenFinishedMatch()" class="px-2.5 py-0.5 rounded bg-emerald-500 text-slate-950">Mở lại</button>
     </div>
 
-    <!-- MODAL ĐĂNG KÝ VĐV (KIỂM TRA TỐI ĐA 2 TRẬN ĐÔI) -->
+    <!-- MODAL ĐĂNG KÝ VĐV -->
     <div id="refereePlayerSetupModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/90 p-4 backdrop-blur-sm">
         <div class="bg-slate-950 border-2 border-brand-500/60 rounded-xl max-w-sm w-full p-4 space-y-3 shadow-2xl max-h-[85vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-800 pb-2">
@@ -266,7 +266,6 @@
             return { tie: firstTie, match: firstTie?.matches?.[0] || null };
         }
 
-        // LUẬT THẮNG: 15 điểm (đổi sân ở điểm 8), trận đơn 21 điểm (đổi sân ở điểm 11), thắng cách biệt 2 điểm
         function evaluateMatchWinCondition(m) {
             const isSingles = (m.catKey === 'DON');
             const target = parseInt(m.targetPoints) || (isSingles ? 21 : 15);
@@ -308,7 +307,6 @@
             renderRefereeApp();
         }
 
-        // KIỂM TRA SỐ LẦN ĐÁNH CỦA VĐV (QUY ĐỊNH TỐI ĐA 2 TRẬN ĐÔI)
         function getPlayerMatchCountInDoubles(clubId, playerId, currentMatchId) {
             let count = 0;
             getAllMatchesFlat().forEach(m => {
@@ -380,7 +378,6 @@
         function toggleRefereePlayerSelection(matchId, side, playerId, maxReq) {
             const { match: m } = findMatchById(matchId);
             if (!m) return;
-            const clubId = side === 1 ? m.club1Id : m.club2Id;
             const arrKey = side === 1 ? 'team1PlayerIds' : 'team2PlayerIds';
             let cur = m[arrKey] || [];
 
@@ -425,9 +422,8 @@
 
             const currentTotalScore = (parseInt(m.score1) || 0) + (parseInt(m.score2) || 0);
             const target = parseInt(m.targetPoints) || 15;
-
-            // Đổi sân chuẩn: Trận 15 điểm đổi sân ở điểm 8, trận đơn 21 điểm đổi sân ở điểm 11
             const midPoint = target === 21 ? 11 : 8;
+
             if (currentTotalScore === midPoint && !m.swappedAtMid) {
                 cs.swappedEnds = !cs.swappedEnds;
                 m.swappedAtMid = true;
@@ -456,8 +452,12 @@
         function triggerSideOutOrNextServer() {
             const { match: m } = findMatchById(state.activeLiveMatchId);
             if (!m) return;
-            if ((m.serverNum || 1) === 1 && m.catKey !== 'DON') m.serverNum = 2;
-            else { m.servingTeam = m.servingTeam === 1 ? 2 : 1; m.serverNum = 1; }
+            if ((m.serverNum || 2) === 2 && m.catKey !== 'DON') {
+                m.servingTeam = m.servingTeam === 1 ? 2 : 1;
+                m.serverNum = 1;
+            } else {
+                m.serverNum = 2;
+            }
             saveState();
             renderRefereeApp();
         }
@@ -499,7 +499,7 @@
 
             const selector = document.getElementById('liveMatchSelector');
             if (selector) {
-                selector.innerHTML = courtMatches.map(x => `<option value="${x.id}">[${x.court}] ${x.catLabel}: (${x.score1 || 0}-${x.score2 || 0})</option>`).join('') || '<option>Chưa có trận đấu trên sân này</option>';
+                selector.innerHTML = courtMatches.map(x => `<option value="${x.id}">[${x.court}] ${x.catLabel}: (${x.score1 || 0}-${x.score2 || 0})</option>`).join('') || '<option>Chưa có trận đấu</option>';
                 if (m) selector.value = m.id;
             }
 
@@ -511,8 +511,9 @@
             if (!m.courtState) syncMatchCourtStateFromLineup(m);
             const cs = m.courtState;
 
-            if (!m.servingTeam) m.servingTeam = 1;
-            if (!m.serverNum) m.serverNum = 1;
+            // MẶC ĐỊNH BẮT ĐẦU TRẬN ĐẤU THEO LUẬT LÀ 0-0-2 (ĐỘI GIAO - ĐỘI NHẬN - NGƯỜI PHÁT SỐ 2)
+            if (m.servingTeam === undefined) m.servingTeam = 1;
+            if (m.serverNum === undefined) m.serverNum = 2;
 
             const isMatchFinished = (m.status === 'FINISHED');
             document.getElementById('matchFinishedCelebrationBanner').classList.toggle('hidden', !isMatchFinished);
@@ -528,10 +529,11 @@
             document.getElementById('liveTeam2Score').textContent = m.score2 || 0;
 
             const servingTeam = m.servingTeam || 1;
-            const serverNum = isSingles ? 1 : (m.serverNum || 1);
+            const serverNum = isSingles ? 1 : (m.serverNum || 2);
             const servingScore = servingTeam === 1 ? (parseInt(m.score1) || 0) : (parseInt(m.score2) || 0);
             const receivingScore = servingTeam === 1 ? (parseInt(m.score2) || 0) : (parseInt(m.score1) || 0);
             
+            // XƯỚNG ĐIỂM CHUẨN 0 - 0 - 2
             document.getElementById('officialScoreCallout').textContent = isSingles ? `${servingScore} - ${receivingScore}` : `${servingScore} - ${receivingScore} - ${serverNum}`;
 
             const isTeam1Serving = (servingTeam === 1);
