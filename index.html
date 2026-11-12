@@ -40,7 +40,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <!-- LOGO BÍNH DẦN CỐ ĐỊNH -->
-                <div class="flex items-center space-x-3 cursor-pointer" onclick="('home')">
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('home')">
                     <div class="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-tr from-orange-600 via-amber-500 to-brand-600 flex items-center justify-center shadow-lg shadow-brand-500/30 border border-amber-400/50">
                         <img src="logo_tiger_2.jpg" alt="Logo Bính Dần" class="w-full h-full object-cover">
                     </div>
@@ -51,12 +51,12 @@
                 </div>
 
                 <nav class="hidden lg:flex space-x-1">
-                    <button onclick="('home')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-brand-400 bg-slate-900 border border-brand-500/20" data-tab="home"><i class="fa-solid fa-house mr-1.5"></i> Tổng quan Sân</button>
-                    <button onclick="('matches')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-900/50" data-tab="matches"><i class="fa-solid fa-calendar-days mr-1.5"></i> Lịch thi đấu theo Sân</button>
-                    <button onclick="('bracket')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-900/50" data-tab="bracket"><i class="fa-solid fa-sitemap mr-1.5"></i> Nhánh A & B</button>
-                    <button onclick="('standings')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-900/50" data-tab="standings"><i class="fa-solid fa-trophy mr-1.5"></i> Vòng Bảng</button>
-                    <button onclick="('teams')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-900/50" data-tab="teams"><i class="fa-solid fa-users mr-1.5"></i> Đội tuyển</button>
-                    <button onclick="('admin')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-amber-400 hover:bg-slate-900/50" data-tab="admin"><i class="fa-solid fa-gear mr-1.5"></i> Quản trị</button>
+                    <button onclick="switchTab('home')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-brand-400 bg-slate-900 border border-brand-500/20" data-tab="home"><i class="fa-solid fa-house mr-1.5"></i> Tổng quan Sân</button>
+                    <button onclick="switchTab('matches')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-900/50" data-tab="matches"><i class="fa-solid fa-calendar-days mr-1.5"></i> Lịch thi đấu theo Sân</button>
+                    <button onclick="switchTab('bracket')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-900/50" data-tab="bracket"><i class="fa-solid fa-sitemap mr-1.5"></i> Nhánh A & B</button>
+                    <button onclick="switchTab('standings')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-900/50" data-tab="standings"><i class="fa-solid fa-trophy mr-1.5"></i> Vòng Bảng</button>
+                    <button onclick="switchTab('teams')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-900/50" data-tab="teams"><i class="fa-solid fa-users mr-1.5"></i> Đội tuyển</button>
+                    <button onclick="switchTab('admin')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-amber-400 hover:bg-slate-900/50" data-tab="admin"><i class="fa-solid fa-gear mr-1.5"></i> Quản trị</button>
                 </nav>
 
                 <div class="lg:hidden flex items-center">
@@ -66,12 +66,12 @@
         </div>
 
         <div id="mobile-menu" class="hidden lg:hidden px-4 pt-2 pb-4 space-y-1 bg-slate-950 border-b border-slate-800">
-            <button onclick="('home'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-brand-400 bg-slate-900">Tổng quan Sân</button>
-            <button onclick="('matches'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">Lịch thi đấu theo Sân</button>
-            <button onclick="('bracket'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">Nhánh A & B</button>
-            <button onclick="('standings'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">Vòng Bảng</button>
-            <button onclick="('teams'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">Đội tuyển</button>
-            <button onclick="('admin'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-amber-400 hover:bg-slate-900">Quản trị</button>
+            <button onclick="switchTab('home'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-brand-400 bg-slate-900">Tổng quan Sân</button>
+            <button onclick="switchTab('matches'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">Lịch thi đấu theo Sân</button>
+            <button onclick="switchTab('bracket'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">Nhánh A & B</button>
+            <button onclick="switchTab('standings'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">Vòng Bảng</button>
+            <button onclick="switchTab('teams'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">Đội tuyển</button>
+            <button onclick="switchTab('admin'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-amber-400 hover:bg-slate-900">Quản trị</button>
         </div>
     </header>
 
@@ -398,7 +398,6 @@
 
         function saveAppState() {
             try {
-                // Đảm bảo đồng bộ trực tiếp giữa appState.clubs và biến teams
                 appState.clubs = teams;
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
                 if (indexMqttClient && indexMqttClient.connected) {
@@ -440,7 +439,7 @@
             if(e.key === 'Enter') confirmPasswordAction(); 
         });
 
-        // BẢO VỆ CÁC HÀM QUẢN TRỊ BẰNG MODAL MẬT KHẨU ĐÚNG CHUẨN
+        // HÀM XÁC THỰC MẬT KHẨU CHO CÁC NÚT QUẢN TRỊ
         function confirmGenerateCircleSchedule() {
             openPasswordModal("Xác nhận Tự động sắp xếp lịch vòng tròn", () => {
                 if (teams.length < 2) {
@@ -516,7 +515,7 @@
             });
         }
 
-        function (tabId) {
+        function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             const targetEl = document.getElementById(`tab-${tabId}`);
             if (targetEl) targetEl.classList.remove('hidden');
@@ -1013,12 +1012,11 @@
         }
 
         window.onload = () => { 
-    initRealtimeSyncIndex(); 
-    initApp(); 
-    // ĐỌC LẠI TRẠNG THÁI TAB KHI BẤM F5
-    const lastTab = localStorage.getItem('CAY_COI_ACTIVE_TAB') || 'home';
-    switchTab(lastTab);
-};
+            initRealtimeSyncIndex(); 
+            initApp(); 
+            const lastTab = localStorage.getItem('CAY_COI_ACTIVE_TAB') || 'home';
+            switchTab(lastTab);
+        };
     </script>
 </body>
 </html>
