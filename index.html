@@ -31,12 +31,17 @@
             40%, 80% { transform: translateX(6px); }
         }
         .animate-shake { animation: shake 0.4s ease-in-out; }
+        @keyframes modalPop {
+            0% { opacity: 0; transform: scale(0.95); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .animate-modal-pop { animation: modalPop 0.2s ease-out forwards; }
     </style>
 </head>
 <body class="h-full font-sans text-slate-100 flex flex-col justify-between selection:bg-brand-500 selection:text-white">
 
     <!-- HEADER / NAVIGATION -->
-    <header class="bg-slate-950/90 backdrop-blur-md sticky top-0 z-50 border-b border-slate-800/80">
+    <header class="bg-slate-950/90 backdrop-blur-md sticky top-0 z-40 border-b border-slate-800/80">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <!-- LOGO BÍNH DẦN CỐ ĐỊNH -->
@@ -128,15 +133,16 @@
             </div>
         </section>
 
-        <!-- TAB 2: MATCHES & SCORES BY COURT (8 SÂN) -->
+        <!-- TAB 2: MATCHES & SCORES BY COURT (HIỂN THỊ TẤT CẢ CÁC SÂN + POPUP CHI TIẾT) -->
         <section id="tab-matches" class="tab-content hidden space-y-6">
             <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h2 class="text-xl font-bold text-white">Lịch thi đấu theo Sân</h2>
-                    <p class="text-xs text-slate-400">Chọn sân để xem các CLB đang đấu. Bấm vào nút xem để hiện chi tiết các nội dung.</p>
+                    <h2 class="text-xl font-bold text-white">Lịch thi đấu theo Sân (Tất cả 8 Sân)</h2>
+                    <p class="text-xs text-slate-400">Mỗi sân hiển thị cặp CLB đang thi đấu. Bấm <strong>Xem nội dung</strong> để mở bảng chi tiết từng trận.</p>
                 </div>
                 <div id="court-filter-buttons" class="flex flex-wrap gap-1.5">
-                    <button onclick="filterCourt('Sân 1')" class="court-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-brand-600 text-white transition shadow">Sân 1</button>
+                    <button onclick="filterCourt('ALL')" class="court-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-brand-600 text-white transition shadow">Tất cả Sân</button>
+                    <button onclick="filterCourt('Sân 1')" class="court-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-slate-300 hover:bg-slate-800 transition border border-slate-800">Sân 1</button>
                     <button onclick="filterCourt('Sân 2')" class="court-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-slate-300 hover:bg-slate-800 transition border border-slate-800">Sân 2</button>
                     <button onclick="filterCourt('Sân 3')" class="court-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-slate-300 hover:bg-slate-800 transition border border-slate-800">Sân 3</button>
                     <button onclick="filterCourt('Sân 4')" class="court-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-slate-300 hover:bg-slate-800 transition border border-slate-800">Sân 4</button>
@@ -146,7 +152,8 @@
                     <button onclick="filterCourt('Sân 8')" class="court-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-slate-300 hover:bg-slate-800 transition border border-slate-800">Sân 8</button>
                 </div>
             </div>
-            <div id="matches-by-court-container" class="space-y-4"></div>
+            <!-- Lưới hiển thị các sân -->
+            <div id="matches-by-court-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div>
         </section>
 
         <!-- TAB 3: BRACKET SERIE A & B -->
@@ -280,21 +287,34 @@
 
     </main>
 
-    <!-- MODAL XEM CHI TIẾT NỘI DUNG (KHI BẤM XEM TRONG SÂN) -->
-    <div id="match-detail-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
-        <div class="bg-slate-950 border border-slate-800 w-full max-w-lg p-6 rounded-2xl shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+    <!-- POPUP MODAL XEM CHI TIẾT NỘI DUNG Ở GIỮA MÀN HÌNH -->
+    <div id="match-detail-modal" onclick="if(event.target === this) closeMatchDetailModal()" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden p-4">
+        <div class="bg-slate-950 border-2 border-brand-500/40 w-full max-w-xl p-6 rounded-2xl shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto animate-modal-pop">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <h3 id="detail-modal-title" class="font-bold text-white text-base">Chi tiết nội dung thi đấu</h3>
-                <button onclick="closeMatchDetailModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-brand-500/10 text-brand-400 flex items-center justify-center"><i class="fa-solid fa-list-ol"></i></div>
+                    <div>
+                        <h3 id="detail-modal-title" class="font-extrabold text-white text-base">Chi tiết nội dung thi đấu</h3>
+                        <p id="detail-modal-subtitle" class="text-xs text-amber-400 font-semibold"></p>
+                    </div>
+                </div>
+                <button onclick="closeMatchDetailModal()" class="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <div id="detail-modal-content" class="space-y-3"></div>
-            <button onclick="closeMatchDetailModal()" class="w-full py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold rounded-xl">Đóng</button>
+            
+            <div id="detail-modal-content" class="space-y-2.5"></div>
+            
+            <div class="pt-3 border-t border-slate-800 flex items-center justify-between gap-3">
+                <a id="detail-modal-referee-link" href="#" target="_blank" class="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold transition shadow-lg flex items-center">
+                    <i class="fa-solid fa-whistle mr-2"></i> Mở App Trọng Tài Sân Này
+                </a>
+                <button onclick="closeMatchDetailModal()" class="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-bold rounded-xl border border-slate-800 transition">Đóng</button>
+            </div>
         </div>
     </div>
 
     <!-- CUSTOM PASSWORD MODAL -->
-    <div id="password-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
-        <div id="modal-box" class="bg-slate-950 border border-slate-800 w-full max-w-md p-6 rounded-2xl shadow-2xl space-y-4 relative transition-all">
+    <div id="password-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden p-4">
+        <div id="modal-box" class="bg-slate-950 border border-slate-800 w-full max-w-md p-6 rounded-2xl shadow-2xl space-y-4 relative transition-all animate-modal-pop">
             <div class="flex items-center space-x-3 text-brand-400">
                 <div class="w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center text-lg shrink-0">
                     <i class="fa-solid fa-lock"></i>
@@ -539,7 +559,7 @@
             (appState.ties || []).forEach(t => (t.matches || []).forEach(m => matches.push(m)));
             renderStats();
             renderHomeOverview();
-            filterCourt(currentCourtFilter || 'Sân 1');
+            filterCourt(currentCourtFilter || 'ALL');
             renderBracket();
             renderStandings();
             renderTeams();
@@ -612,7 +632,7 @@
                                 <div class="text-[11px] text-slate-400">Tiến độ: <span class="text-emerald-400 font-bold">${finishedCount}/${courtMatches.length}</span> trận</div>
                             </div>
                             <div class="flex justify-between items-center pt-2 border-t border-slate-800/80 text-[11px]">
-                                <button onclick="switchTab('matches'); filterCourt('${courtName}')" class="font-bold text-emerald-400 hover:text-emerald-300"><i class="fa-solid fa-calendar-days mr-1"></i> Lịch sân</button>
+                                <button onclick="openCourtDetailModal('${courtName}', '${activeMatch.club1Id}', '${activeMatch.club2Id}')" class="font-bold text-emerald-400 hover:text-emerald-300"><i class="fa-solid fa-eye mr-1"></i> Xem nội dung</button>
                                 <a href="referee.html?court=${encodeURIComponent(courtName)}" target="_blank" class="font-bold text-brand-400 hover:text-brand-300">Trọng Tài <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i></a>
                             </div>
                         </div>
@@ -622,118 +642,150 @@
             container.innerHTML = html;
         }
 
-        // TAB 2: LỊCH THI ĐẤU THEO SÂN - HIỂN THỊ TÊN SÂN VÀ CẶP CLB, BẤM VÀO HIỆN CHI TIẾT NỘI DUNG
-        let currentCourtFilter = 'Sân 1';
-        function filterCourt(courtName) {
-            currentCourtFilter = courtName;
+        // TAB 2: HIỂN THỊ TẤT CẢ CÁC SÂN & CHỈ HIỆN SÂN + TÊN CẶP CLB + NÚT MỞ POPUP XEM NỘI DUNG
+        let currentCourtFilter = 'ALL';
+        function filterCourt(courtFilter) {
+            currentCourtFilter = courtFilter;
             document.querySelectorAll('.court-btn').forEach(btn => {
                 btn.classList.remove('bg-brand-600', 'text-white', 'shadow');
                 btn.classList.add('bg-slate-900', 'text-slate-300', 'border', 'border-slate-800');
-                if(btn.textContent.trim() === courtName) {
+                const btnVal = btn.textContent.trim();
+                if ((courtFilter === 'ALL' && btnVal === 'Tất cả Sân') || btnVal === courtFilter) {
                     btn.classList.remove('bg-slate-900', 'text-slate-300', 'border', 'border-slate-800');
                     btn.classList.add('bg-brand-600', 'text-white', 'shadow');
                 }
             });
 
             const container = document.getElementById('matches-by-court-container');
-            const courtMatches = matches.filter(m => (m.court || 'Sân 1') === courtName);
-
-            if (courtMatches.length === 0) {
-                container.innerHTML = `<div class="text-center py-12 text-slate-500 bg-slate-900/30 rounded-2xl border border-slate-800">Chưa có lịch thi đấu trên ${courtName}.</div>`;
-                return;
-            }
-
-            let tiesMap = {};
-            courtMatches.forEach(m => {
-                let key = m.club1Id + '_vs_' + m.club2Id;
-                if (!tiesMap[key]) {
-                    tiesMap[key] = {
-                        club1Name: getClubName(m.club1Id),
-                        club2Name: getClubName(m.club2Id),
-                        matches: []
-                    };
-                }
-                tiesMap[key].matches.push(m);
-            });
+            const courtsToRender = courtFilter === 'ALL' ? COURTS_LIST : [courtFilter];
 
             let html = '';
-            Object.values(tiesMap).forEach(tie => {
-                let allFinished = tie.matches.every(x => x.status === 'FINISHED');
-                let someLive = tie.matches.some(x => x.status === 'LIVE');
-                let tieStatusBadge = allFinished ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400">Đã xong</span>` : (someLive ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-500/20 text-brand-400 animate-pulse">Đang LIVE</span>` : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400">Chuẩn bị</span>`);
+            courtsToRender.forEach(courtName => {
+                const courtMatches = matches.filter(m => (m.court || 'Sân 1') === courtName);
 
-                let tieIdKey = 'collapse_' + tie.club1Name + '_' + tie.club2Name;
-
-                html += `
-                    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl backdrop-blur-sm">
-                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-3 border-b border-slate-800 gap-2">
-                            <div class="flex items-center space-x-3">
-                                <span class="text-sm font-black text-amber-400 uppercase tracking-wide"><i class="fa-solid fa-location-dot mr-1"></i> ${courtName}</span>
-                                <span class="text-slate-600">•</span>
-                                <span class="text-sm font-extrabold text-white">${tie.club1Name} vs ${tie.club2Name}</span>
-                            </div>
-                            <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-                                ${tieStatusBadge}
-                                <button onclick="toggleTieDetails('${tieIdKey}')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold transition flex items-center shadow">
-                                    <i class="fa-solid fa-list-dropdown mr-1.5"></i> Xem nội dung <i class="fa-solid fa-chevron-down ml-1.5 text-[10px]"></i>
-                                </button>
-                                <a href="referee.html?court=${encodeURIComponent(courtName)}" target="_blank" class="px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold transition flex items-center shadow">
-                                    <i class="fa-solid fa-whistle mr-1.5"></i> Trọng tài
-                                </a>
-                            </div>
-                        </div>
-
-                        <!-- KHU VỰC CHI TIẾT CÁC NỘI DUNG (MẶC ĐỊNH THU GỌN HOẶC BẤM HIỆN) -->
-                        <div id="${tieIdKey}" class="space-y-2 pt-1">
-                `;
-
-                tie.matches.forEach(m => {
-                    let statusDot = m.status === 'FINISHED' ? '<i class="fa-solid fa-check text-emerald-400"></i>' : (m.status === 'LIVE' ? '<i class="fa-solid fa-spinner animate-spin text-brand-400"></i>' : '<span class="w-2 h-2 rounded-full bg-slate-600 inline-block"></span>');
+                if (courtMatches.length === 0) {
                     html += `
-                        <div class="bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 flex items-center justify-between gap-3">
-                            <div class="flex items-center space-x-2.5 min-w-0">
-                                <div class="shrink-0">${statusDot}</div>
-                                <div class="min-w-0">
-                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">${m.catLabel} (${m.targetPoints} điểm)</div>
-                                    <div class="text-xs font-bold text-white truncate mt-0.5">${m.team1Name || tie.club1Name} <span class="text-brand-400 px-1 font-score font-black text-sm">${m.score1 || 0}-${m.score2 || 0}</span> ${m.team2Name || tie.club2Name}</div>
-                                </div>
+                        <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-5 flex flex-col justify-between space-y-4 opacity-60">
+                            <div class="flex items-center justify-between pb-2.5 border-b border-slate-800/80">
+                                <span class="text-sm font-black text-amber-400 uppercase tracking-wide"><i class="fa-solid fa-location-dot mr-1.5"></i> ${courtName}</span>
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400">Trống</span>
+                            </div>
+                            <div class="py-4 text-center text-xs text-slate-500 italic">Chưa có cặp đấu nào</div>
+                            <div class="pt-2.5 border-t border-slate-800/60 flex justify-end">
+                                <a href="referee.html?court=${encodeURIComponent(courtName)}" target="_blank" class="text-xs font-bold text-brand-400 hover:text-brand-300">Mở Trọng Tài <i class="fa-solid fa-arrow-up-right-from-square text-[10px] ml-1"></i></a>
                             </div>
                         </div>
                     `;
-                });
+                } else {
+                    // Nhóm theo cặp CLB (Tie) trên sân đó
+                    let tiesMap = {};
+                    courtMatches.forEach(m => {
+                        let key = m.club1Id + '_vs_' + m.club2Id;
+                        if (!tiesMap[key]) {
+                            tiesMap[key] = {
+                                club1Id: m.club1Id,
+                                club2Id: m.club2Id,
+                                club1Name: getClubName(m.club1Id),
+                                club2Name: getClubName(m.club2Id),
+                                matches: []
+                            };
+                        }
+                        tiesMap[key].matches.push(m);
+                    });
 
-                html += `
-                        </div>
-                    </div>
-                `;
+                    Object.values(tiesMap).forEach(tie => {
+                        let allFinished = tie.matches.every(x => x.status === 'FINISHED');
+                        let someLive = tie.matches.some(x => x.status === 'LIVE');
+                        let tieStatusBadge = allFinished 
+                            ? `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Đã xong</span>` 
+                            : (someLive 
+                                ? `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-brand-500/20 text-brand-400 border border-brand-500/30 animate-pulse">Đang LIVE</span>` 
+                                : `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">Chuẩn bị đấu</span>`);
+
+                        // Tính tỷ số trận thắng giữa 2 CLB trong Tie này
+                        let c1Wins = 0, c2Wins = 0;
+                        tie.matches.filter(x => x.status === 'FINISHED').forEach(x => {
+                            if ((parseInt(x.score1) || 0) > (parseInt(x.score2) || 0)) c1Wins++;
+                            else if ((parseInt(x.score2) || 0) > (parseInt(x.score1) || 0)) c2Wins++;
+                        });
+
+                        html += `
+                            <div class="bg-slate-900/70 border ${someLive ? 'border-brand-500/60 shadow-lg shadow-brand-500/10' : 'border-slate-800'} rounded-2xl p-5 flex flex-col justify-between space-y-4 backdrop-blur-sm">
+                                <div class="flex items-center justify-between pb-2.5 border-b border-slate-800">
+                                    <span class="text-sm font-black text-amber-400 uppercase tracking-wide"><i class="fa-solid fa-location-dot mr-1.5"></i> ${courtName}</span>
+                                    ${tieStatusBadge}
+                                </div>
+
+                                <div class="space-y-2 py-1">
+                                    <div class="flex items-center justify-between bg-slate-950/90 px-3 py-2.5 rounded-xl border border-slate-800/90">
+                                        <span class="font-bold text-white text-xs sm:text-sm truncate pr-2">${tie.club1Name}</span>
+                                        <span class="font-score font-black text-base text-brand-400 shrink-0">${c1Wins}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between bg-slate-950/90 px-3 py-2.5 rounded-xl border border-slate-800/90">
+                                        <span class="font-bold text-white text-xs sm:text-sm truncate pr-2">${tie.club2Name}</span>
+                                        <span class="font-score font-black text-base text-emerald-400 shrink-0">${c2Wins}</span>
+                                    </div>
+                                </div>
+
+                                <div class="pt-2.5 border-t border-slate-800/80 flex items-center justify-between gap-2">
+                                    <button onclick="openCourtDetailModal('${courtName}', '${tie.club1Id}', '${tie.club2Id}')" class="flex-1 py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold transition flex items-center justify-center shadow">
+                                        <i class="fa-solid fa-eye mr-1.5"></i> Xem nội dung (${tie.matches.length})
+                                    </button>
+                                    <a href="referee.html?court=${encodeURIComponent(courtName)}" target="_blank" class="py-2 px-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold transition flex items-center justify-center shadow" title="Mở bảng điểm Trọng Tài">
+                                        <i class="fa-solid fa-whistle"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
             });
 
             container.innerHTML = html;
         }
 
-        function toggleTieDetails(elementId) {
-            const el = document.getElementById(elementId);
-            if (el) {
-                el.classList.toggle('hidden');
-            }
-        }
+        // MỞ POPUP GIỮA MÀN HÌNH HIỂN THỊ CHI TIẾT CÁC NỘI DUNG CỦA CẶP CLB ĐANG ĐẤU
+        function openCourtDetailModal(courtName, club1Id, club2Id) {
+            const tieMatches = matches.filter(m => 
+                (m.court || 'Sân 1') === courtName && 
+                (!club1Id || (m.club1Id === club1Id && m.club2Id === club2Id))
+            );
 
-        function openCourtDetailModal(courtName) {
-            const courtMatches = matches.filter(m => (m.court || 'Sân 1') === courtName);
-            document.getElementById('detail-modal-title').textContent = `Tất cả nội dung trên ${courtName}`;
-            document.getElementById('detail-modal-content').innerHTML = courtMatches.length ? courtMatches.map(m => `
-                <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-1.5">
-                    <div class="flex justify-between items-center text-[11px] text-amber-400 font-bold">
-                        <span>${m.catLabel || 'Trận'}</span>
-                        <span>${m.status === 'FINISHED' ? 'Đã xong' : (m.status === 'LIVE' ? 'Đang LIVE' : 'Sắp diễn ra')}</span>
+            const c1Name = club1Id ? getClubName(club1Id) : (tieMatches[0] ? getClubName(tieMatches[0].club1Id) : 'CLB 1');
+            const c2Name = club2Id ? getClubName(club2Id) : (tieMatches[0] ? getClubName(tieMatches[0].club2Id) : 'CLB 2');
+
+            document.getElementById('detail-modal-title').textContent = `${courtName}: ${c1Name} vs ${c2Name}`;
+            document.getElementById('detail-modal-subtitle').textContent = `Chi tiết ${tieMatches.length} nội dung thi đấu`;
+            document.getElementById('detail-modal-referee-link').href = `referee.html?court=${encodeURIComponent(courtName)}`;
+
+            document.getElementById('detail-modal-content').innerHTML = tieMatches.length ? tieMatches.map(m => {
+                let statusBadge = m.status === 'FINISHED' 
+                    ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400">Đã xong</span>` 
+                    : (m.status === 'LIVE' 
+                        ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-brand-500/20 text-brand-400 animate-pulse">Đang LIVE</span>` 
+                        : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400">Sắp đấu</span>`);
+
+                return `
+                    <div class="bg-slate-900/90 p-3.5 rounded-xl border ${m.status === 'LIVE' ? 'border-brand-500/50' : 'border-slate-800'} space-y-2">
+                        <div class="flex justify-between items-center text-[11px]">
+                            <span class="text-amber-400 font-bold uppercase tracking-wider">${m.catLabel || 'Trận'} <span class="text-slate-500 font-normal">(${m.targetPoints || 15}đ)</span></span>
+                            ${statusBadge}
+                        </div>
+                        <div class="grid grid-cols-7 items-center gap-2 pt-1">
+                            <div class="col-span-3 text-right">
+                                <div class="text-xs font-bold text-white truncate">${m.team1Name || c1Name}</div>
+                            </div>
+                            <div class="col-span-1 flex justify-center items-center bg-slate-950 py-1 rounded-lg border border-slate-800 font-score font-black text-brand-400 text-sm">
+                                ${m.score1 || 0}-${m.score2 || 0}
+                            </div>
+                            <div class="col-span-3 text-left">
+                                <div class="text-xs font-bold text-white truncate">${m.team2Name || c2Name}</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="flex justify-between items-center text-xs font-semibold text-white">
-                        <span class="truncate max-w-[40%]">${m.team1Name}</span>
-                        <span class="font-score font-black text-brand-400 text-base px-2">${m.score1 || 0} - ${m.score2 || 0}</span>
-                        <span class="truncate max-w-[40%] text-right">${m.team2Name}</span>
-                    </div>
-                </div>
-            `).join('') : '<div class="text-center text-slate-500 py-6">Chưa có trận đấu nào.</div>';
+                `;
+            }).join('') : '<div class="text-center text-slate-500 py-8 text-xs">Chưa có nội dung thi đấu nào.</div>';
+
             document.getElementById('match-detail-modal').classList.remove('hidden');
             document.getElementById('match-detail-modal').classList.add('flex');
         }
