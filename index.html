@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- MQTT Client CDN -->
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <!-- SheetJS (XLSX) cho tính năng Import/Export Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -37,9 +39,10 @@
     <header class="bg-slate-950/90 backdrop-blur-md sticky top-0 z-50 border-b border-slate-800/80">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
+                <!-- LOGO BÍNH DẦN PICKLEBALL -->
                 <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('home')">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-amber-500 flex items-center justify-center shadow-lg shadow-brand-500/30">
-                        <i class="fa-solid fa-table-tennis-paddle-ball text-white text-lg"></i>
+                    <div class="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-tr from-brand-600 to-amber-500 flex items-center justify-center shadow-lg shadow-brand-500/30 border border-brand-500/40">
+                        <img src="logo_tiger.jpg" alt="Bính Dần Logo" class="w-full h-full object-cover">
                     </div>
                     <div>
                         <h1 class="font-bold text-base sm:text-lg tracking-wide text-white leading-tight">Pickleball Bính Dần 1986</h1>
@@ -50,7 +53,7 @@
                 <nav class="hidden lg:flex space-x-1">
                     <button onclick="switchTab('home')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-brand-400 bg-slate-900 border border-brand-500/20" data-tab="home"><i class="fa-solid fa-house mr-1.5"></i> Tổng quan Sân</button>
                     <button onclick="switchTab('matches')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-900/50" data-tab="matches"><i class="fa-solid fa-calendar-days mr-1.5"></i> Lịch thi đấu theo Sân</button>
-                    <button onclick="switchTab('bracket')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-900/50" data-tab="bracket"><i class="fa-solid fa-sitemap mr-1.5"></i> Nhánh A & B (Knock-out)</button>
+                    <button onclick="switchTab('bracket')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-900/50" data-tab="bracket"><i class="fa-solid fa-sitemap mr-1.5"></i> Nhánh A & B</button>
                     <button onclick="switchTab('standings')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-900/50" data-tab="standings"><i class="fa-solid fa-trophy mr-1.5"></i> Vòng Bảng</button>
                     <button onclick="switchTab('teams')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-900/50" data-tab="teams"><i class="fa-solid fa-users mr-1.5"></i> Đội tuyển</button>
                     <button onclick="switchTab('admin')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-amber-400 hover:bg-slate-900/50" data-tab="admin"><i class="fa-solid fa-gear mr-1.5"></i> Quản trị</button>
@@ -65,7 +68,7 @@
         <div id="mobile-menu" class="hidden lg:hidden px-4 pt-2 pb-4 space-y-1 bg-slate-950 border-b border-slate-800">
             <button onclick="switchTab('home'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-brand-400 bg-slate-900">Tổng quan Sân</button>
             <button onclick="switchTab('matches'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">Lịch thi đấu theo Sân</button>
-            <button onclick="switchTab('bracket'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">Nhánh A & B (Knock-out)</button>
+            <button onclick="switchTab('bracket'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">Nhánh A & B</button>
             <button onclick="switchTab('standings'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">Vòng Bảng</button>
             <button onclick="switchTab('teams'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">Đội tuyển</button>
             <button onclick="switchTab('admin'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-amber-400 hover:bg-slate-900">Quản trị</button>
@@ -83,7 +86,7 @@
                 </div>
                 <div class="relative z-10 max-w-3xl">
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-brand-500/10 text-brand-400 border border-brand-500/20 mb-3">
-                        <span class="w-2 h-2 rounded-full bg-brand-500 animate-pulse mr-2"></span> Bản mệnh Lô Trung Hỏa - Sẵn sàng bứt phá
+                        <span class="w-2 h-2 rounded-full bg-brand-500 animate-pulse mr-2"></span> Đánh bằng bản lĩnh - Thắng bằng tinh thần
                     </span>
                     <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-2">
                         Trạng Thái Thi Đấu <span class="text-brand-400">Tất Cả 8 Sân</span>
@@ -149,7 +152,7 @@
             <div id="matches-by-court-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </section>
 
-        <!-- TAB 3: BRACKET SERIE A & B (TỰ ĐỘNG CHIA NHÁNH & TIẾN VÒNG KẾ TIẾP) -->
+        <!-- TAB 3: BRACKET SERIE A & B -->
         <section id="tab-bracket" class="tab-content hidden space-y-6">
             <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-800 flex justify-between items-center">
                 <div>
@@ -194,14 +197,19 @@
             </div>
         </section>
 
-        <!-- TAB 4: STANDINGS (VÒNG BẢNG) -->
+        <!-- TAB 4: STANDINGS & EXPORT EXCEL -->
         <section id="tab-standings" class="tab-content hidden space-y-6">
-            <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-800 flex justify-between items-center">
+            <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
-                    <h2 class="text-xl font-bold text-white">Bảng xếp hạng Vòng bảng (Round Robin)</h2>
-                    <p class="text-xs text-slate-400">Quy định điểm: Thắng (3đ), Hòa (2đ), Thua (1đ). Top 1-2 vào Serie A, Top 3-4 vào Serie B.</p>
+                    <h2 class="text-xl font-bold text-white">Bảng xếp hạng Vòng bảng & Kết quả</h2>
+                    <p class="text-xs text-slate-400">Quy định điểm: Thắng (3đ), Hòa (2đ), Thua (1đ).</p>
                 </div>
-                <button onclick="renderStandings()" class="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 transition text-sm border border-slate-800"><i class="fa-solid fa-rotate mr-1"></i> Làm mới</button>
+                <div class="flex gap-2">
+                    <button onclick="exportResultToExcel()" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition shadow flex items-center">
+                        <i class="fa-solid fa-file-excel mr-1.5"></i> Xuất kết quả ra Excel
+                    </button>
+                    <button onclick="renderStandings()" class="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 transition text-sm border border-slate-800"><i class="fa-solid fa-rotate"></i></button>
+                </div>
             </div>
             <div class="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
                 <div class="overflow-x-auto">
@@ -215,7 +223,7 @@
                                 <th class="py-3.5 px-4 font-semibold text-center">Hòa (2đ)</th>
                                 <th class="py-3.5 px-4 font-semibold text-center">Thua (1đ)</th>
                                 <th class="py-3.5 px-4 font-semibold text-center text-brand-400">Điểm Tổng</th>
-                                <th class="py-3.5 px-4 font-semibold text-center text-amber-400">Phân Nhánh Knock-out</th>
+                                <th class="py-3.5 px-4 font-semibold text-center text-amber-400">Phân Nhánh</th>
                             </tr>
                         </thead>
                         <tbody id="standings-table-body" class="divide-y divide-slate-800/80 text-sm"></tbody>
@@ -224,12 +232,21 @@
             </div>
         </section>
 
-        <!-- TAB 5: TEAMS -->
+        <!-- TAB 5: TEAMS & IMPORT EXCEL -->
         <section id="tab-teams" class="tab-content hidden space-y-6">
-            <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-800">
-                <h2 class="text-xl font-bold text-white">Danh sách Đội tuyển</h2>
-                <p class="text-xs text-slate-400">Các đội tuyển thành viên tham gia giải đấu Bính Dần 1986.</p>
+            <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div>
+                    <h2 class="text-xl font-bold text-white">Danh sách Đội tuyển & VĐV</h2>
+                    <p class="text-xs text-slate-400">Quản lý các đội tuyển và nhập danh sách vận động viên từ file Excel.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <label class="px-3 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs transition cursor-pointer shadow flex items-center">
+                        <i class="fa-solid fa-file-import mr-1.5"></i> Import danh sách VĐV (Excel)
+                        <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" onchange="importPlayersFromExcel(event)" class="hidden">
+                    </label>
+                </div>
             </div>
+
             <div id="teams-grid-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </section>
 
@@ -503,9 +520,12 @@
             });
         }
 
+        // HÀM CHUYỂN TAB & GHI NHỚ TRẠNG THÁI KHI REFRESH (F5)
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            const targetEl = document.getElementById(`tab-${tabId}`);
+            if (targetEl) targetEl.classList.remove('hidden');
+
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.remove('text-brand-400', 'bg-slate-900', 'border', 'border-brand-500/20');
                 btn.classList.add('text-slate-300', 'hover:text-white', 'hover:bg-slate-900/50');
@@ -514,6 +534,7 @@
                     btn.classList.add('text-brand-400', 'bg-slate-900', 'border', 'border-brand-500/20');
                 }
             });
+            localStorage.setItem('CAY_COI_ACTIVE_TAB', tabId);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -691,7 +712,7 @@
             document.getElementById('match-detail-modal').classList.remove('flex'); 
         }
 
-        // TÍNH ĐIỂM VÒNG BẢNG & TỰ ĐỘNG TIẾN VÒNG KNOCK-OUT (BÁN KẾT ➔ CHUNG KẾT)
+        // TÍNH ĐIỂM VÒNG BẢNG & TỰ ĐỘNG TIẾN VÒNG KNOCK-OUT
         function calculateStandingsAndSeries() {
             let statsMap = {};
             teams.forEach(t => { statsMap[t.name] = { name: t.name, played: 0, won: 0, drawn: 0, lost: 0, points: 0 }; });
@@ -739,16 +760,12 @@
 
         function renderBracket() {
             const standings = calculateStandingsAndSeries();
-            
-            // Tìm các trận đấu knock-out đã lưu hoặc tạo sẵn trong appState
             const koMatches = matches.filter(m => m.knockoutRound);
             
-            // Nhánh SERIE A
             const aSemi = document.getElementById('serie-a-semifinals');
             const aFinal = document.getElementById('serie-a-final');
             if (standings.length >= 2) {
                 const t1 = standings[0].name, t2 = standings[1].name;
-                // Kiểm tra xem đã có kết quả Bán kết Serie A chưa để tự động đẩy vào Chung kết
                 const aSemiMatch = koMatches.find(m => m.series === 'A' && m.round === 'semifinal');
                 const aWinner = aSemiMatch && aSemiMatch.status === 'FINISHED' ? (aSemiMatch.score1 > aSemiMatch.score2 ? aSemiMatch.team1Name : aSemiMatch.team2Name) : 'Thắng Bán Kết A';
 
@@ -771,7 +788,6 @@
                 aFinal.innerHTML = '';
             }
 
-            // Nhánh SERIE B
             const bSemi = document.getElementById('serie-b-semifinals');
             const bFinal = document.getElementById('serie-b-final');
             if (standings.length >= 4) {
@@ -799,12 +815,90 @@
             }
         }
 
+        // TÍNH NĂNG IMPORT DANH SÁCH VĐV TỪ EXCEL
+        function importPlayersFromExcel(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const json = XLSX.utils.sheet_to_json(worksheet);
+
+                    if (json.length === 0) {
+                        showToast('File Excel trống hoặc không đúng định dạng!', true);
+                        return;
+                    }
+
+                    // Gom nhóm VĐV theo tên đội/CLB
+                    let teamsMap = {};
+                    json.forEach((row, idx) => {
+                        const teamName = row['Tên Đội / CLB'] || row['Đội'] || row['Team'] || 'Đội Mới';
+                        const playerName = row['Họ và Tên VĐV'] || row['VĐV'] || row['Tên'] || row['Player'] || `VĐV ${idx+1}`;
+                        const level = row['Cấp độ/Trình độ'] || row['Trình độ'] || row['Level'] || 'A';
+
+                        if (!teamsMap[teamName]) {
+                            teamsMap[teamName] = [];
+                        }
+                        teamsMap[teamName].push({
+                            id: 'p_' + Date.now() + '_' + idx,
+                            name: String(playerName).trim(),
+                            level: String(level).trim()
+                        });
+                    });
+
+                    // Chuyển đổi thành mảng clubs mới
+                    appState.clubs = Object.keys(teamsMap).map((tName, i) => ({
+                        id: 't_imp_' + i + '_' + Date.now(),
+                        name: tName,
+                        players: teamsMap[tName]
+                    }));
+
+                    teams = appState.clubs;
+                    saveAppState();
+                    showToast(`✅ Đã import thành công ${teams.length} đội tuyển từ file Excel!`);
+                } catch (err) {
+                    console.error(err);
+                    showToast('Lỗi đọc file Excel. Vui lòng kiểm tra lại cấu trúc file!', true);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // TÍNH NĂNG XUẤT KẾT QUẢ RA FILE EXCEL
+        function exportResultToExcel() {
+            const standings = calculateStandingsAndSeries();
+            let exportData = standings.map((st, i) => ({
+                "Hạng": i + 1,
+                "Tên Đội / CLB": st.name,
+                "Số Trận Đấu": st.played,
+                "Thắng (3đ)": st.won,
+                "Hòa (2đ)": st.drawn,
+                "Thua (1đ)": st.lost,
+                "Điểm Tổng": st.points,
+                "Phân Nhánh Knock-out": st.series
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(exportData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "BangXepHang_BinhDan1986");
+            XLSX.writeFile(workbook, "KetQua_Pickleball_BinhDan1986.xlsx");
+            showToast('📥 Đã xuất kết quả ra file Excel thành công!');
+        }
+
         function renderTeams() {
             document.getElementById('teams-grid-container').innerHTML = teams.map(t => `
                 <div class="bg-slate-900/50 border border-slate-800 p-5 rounded-2xl space-y-3">
                     <div class="flex items-center space-x-3">
                         <div class="w-10 h-10 rounded-xl bg-brand-500/10 text-brand-400 flex items-center justify-center font-bold">${t.name.charAt(0)}</div>
                         <div><h3 class="font-bold text-white text-base">${t.name}</h3><p class="text-xs text-slate-400">${(t.players || []).length} thành viên</p></div>
+                    </div>
+                    <div class="pt-2 border-t border-slate-800 flex flex-wrap gap-1.5">
+                        ${(t.players || []).map(p => `<span class="px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-[11px] text-slate-300">${p.name} (${p.level})</span>`).join('')}
                     </div>
                 </div>
             `).join('');
@@ -901,7 +995,13 @@
             }
         }
 
-        window.onload = () => { initRealtimeSyncIndex(); initApp(); };
+        window.onload = () => { 
+            initRealtimeSyncIndex(); 
+            initApp(); 
+            // Khôi phục tab đang mở trước khi F5
+            const lastTab = localStorage.getItem('CAY_COI_ACTIVE_TAB') || 'home';
+            switchTab(lastTab);
+        };
     </script>
 </body>
 </html>
