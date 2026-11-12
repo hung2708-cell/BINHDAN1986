@@ -54,6 +54,12 @@
         .serve-blinking { animation: serve-blink 0.6s ease-in-out infinite; }
         @keyframes dash-flow { to { stroke-dashoffset: -18; } }
         .serve-trajectory-line { stroke-dasharray: 6 3; animation: dash-flow 0.55s linear infinite; }
+        @keyframes coin-spin {
+            0% { transform: rotateY(0deg) scale(1); }
+            50% { transform: rotateY(540deg) scale(1.2); }
+            100% { transform: rotateY(1080deg) scale(1); }
+        }
+        .animate-coin { animation: coin-spin 0.65s ease-out; }
         .fluid-score-num { font-size: clamp(1.75rem, 4.8dvh, 2.65rem); line-height: 1; }
         .ref-score-btn { height: clamp(42px, 6.2dvh, 56px); }
     </style>
@@ -100,15 +106,26 @@
         <button type="button" onclick="openRefereePlayerSetupModal(1)" class="px-2 py-0.5 rounded bg-amber-500 text-slate-950 font-extrabold text-[10px] shrink-0">Đội hình</button>
     </div>
 
-    <!-- 3. SƠ ĐỒ SÂN 2D TỰ CO GIÃN LINH HOẠT THEO CHIỀU CAO ĐIỆN THOẠI -->
+    <!-- 3. SƠ ĐỒ SÂN 2D TỰ CO GIÃN & CHỌN SÂN / BÓNG / GIAO / ĐỠ -->
     <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-2 flex flex-col justify-between gap-1.5 shadow-lg flex-1 min-h-0 backdrop-blur-sm">
-        <div class="flex justify-between items-center text-[10px] font-extrabold text-amber-400 shrink-0">
-            <span><i class="fa-solid fa-earth-asia mr-1"></i>Sơ Đồ Sân 2D & Vị Trí</span>
-            <button type="button" onclick="openRefereePlayerSetupModal(1)" class="px-2 py-0.5 rounded bg-brand-600 text-white font-extrabold text-[10px] shadow hover:bg-brand-500"><i class="fa-solid fa-users-gear mr-1"></i>Đăng Ký VĐV (5 Trận)</button>
+        <div class="flex justify-between items-center text-[10px] font-extrabold text-amber-400 shrink-0 gap-1">
+            <span class="truncate"><i class="fa-solid fa-earth-asia mr-1"></i>Sơ Đồ Sân 2D</span>
+            <div class="flex items-center gap-1.5 shrink-0">
+                <button type="button" onclick="openCoinTossModal()" class="px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-extrabold text-[10px] shadow transition">
+                    <i class="fa-solid fa-coins mr-1"></i>Chọn Sân/Bóng
+                </button>
+                <button type="button" onclick="openRefereePlayerSetupModal(1)" class="px-2 py-0.5 rounded bg-brand-600 hover:bg-brand-500 text-white font-extrabold text-[10px] shadow transition">
+                    <i class="fa-solid fa-users-gear mr-1"></i>Đăng Ký VĐV
+                </button>
+            </div>
         </div>
 
-        <!-- Khung sân tự co giãn chiếm phần không gian còn dư trên màn hình -->
-        <div class="relative w-full flex-1 min-h-[105px] bg-emerald-950/90 rounded-lg border-2 border-emerald-500/40 overflow-hidden shadow-inner flex items-center justify-center">
+        <!-- Khung sân tự co giãn -->
+        <div class="relative w-full flex-1 min-h-[100px] bg-emerald-950/90 rounded-lg border-2 border-emerald-500/40 overflow-hidden shadow-inner flex items-center justify-center">
+            <!-- Nhãn chỉ hướng nửa sân Trái / Phải -->
+            <div id="leftCourtSideTag" class="absolute top-1 left-2 text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-black/40 text-slate-300 pointer-events-none z-10">Sân Trái</div>
+            <div id="rightCourtSideTag" class="absolute top-1 right-2 text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-black/40 text-slate-300 pointer-events-none z-10">Sân Phải</div>
+
             <svg class="absolute inset-0 w-full h-full" viewBox="0 0 440 210" preserveAspectRatio="none">
                 <defs>
                     <marker id="arrowhead" markerWidth="7" markerHeight="5" refX="5" refY="2.5" orient="auto">
@@ -154,6 +171,7 @@
             <!-- ĐỘI 1 -->
             <div class="bg-slate-950 border border-brand-500/30 rounded-xl p-2 space-y-1 relative flex flex-col justify-between shadow">
                 <div id="team1ServeBadge" class="hidden absolute -top-2 -left-1 bg-brand-600 text-white px-1.5 py-0.5 rounded font-extrabold text-[8px] shadow uppercase">Phát (<span id="team1ServerNum">2</span>)</div>
+                <div id="team1SideMiniBadge" class="absolute -top-2 right-1.5 bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded font-bold text-[8px] border border-slate-700">Sân Trái</div>
                 <div>
                     <div id="liveTeam1ClubLabel" class="text-[9px] text-brand-400 font-extrabold uppercase truncate leading-tight">Đội 1</div>
                     <div id="liveTeam1Name" class="text-[11px] font-bold text-white truncate leading-tight mt-0.5">---</div>
@@ -165,6 +183,7 @@
             <!-- ĐỘI 2 -->
             <div class="bg-slate-950 border border-fengshui-wood/30 rounded-xl p-2 space-y-1 relative flex flex-col justify-between shadow">
                 <div id="team2ServeBadge" class="hidden absolute -top-2 -left-1 bg-fengshui-wood text-slate-950 px-1.5 py-0.5 rounded font-extrabold text-[8px] shadow uppercase">Phát (<span id="team2ServerNum">2</span>)</div>
+                <div id="team2SideMiniBadge" class="absolute -top-2 right-1.5 bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded font-bold text-[8px] border border-slate-700">Sân Phải</div>
                 <div>
                     <div id="liveTeam2ClubLabel" class="text-[9px] text-fengshui-wood font-extrabold uppercase truncate leading-tight">Đội 2</div>
                     <div id="liveTeam2Name" class="text-[11px] font-bold text-white truncate leading-tight mt-0.5">---</div>
@@ -194,6 +213,60 @@
         <button type="button" onclick="reopenFinishedMatch()" class="px-2 py-0.5 rounded bg-emerald-500 text-slate-950">Mở lại</button>
     </div>
 
+    <!-- MODAL TUNG ĐỒNG XU & CHỌN SÂN / CHỌN BÓNG TRƯỚC TRẬN -->
+    <div id="coinTossModal" onclick="if(event.target === this) closeCoinTossModal()" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/90 p-3 backdrop-blur-md">
+        <div class="bg-slate-900 border-2 border-amber-500/50 rounded-2xl max-w-sm w-full p-4 space-y-3.5 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center"><i class="fa-solid fa-coins"></i></div>
+                    <div>
+                        <h3 class="text-xs font-extrabold text-amber-400 uppercase">Chọn Sân & Chọn Bóng</h3>
+                        <p class="text-[10px] text-slate-400">Tung đồng xu hoặc thiết lập trực tiếp</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeCoinTossModal()" class="w-7 h-7 rounded-lg bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center"><i class="fa-solid fa-xmark text-sm"></i></button>
+            </div>
+
+            <!-- Khu vực Tung đồng xu ngẫu nhiên -->
+            <div class="bg-slate-950/90 border border-slate-800 rounded-xl p-3 text-center space-y-2">
+                <div id="coinVisualIcon" class="w-11 h-11 mx-auto rounded-full bg-gradient-to-tr from-amber-600 to-yellow-300 text-slate-950 font-black text-base flex items-center justify-center shadow-lg border-2 border-amber-200">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+                <div id="coinTossResultText" class="text-xs font-bold text-slate-300">Bấm tung đồng xu để xác định đội ưu tiên</div>
+                <button type="button" onclick="flipCoinForPriority()" class="px-4 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs shadow transition">
+                    <i class="fa-solid fa-shuffle mr-1"></i> Tung Đồng Xu (50/50)
+                </button>
+            </div>
+
+            <!-- Thiết lập trực tiếp Quyền Giao Bóng & Vị Trí Sân -->
+            <div class="space-y-2.5 text-xs">
+                <div class="space-y-1">
+                    <label class="block text-[10px] font-extrabold text-amber-400 uppercase">1. Đội giao bóng đầu tiên (Chọn Bóng):</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" id="tossServeTeam1Btn" onclick="setTossServeTeam(1)" class="py-2 px-2 rounded-xl border font-bold text-xs truncate transition">Đội 1</button>
+                        <button type="button" id="tossServeTeam2Btn" onclick="setTossServeTeam(2)" class="py-2 px-2 rounded-xl border font-bold text-xs truncate transition">Đội 2</button>
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="block text-[10px] font-extrabold text-emerald-400 uppercase">2. Vị trí đứng hai đội (Chọn Sân):</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" id="tossSideNormalBtn" onclick="setTossCourtSide(false)" class="py-2 px-2 rounded-xl border font-bold text-[11px] leading-tight transition">
+                            Đội 1 Trái • Đội 2 Phải
+                        </button>
+                        <button type="button" id="tossSideSwappedBtn" onclick="setTossCourtSide(true)" class="py-2 px-2 rounded-xl border font-bold text-[11px] leading-tight transition">
+                            Đội 2 Trái • Đội 1 Phải
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" onclick="applyCoinTossSettings()" class="w-full py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-extrabold text-xs uppercase shadow-lg">
+                <i class="fa-solid fa-check mr-1"></i> Xác Nhận & Vào Trận
+            </button>
+        </div>
+    </div>
+
     <!-- MODAL ĐĂNG KÝ VĐV CHO TOÀN BỘ 5 NỘI DUNG THEO TỪNG ĐỘI -->
     <div id="refereePlayerSetupModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/95 p-3 backdrop-blur-md">
         <div class="bg-slate-900 border-2 border-brand-500/60 rounded-2xl max-w-md w-full p-4 space-y-3 shadow-2xl max-h-[90dvh] flex flex-col">
@@ -218,6 +291,8 @@
         window.__deviceClientId = 'REF_' + Math.random().toString(36).slice(2, 9);
         window.__currentSyncRoomCode = 'BINHDAN';
         let currentSetupStep = 1;
+        let tempTossServeTeam = 1;
+        let tempTossSwapped = false;
 
         function loadState() {
             try {
@@ -338,6 +413,93 @@
             }
             const firstTie = state.ties?.[0];
             return { tie: firstTie, match: firstTie?.matches?.[0] || null };
+        }
+
+        // CHỨC NĂNG CHỌN SÂN & CHỌN BÓNG (TUNG ĐỒNG XU)
+        function openCoinTossModal() {
+            const { match: m } = findMatchById(state.activeLiveMatchId);
+            if (!m) return;
+            if (!m.courtState) syncMatchCourtStateFromLineup(m);
+
+            tempTossServeTeam = m.servingTeam || 1;
+            tempTossSwapped = Boolean(m.courtState?.swappedEnds);
+
+            const c1 = getClubById(m.club1Id).name;
+            const c2 = getClubById(m.club2Id).name;
+
+            document.getElementById('tossServeTeam1Btn').textContent = c1;
+            document.getElementById('tossServeTeam2Btn').textContent = c2;
+            document.getElementById('tossSideNormalBtn').innerHTML = `${c1} (Trái)<br><span class="text-[9px] font-normal opacity-80">${c2} (Phải)</span>`;
+            document.getElementById('tossSideSwappedBtn').innerHTML = `${c2} (Trái)<br><span class="text-[9px] font-normal opacity-80">${c1} (Phải)</span>`;
+            document.getElementById('coinTossResultText').textContent = 'Bấm tung đồng xu để xác định đội ưu tiên';
+
+            updateCoinTossButtonsUI();
+            document.getElementById('coinTossModal').classList.remove('hidden');
+            document.getElementById('coinTossModal').classList.add('flex');
+        }
+
+        function closeCoinTossModal() {
+            document.getElementById('coinTossModal').classList.add('hidden');
+            document.getElementById('coinTossModal').classList.remove('flex');
+        }
+
+        function flipCoinForPriority() {
+            const { match: m } = findMatchById(state.activeLiveMatchId);
+            if (!m) return;
+            const c1 = getClubById(m.club1Id).name;
+            const c2 = getClubById(m.club2Id).name;
+
+            const coinEl = document.getElementById('coinVisualIcon');
+            coinEl.classList.remove('animate-coin');
+            void coinEl.offsetWidth;
+            coinEl.classList.add('animate-coin');
+
+            const winnerTeam = Math.random() < 0.5 ? 1 : 2;
+            const winnerName = winnerTeam === 1 ? c1 : c2;
+            tempTossServeTeam = winnerTeam;
+            updateCoinTossButtonsUI();
+
+            document.getElementById('coinTossResultText').innerHTML = `🎉 <span class="text-amber-400 font-extrabold">${winnerName}</span> thắng bốc thăm! (Chọn Sân hoặc Bóng bên dưới)`;
+        }
+
+        function setTossServeTeam(teamNum) {
+            tempTossServeTeam = teamNum;
+            updateCoinTossButtonsUI();
+        }
+
+        function setTossCourtSide(isSwapped) {
+            tempTossSwapped = isSwapped;
+            updateCoinTossButtonsUI();
+        }
+
+        function updateCoinTossButtonsUI() {
+            const s1Btn = document.getElementById('tossServeTeam1Btn');
+            const s2Btn = document.getElementById('tossServeTeam2Btn');
+            const sideNormBtn = document.getElementById('tossSideNormalBtn');
+            const sideSwapBtn = document.getElementById('tossSideSwappedBtn');
+
+            s1Btn.className = `py-2 px-2 rounded-xl border font-bold text-xs truncate transition ${tempTossServeTeam === 1 ? 'bg-brand-600 text-white border-brand-400 shadow' : 'bg-slate-950 text-slate-400 border-slate-800'}`;
+            s2Btn.className = `py-2 px-2 rounded-xl border font-bold text-xs truncate transition ${tempTossServeTeam === 2 ? 'bg-emerald-600 text-white border-emerald-400 shadow' : 'bg-slate-950 text-slate-400 border-slate-800'}`;
+
+            sideNormBtn.className = `py-2 px-2 rounded-xl border font-bold text-[11px] leading-tight transition ${!tempTossSwapped ? 'bg-amber-500/25 text-amber-300 border-amber-400 shadow' : 'bg-slate-950 text-slate-400 border-slate-800'}`;
+            sideSwapBtn.className = `py-2 px-2 rounded-xl border font-bold text-[11px] leading-tight transition ${tempTossSwapped ? 'bg-amber-500/25 text-amber-300 border-amber-400 shadow' : 'bg-slate-950 text-slate-400 border-slate-800'}`;
+        }
+
+        function applyCoinTossSettings() {
+            const { match: m } = findMatchById(state.activeLiveMatchId);
+            if (!m) return;
+            if (!m.courtState) syncMatchCourtStateFromLineup(m);
+
+            m.servingTeam = tempTossServeTeam;
+            m.serverNum = m.catKey === 'DON' ? 1 : 2;
+            m.courtState.swappedEnds = tempTossSwapped;
+
+            saveState();
+            closeCoinTossModal();
+            renderRefereeApp();
+
+            const serverClub = getClubById(tempTossServeTeam === 1 ? m.club1Id : m.club2Id).name;
+            showToast(`✅ ${serverClub} giao bóng trước (${tempTossSwapped ? 'Đổi bên sân' : 'Giữ bên sân'})!`);
         }
 
         function evaluateMatchWinCondition(m) {
@@ -955,6 +1117,13 @@
             document.getElementById('team2ServeBadge').classList.toggle('hidden', !isTeam2Serving);
             document.getElementById('team2ServerNum').textContent = serverNum;
 
+            // Cập nhật nhãn bên sân Trái / Phải trên thẻ đội & sơ đồ sân
+            const leftIsT1 = !cs.swappedEnds;
+            document.getElementById('team1SideMiniBadge').textContent = leftIsT1 ? 'Sân Trái' : 'Sân Phải';
+            document.getElementById('team2SideMiniBadge').textContent = leftIsT1 ? 'Sân Phải' : 'Sân Trái';
+            document.getElementById('leftCourtSideTag').textContent = leftIsT1 ? cl1 : cl2;
+            document.getElementById('rightCourtSideTag').textContent = leftIsT1 ? cl2 : cl1;
+
             if (isMatchFinished) {
                 document.getElementById('team1ScoreActionArea').innerHTML = `<div class="col-span-3 ref-score-btn rounded-lg bg-emerald-950/60 text-emerald-300 font-extrabold text-xs flex items-center justify-center">🏆 XONG</div>`;
                 document.getElementById('team2ScoreActionArea').innerHTML = `<div class="col-span-3 ref-score-btn rounded-lg bg-emerald-950/60 text-emerald-300 font-extrabold text-xs flex items-center justify-center">🏆 XONG</div>`;
@@ -972,7 +1141,6 @@
 
             // SƠ ĐỒ SÂN 2D & MŨI TÊN ĐƯỜNG CHÉO NGẮN GỌN
             const isEvenScore = (servingScore % 2 === 0);
-            const leftIsT1 = !cs.swappedEnds;
             const leftTeamNum = leftIsT1 ? 1 : 2;
             const rightTeamNum = leftIsT1 ? 2 : 1;
 
@@ -1009,7 +1177,6 @@
             const serverDot = dots.find(d => d.isServer) || dots[0];
             const receiverDot = dots.find(d => d.team !== serverDot.team && Math.abs(d.y - (210 - serverDot.y)) < 20) || dots[dots.length - 1];
             
-            // Mũi tên đường chéo ngắn gọn nằm gọn khoảng giữa sân
             const dx = receiverDot.x - serverDot.x, dy = receiverDot.y - serverDot.y;
             const dist = Math.hypot(dx, dy) || 1;
             const padStart = Math.min(72, dist * 0.30);
@@ -1035,7 +1202,6 @@
                 </div>
             `).join('');
 
-            // CẬP NHẬT DANH SÁCH CHỌN NGƯỜI GIAO BÓNG & NGƯỜI ĐỠ BÓNG
             const serverSel = document.getElementById('selectCurrentServerPlayer');
             const receiverSel = document.getElementById('selectCurrentReceiverPlayer');
             if (serverSel && receiverSel) {
