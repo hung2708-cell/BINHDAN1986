@@ -727,6 +727,23 @@
         function renderStandings() {
             const standingsArray = calculateStandingsAndSeries();
             const tbody = document.getElementById('standings-table-body');
+            
+            // Kiểm tra xem vòng bảng đã đấu xong tất cả các trận chưa
+            const groupMatches = matches.filter(m => !m.knockoutRound);
+            const allGroupFinished = groupMatches.length > 0 && groupMatches.every(m => m.status === 'FINISHED');
+
+            if (!allGroupFinished && groupMatches.length > 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-12 text-amber-400 font-semibold bg-slate-900/40">
+                            <i class="fa-solid fa-triangle-exclamation mr-2 text-base"></i>
+                            Vòng bảng đang diễn ra. Bảng xếp hạng và kết quả nhất - nhì chính thức sẽ hiển thị khi tất cả các trận vòng bảng hoàn thành!
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
             tbody.innerHTML = standingsArray.length ? standingsArray.map((st, idx) => {
                 const isSerieA = idx < 2;
                 const badgeColor = isSerieA ? 'bg-brand-500/20 text-brand-400 border-brand-500/40' : 'bg-blue-500/20 text-blue-400 border-blue-500/40';
@@ -742,7 +759,7 @@
                         <td class="py-3 px-4 text-center"><span class="px-2.5 py-1 rounded-full text-[11px] font-extrabold border ${badgeColor}">${st.series}</span></td>
                     </tr>
                 `;
-            }).join('') : `<tr><td colspan="8" class="text-center py-6 text-slate-500">Chưa có dữ liệu bảng xếp hạng vòng bảng.</td></tr>`;
+            }).join('') : `<tr><td colspan="8" class="text-center py-6 text-slate-500">Chưa có dữ liệu vòng bảng.</td></tr>`;
         }
 
         function renderBracket() {
