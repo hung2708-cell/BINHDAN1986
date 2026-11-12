@@ -522,7 +522,6 @@
             }, 2500);
         }
 
-        // MQTT Realtime Sync
         let indexMqttClient = null;
         function initRealtimeSyncIndex() {
             if (typeof mqtt === 'undefined') return;
@@ -572,12 +571,19 @@
 
         function confirmPasswordAction() {
             const pwd = document.getElementById('modal-password-input').value;
+            const modalBox = document.getElementById('modal-box');
+            const errorMsg = document.getElementById('modal-error-msg');
+
             if(pwd === ADMIN_PASSWORD) {
                 closePasswordModal();
                 if(pendingAction) pendingAction();
             } else {
-                document.getElementById('modal-error-msg').classList.remove('hidden');
+                errorMsg.classList.remove('hidden');
                 document.getElementById('modal-password-input').focus();
+                modalBox.classList.add('animate-shake', 'border-rose-500');
+                setTimeout(() => {
+                    modalBox.classList.remove('animate-shake', 'border-rose-500');
+                }, 400);
             }
         }
 
@@ -585,9 +591,14 @@
             if(e.key === 'Enter') confirmPasswordAction();
         });
 
+        // HÀM KHÔI PHỤC DỮ LIỆU MẪU CHUẨN XÁC
         function promptResetDefault() {
             openPasswordModal("Khôi phục dữ liệu mẫu", () => {
-                appState = { ties: JSON.parse(JSON.stringify(DEFAULT_TIES)), clubs: JSON.parse(JSON.stringify(DEFAULT_TEAMS)), activeLiveMatchId: 'm1' };
+                appState = { 
+                    ties: JSON.parse(JSON.stringify(DEFAULT_TIES)), 
+                    clubs: JSON.parse(JSON.stringify(DEFAULT_TEAMS)), 
+                    activeLiveMatchId: 'm1' 
+                };
                 teams = appState.clubs;
                 matches = [];
                 appState.ties.forEach(t => (t.matches || []).forEach(m => matches.push(m)));
@@ -596,11 +607,16 @@
             });
         }
 
+        // HÀM XÓA TRẬN ĐẤU CHUẨN XÁC
         function promptDeleteMatch(matchId) {
             openPasswordModal("Xác nhận xóa trận đấu", () => {
-                appState.ties.forEach(t => {
-                    t.matches = (t.matches || []).filter(m => m.id !== matchId);
-                });
+                if (appState.ties) {
+                    appState.ties.forEach(t => {
+                        if (t.matches) {
+                            t.matches = t.matches.filter(m => m.id !== matchId);
+                        }
+                    });
+                }
                 matches = matches.filter(m => m.id !== matchId);
                 saveAppState();
                 showToast('🗑️ Đã xóa trận đấu thành công!');
