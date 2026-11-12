@@ -438,7 +438,7 @@
             if(e.key === 'Enter') confirmPasswordAction(); 
         });
 
-        // THUẬT TOÁN TỰ ĐỘNG XẾP LỊCH VÒNG TRÒN (CIRCLE METHOD) - MỖI CẶP ĐẤU GIỮA 2 ĐỘI ĐÁNH TRỌN VẸN TRÊN 1 SÂN
+        // THUẬT TOÁN XẾP LỊCH VÒNG TRÒN CHUẨN ĐỒNG ĐỘI (MỖI ĐỘI 1 VÒNG CHỈ ĐÁNH 1 SÂN, CÁC NỘI DUNG ĐÁNH TRỌN VẸN TRÊN SÂN ĐÓ)
         function promptGenerateCircleSchedule() {
             openPasswordModal("Xác nhận Tự động sắp xếp lịch vòng tròn", () => {
                 if (teams.length < 2) {
@@ -457,7 +457,6 @@
 
                 let generatedTies = [];
                 let matchIdCounter = 1;
-                let courtIndex = 0;
 
                 for (let round = 0; round < rounds; round++) {
                     let roundPairings = [];
@@ -469,21 +468,19 @@
                         }
                     }
 
-                    roundPairings.forEach(pair => {
-                        // Lần lượt phân bổ các cặp đấu vào các sân từ Sân 1 đến Sân 8
-                        let assignedCourt = COURTS_LIST[courtIndex % COURTS_LIST.length];
+                    // Trong mỗi vòng đấu, mỗi cặp CLB sẽ được gán vào các sân khác nhau từ Sân 1 đến Sân 8 (không bị trùng đội giữa các sân trong cùng 1 vòng)
+                    roundPairings.forEach((pair, pairIdx) => {
+                        let assignedCourt = COURTS_LIST[pairIdx % COURTS_LIST.length];
                         
-                        // 5 trận đấu của cặp CLB này nằm trọn trên ĐÚNG 1 SÂN đó
                         let tieMatches = [
-                            { id: 'm_' + matchIdCounter++, club1Id: pair.home.id, club2Id: pair.away.id, catKey: 'DOI', catLabel: 'Trận 1: Đôi Nam', court: assignedCourt, score1: 0, score2: 0, status: 'UPCOMING', maxPlayers: 2, targetPoints: 15 },
-                            { id: 'm_' + matchIdCounter++, club1Id: pair.home.id, club2Id: pair.away.id, catKey: 'DOI', catLabel: 'Trận 2: Đôi Nữ', court: assignedCourt, score1: 0, score2: 0, status: 'UPCOMING', maxPlayers: 2, targetPoints: 15 },
-                            { id: 'm_' + matchIdCounter++, club1Id: pair.home.id, club2Id: pair.away.id, catKey: 'DOI', catLabel: 'Trận 3: Đôi Nam Nữ 1', court: assignedCourt, score1: 0, score2: 0, status: 'UPCOMING', maxPlayers: 2, targetPoints: 15 },
-                            { id: 'm_' + matchIdCounter++, club1Id: pair.home.id, club2Id: pair.away.id, catKey: 'DOI', catLabel: 'Trận 4: Đôi Nam Nữ 2', court: assignedCourt, score1: 0, score2: 0, status: 'UPCOMING', maxPlayers: 2, targetPoints: 15 },
-                            { id: 'm_' + matchIdCounter++, club1Id: pair.home.id, club2Id: pair.away.id, catKey: 'DON', catLabel: 'Trận 5: Đơn Quyết Định', court: assignedCourt, score1: 0, score2: 0, status: 'UPCOMING', maxPlayers: 1, targetPoints: 21 }
+                            { id: 'm_' + matchIdCounter++, club1Id: pair.home.id, club2Id: pair.away.id, catKey: 'DOI', catLabel: `Vòng ${round+1} - Trận 1: Đôi Nam`, court: assignedCourt, score1: 0, score2: 0, status: 'UPCOMING', maxPlayers: 2, targetPoints: 15 },
+                            { id: 'm_' + matchIdCounter++, club1Id: pair.home.id, club2Id: pair.away.id, catKey: 'DOI', catLabel: `Vòng ${round+1} - Trận 2: Đôi Nữ`, court: assignedCourt, score1: 0, score2: 0, status: 'UPCOMING', maxPlayers: 2, targetPoints: 15 },
+                            { id: 'm_' + matchIdCounter++, club1Id: pair.home.id, club2Id: pair.away.id, catKey: 'DOI', catLabel: `Vòng ${round+1} - Trận 3: Đôi Nam Nữ 1`, court: assignedCourt, score1: 0, score2: 0, status: 'UPCOMING', maxPlayers: 2, targetPoints: 15 },
+                            { id: 'm_' + matchIdCounter++, club1Id: pair.home.id, club2Id: pair.away.id, catKey: 'DOI', catLabel: `Vòng ${round+1} - Trận 4: Đôi Nam Nữ 2`, court: assignedCourt, score1: 0, score2: 0, status: 'UPCOMING', maxPlayers: 2, targetPoints: 15 },
+                            { id: 'm_' + matchIdCounter++, club1Id: pair.home.id, club2Id: pair.away.id, catKey: 'DON', catLabel: `Vòng ${round+1} - Trận 5: Đơn Quyết Định`, court: assignedCourt, score1: 0, score2: 0, status: 'UPCOMING', maxPlayers: 1, targetPoints: 21 }
                         ];
                         
                         generatedTies.push({ id: 'tie_' + Math.random(), matches: tieMatches });
-                        courtIndex++;
                     });
 
                     // Xoay vòng thuật toán Circle Method
@@ -493,7 +490,7 @@
 
                 appState.ties = generatedTies;
                 saveAppState();
-                showToast(`🪄 Đã xếp lịch thành công! Mỗi cặp đấu CLB được phân bổ trọn vẹn trên 1 sân.`);
+                showToast(`🪄 Đã xếp lịch thành công! Đảm bảo mỗi đội không bị trùng sân trong cùng một vòng.`);
             });
         }
 
