@@ -133,7 +133,7 @@
             </div>
         </section>
 
-        <!-- TAB 2: MATCHES & SCORES BY COURT (HIỂN THỊ ĐÚNG 1 THẺ MỖI SÂN + POPUP VỪA KHUNG) -->
+        <!-- TAB 2: MATCHES & SCORES BY COURT -->
         <section id="tab-matches" class="tab-content hidden space-y-6">
             <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
@@ -152,7 +152,6 @@
                     <button onclick="filterCourt('Sân 8')" class="court-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-slate-300 hover:bg-slate-800 transition border border-slate-800">Sân 8</button>
                 </div>
             </div>
-            <!-- Lưới hiển thị đúng 8 thẻ sân -->
             <div id="matches-by-court-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div>
         </section>
 
@@ -241,7 +240,11 @@
             <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
                     <h2 class="text-xl font-bold text-white">Danh sách Đội tuyển & VĐV</h2>
-                    <p class="text-xs text-slate-400">Quản lý đội tuyển, thêm/xóa trực tiếp VĐV trong CLB hoặc import từ Excel.</p>
+                    <div class="flex flex-wrap items-center gap-3 mt-1 text-xs text-slate-400">
+                        <span>Quản lý VĐV theo trình độ (A, B, C) & giới tính:</span>
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-sky-500/15 text-sky-400 border border-sky-500/30 font-semibold"><i class="fa-solid fa-mars"></i> Nam</span>
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-pink-500/15 text-pink-400 border border-pink-500/30 font-semibold"><i class="fa-solid fa-venus"></i> Nữ</span>
+                    </div>
                 </div>
                 <div class="flex items-center gap-2">
                     <label class="px-3 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs transition cursor-pointer shadow flex items-center">
@@ -250,7 +253,7 @@
                     </label>
                 </div>
             </div>
-            <div id="teams-grid-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            <div id="teams-grid-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </section>
 
         <!-- TAB 6: ADMIN PANEL & AUTO SCHEDULE (CIRCLE METHOD) -->
@@ -273,8 +276,12 @@
             <div class="bg-slate-900/50 border border-slate-800 p-5 rounded-2xl space-y-4 max-w-xl">
                 <h3 class="font-bold text-white flex items-center text-base"><i class="fa-solid fa-user-plus text-brand-400 mr-2"></i> Thêm đội tuyển / CLB mới</h3>
                 <form id="form-add-team" onsubmit="handleAddTeam(event)" class="space-y-3">
-                    <div><label class="block text-xs font-medium text-slate-400 mb-1">Tên đội</label><input type="text" id="team-name" required placeholder="VD: Bính Dần FC" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"></div>
-                    <div><label class="block text-xs font-medium text-slate-400 mb-1">Thành viên (phân cách bằng dấu phẩy)</label><input type="text" id="team-members" required placeholder="VD: Hùng, Cường, Dũng" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"></div>
+                    <div><label class="block text-xs font-medium text-slate-400 mb-1">Tên đội / CLB</label><input type="text" id="team-name" required placeholder="VD: Bính Dần FC" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"></div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Thành viên ban đầu (VD: Hùng-Nam-A, Lan-Nữ-B)</label>
+                        <input type="text" id="team-members" required placeholder="VD: Hùng-Nam-A, Lan-Nữ-B, Dũng-Nam-C" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500">
+                        <p class="text-[11px] text-slate-500 mt-1">Có thể nhập nhanh tên (mặc định Nam - Trình A), sau đó thêm/chỉnh chi tiết tại Tab <strong>Đội tuyển</strong>.</p>
+                    </div>
                     <button type="submit" class="w-full py-2.5 bg-brand-600 hover:bg-brand-500 text-white font-medium rounded-xl text-sm transition shadow-lg">Thêm đội tuyển</button>
                 </form>
             </div>
@@ -301,7 +308,6 @@
                 <button onclick="closeMatchDetailModal()" class="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition shrink-0"><i class="fa-solid fa-xmark text-base"></i></button>
             </div>
             
-            <!-- Danh sách 5 trận hiển thị cô đọng kèm tên VĐV vừa 1 màn hình -->
             <div id="detail-modal-content" class="space-y-1.5"></div>
             
             <div class="pt-2.5 border-t border-slate-800 flex items-center justify-between gap-3">
@@ -310,6 +316,45 @@
                 </a>
                 <button onclick="closeMatchDetailModal()" class="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-bold rounded-xl border border-slate-800 transition">Đóng</button>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL SỬA THÔNG TIN VĐV (TÊN, GIỚI TÍNH, TRÌNH ĐỘ A/B/C) -->
+    <div id="edit-player-modal" onclick="if(event.target === this) closeEditPlayerModal()" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden p-4">
+        <div class="bg-slate-950 border border-slate-800 w-full max-w-sm p-5 rounded-2xl shadow-2xl space-y-4 animate-modal-pop">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2.5">
+                <h3 class="font-bold text-white text-sm flex items-center gap-2"><i class="fa-solid fa-user-pen text-brand-400"></i> Cập nhật Vận động viên</h3>
+                <button onclick="closeEditPlayerModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="saveEditedPlayer(event)" class="space-y-3">
+                <input type="hidden" id="edit-player-team-id">
+                <input type="hidden" id="edit-player-id">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Họ và tên VĐV</label>
+                    <input type="text" id="edit-player-name" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Giới tính</label>
+                        <select id="edit-player-gender" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500">
+                            <option value="Nam">Nam</option>
+                            <option value="Nữ">Nữ</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Trình độ</label>
+                        <select id="edit-player-level" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500">
+                            <option value="A">Trình A</option>
+                            <option value="B">Trình B</option>
+                            <option value="C">Trình C</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                    <button type="button" onclick="closeEditPlayerModal()" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold">Hủy</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold shadow-lg">Lưu thay đổi</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -352,10 +397,10 @@
         const COURTS_LIST = ['Sân 1', 'Sân 2', 'Sân 3', 'Sân 4', 'Sân 5', 'Sân 6', 'Sân 7', 'Sân 8'];
 
         const DEFAULT_TEAMS = [
-            { id: 't1', name: 'Bính Dần A', players: [{id: 'p1', name: 'Hùng', level: 'A'}, {id: 'p2', name: 'Cường', level: 'A'}] },
-            { id: 't2', name: 'Hổ Phách FC', players: [{id: 'p3', name: 'Nam', level: 'A'}, {id: 'p4', name: 'Tuấn', level: 'B'}] },
-            { id: 't3', name: 'Sơn Lâm Team', players: [{id: 'p5', name: 'Trọng', level: 'A'}, {id: 'p6', name: 'Thắng', level: 'B'}] },
-            { id: 't4', name: '1986 Warriors', players: [{id: 'p7', name: 'Đức', level: 'A'}, {id: 'p8', name: 'Huy', level: 'B'}] }
+            { id: 't1', name: 'Bính Dần A', players: [{id: 'p1', name: 'Hùng', gender: 'Nam', level: 'A'}, {id: 'p2', name: 'Lan', gender: 'Nữ', level: 'B'}] },
+            { id: 't2', name: 'Hổ Phách FC', players: [{id: 'p3', name: 'Nam', gender: 'Nam', level: 'A'}, {id: 'p4', name: 'Mai', gender: 'Nữ', level: 'B'}] },
+            { id: 't3', name: 'Sơn Lâm Team', players: [{id: 'p5', name: 'Trọng', gender: 'Nam', level: 'A'}, {id: 'p6', name: 'Thắng', gender: 'Nam', level: 'C'}] },
+            { id: 't4', name: '1986 Warriors', players: [{id: 'p7', name: 'Đức', gender: 'Nam', level: 'A'}, {id: 'p8', name: 'Hương', gender: 'Nữ', level: 'B'}] }
         ];
 
         const DEFAULT_TIES = [
@@ -644,7 +689,7 @@
             container.innerHTML = html;
         }
 
-        // TAB 2: HIỂN THỊ ĐÚNG 1 Ô DUY NHẤT CHO MỖI SÂN (SÂN 1 - SÂN 8), CHỈ HIỆN SÂN + 2 CLB + NÚT XEM NỘI DUNG
+        // TAB 2: HIỂN THỊ ĐÚNG 1 Ô DUY NHẤT CHO MỖI SÂN (SÂN 1 - SÂN 8)
         let currentCourtFilter = 'ALL';
         function filterCourt(courtFilter) {
             currentCourtFilter = courtFilter;
@@ -743,7 +788,7 @@
             container.innerHTML = html;
         }
 
-        // POPUP GIỮA MÀN HÌNH HIỂN THỊ CÔ ĐỌNG 5 NỘI DUNG KÈM TÊN VĐV TỪNG TRẬN (VỪA KHÍT KHUNG HÌNH)
+        // POPUP GIỮA MÀN HÌNH HIỂN THỊ CÔ ĐỌNG 5 NỘI DUNG KÈM TÊN VĐV TỪNG TRẬN
         function openCourtDetailModal(courtName, club1Id, club2Id) {
             const courtMatches = matches.filter(m => (m.court || 'Sân 1') === courtName);
             let activeMatch = courtMatches.find(m => m.status === 'LIVE') || courtMatches.find(m => m.status === 'UPCOMING') || courtMatches[0];
@@ -968,6 +1013,18 @@
             }
         }
 
+        function normalizeGender(val) {
+            const s = String(val || '').trim().toLowerCase();
+            if (s === 'nữ' || s === 'nu' || s === 'f' || s === 'female') return 'Nữ';
+            return 'Nam';
+        }
+
+        function normalizeLevel(val) {
+            const s = String(val || '').trim().toUpperCase();
+            if (['A', 'B', 'C'].includes(s)) return s;
+            return 'A';
+        }
+
         function importPlayersFromExcel(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -983,9 +1040,10 @@
                     json.forEach((row, idx) => {
                         const teamName = row['Tên Đội / CLB'] || row['Đội'] || row['Team'] || 'Đội Mới';
                         const playerName = row['Họ và Tên VĐV'] || row['VĐV'] || row['Tên'] || `VĐV ${idx+1}`;
-                        const level = row['Cấp độ/Trình độ'] || 'A';
+                        const gender = normalizeGender(row['Giới tính'] || row['Giới Tính'] || row['Gender'] || 'Nam');
+                        const level = normalizeLevel(row['Cấp độ/Trình độ'] || row['Trình độ'] || row['Level'] || 'A');
                         if (!teamsMap[teamName]) teamsMap[teamName] = [];
-                        teamsMap[teamName].push({ id: 'p_' + Date.now() + '_' + idx, name: String(playerName).trim(), level: String(level).trim() });
+                        teamsMap[teamName].push({ id: 'p_' + Date.now() + '_' + idx, name: String(playerName).trim(), gender, level });
                     });
 
                     teams = Object.keys(teamsMap).map((tName, i) => ({
@@ -1015,10 +1073,11 @@
             showToast('📥 Đã xuất kết quả ra Excel!');
         }
 
+        // HIỂN THỊ DANH SÁCH VĐV PHÂN BIỆT MÀU SẮC NAM (XANH DƯƠNG) / NỮ (HỒNG) VÀ TRÌNH ĐỘ A, B, C
         function renderTeams() {
             const container = document.getElementById('teams-grid-container');
             if (!teams || teams.length === 0) {
-                container.innerHTML = `<div class="col-span-full text-center py-12 text-slate-500 bg-slate-900/30 rounded-2xl border border-slate-800">Chưa có đội tuyển nào. Hãy bấm <strong>Import VĐV (Excel)</strong> ở trên.</div>`;
+                container.innerHTML = `<div class="col-span-full text-center py-12 text-slate-500 bg-slate-900/30 rounded-2xl border border-slate-800">Chưa có đội tuyển nào. Hãy bấm <strong>Import VĐV (Excel)</strong> ở trên hoặc thêm tại Tab <strong>Quản trị</strong>.</div>`;
                 return;
             }
             container.innerHTML = teams.map(t => `
@@ -1027,28 +1086,65 @@
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-3">
                                 <div class="w-10 h-10 rounded-xl bg-brand-500/10 text-brand-400 flex items-center justify-center font-bold">${t.name.charAt(0)}</div>
-                                <div><h3 class="font-bold text-white text-base">${t.name}</h3><p class="text-xs text-slate-400">${(t.players || []).length} VĐV</p></div>
+                                <div>
+                                    <h3 class="font-bold text-white text-base">${t.name}</h3>
+                                    <p class="text-xs text-slate-400">${(t.players || []).length} VĐV</p>
+                                </div>
                             </div>
                             <button onclick="promptDeleteTeam('${t.id}')" class="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-xs transition" title="Xóa CLB"><i class="fa-solid fa-trash"></i></button>
                         </div>
+
                         <div class="pt-2 border-t border-slate-800 space-y-2">
-                            <span class="text-[11px] text-slate-500 block">Danh sách Vận động viên (bấm tên để sửa, bấm × để xóa):</span>
+                            <span class="text-[11px] text-slate-500 block">Vận động viên (bấm tên để sửa, bấm × để xóa):</span>
                             <div class="flex flex-wrap gap-1.5">
-                                ${(t.players || []).map(p => `
-                                    <div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-300">
-                                        <span onclick="promptEditPlayer('${t.id}', '${p.id}', '${p.name}')" class="cursor-pointer hover:text-brand-400 font-medium">${p.name}</span>
-                                        <button onclick="promptDeletePlayer('${t.id}', '${p.id}')" class="text-rose-500 hover:text-rose-400 ml-1" title="Xóa VĐV"><i class="fa-solid fa-xmark text-[10px]"></i></button>
-                                    </div>
-                                `).join('') || '<span class="text-xs text-slate-500 italic">Chưa có VĐV</span>'}
+                                ${(t.players || []).map(p => {
+                                    const gender = normalizeGender(p.gender);
+                                    const level = normalizeLevel(p.level);
+                                    const isFemale = gender === 'Nữ';
+
+                                    const pillTheme = isFemale 
+                                        ? 'bg-pink-500/10 border-pink-500/35 text-pink-200 hover:border-pink-400' 
+                                        : 'bg-sky-500/10 border-sky-500/35 text-sky-200 hover:border-sky-400';
+
+                                    const genderIcon = isFemale 
+                                        ? '<i class="fa-solid fa-venus text-pink-400 text-[10px]"></i>' 
+                                        : '<i class="fa-solid fa-mars text-sky-400 text-[10px]"></i>';
+
+                                    const levelBadgeTheme = level === 'A' 
+                                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' 
+                                        : (level === 'B' 
+                                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' 
+                                            : 'bg-purple-500/20 text-purple-300 border-purple-500/40');
+
+                                    return `
+                                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs transition ${pillTheme}">
+                                            ${genderIcon}
+                                            <span onclick="openEditPlayerModal('${t.id}', '${p.id}')" class="cursor-pointer font-semibold hover:underline">${p.name}</span>
+                                            <span class="px-1.5 py-0.2 rounded text-[10px] font-black border ${levelBadgeTheme}">${level}</span>
+                                            <button onclick="promptDeletePlayer('${t.id}', '${p.id}')" class="text-slate-400 hover:text-rose-400 ml-0.5" title="Xóa VĐV"><i class="fa-solid fa-xmark text-[10px]"></i></button>
+                                        </div>
+                                    `;
+                                }).join('') || '<span class="text-xs text-slate-500 italic">Chưa có VĐV</span>'}
                             </div>
                         </div>
                     </div>
 
-                    <!-- FORM THÊM NHANH VĐV TRONG CLB -->
-                    <form onsubmit="handleQuickAddPlayer(event, '${t.id}')" class="pt-3 border-t border-slate-800/80 flex items-center gap-2">
-                        <input type="text" id="new-player-input-${t.id}" placeholder="+ Thêm VĐV mới..." required class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500">
-                        <button type="submit" class="px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold transition shadow shrink-0">
-                            <i class="fa-solid fa-plus mr-1"></i> Thêm
+                    <!-- FORM THÊM NHANH VĐV TRONG CLB (CHỌN GIỚI TÍNH NAM/NỮ & TRÌNH A, B, C) -->
+                    <form onsubmit="handleQuickAddPlayer(event, '${t.id}')" class="pt-3 border-t border-slate-800/80 space-y-2">
+                        <div class="flex items-center gap-1.5">
+                            <input type="text" id="new-player-name-${t.id}" placeholder="Tên VĐV mới..." required class="flex-1 min-w-0 bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500">
+                            <select id="new-player-gender-${t.id}" class="bg-slate-950 border border-slate-800 rounded-xl px-2 py-1.5 text-xs font-semibold text-white focus:outline-none focus:border-brand-500">
+                                <option value="Nam">Nam</option>
+                                <option value="Nữ">Nữ</option>
+                            </select>
+                            <select id="new-player-level-${t.id}" class="bg-slate-950 border border-slate-800 rounded-xl px-2 py-1.5 text-xs font-bold text-amber-400 focus:outline-none focus:border-brand-500">
+                                <option value="A">Trình A</option>
+                                <option value="B">Trình B</option>
+                                <option value="C">Trình C</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="w-full py-1.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold transition shadow flex items-center justify-center">
+                            <i class="fa-solid fa-user-plus mr-1.5"></i> Thêm VĐV vào ${t.name}
                         </button>
                     </form>
                 </div>
@@ -1057,9 +1153,14 @@
 
         function handleQuickAddPlayer(event, teamId) {
             event.preventDefault();
-            const inputEl = document.getElementById(`new-player-input-${teamId}`);
-            if (!inputEl) return;
-            const rawNames = inputEl.value.trim();
+            const nameInput = document.getElementById(`new-player-name-${teamId}`);
+            const genderSelect = document.getElementById(`new-player-gender-${teamId}`);
+            const levelSelect = document.getElementById(`new-player-level-${teamId}`);
+            if (!nameInput || !genderSelect || !levelSelect) return;
+
+            const rawNames = nameInput.value.trim();
+            const gender = normalizeGender(genderSelect.value);
+            const level = normalizeLevel(levelSelect.value);
             if (!rawNames) return;
 
             openPasswordModal("Xác nhận thêm VĐV vào CLB", () => {
@@ -1072,14 +1173,61 @@
                     team.players.push({
                         id: 'p_' + Date.now() + '_' + idx,
                         name: name,
-                        level: 'A'
+                        gender: gender,
+                        level: level
                     });
                 });
 
                 appState.clubs = teams;
                 saveAppState();
-                showToast(`✅ Đã thêm ${namesList.length} VĐV vào ${team.name}!`);
+                showToast(`✅ Đã thêm ${namesList.length} VĐV (${gender} - Trình ${level}) vào ${team.name}!`);
             });
+        }
+
+        function openEditPlayerModal(teamId, playerId) {
+            const team = teams.find(c => c.id === teamId);
+            if (!team || !team.players) return;
+            const player = team.players.find(p => p.id === playerId);
+            if (!player) return;
+
+            document.getElementById('edit-player-team-id').value = teamId;
+            document.getElementById('edit-player-id').value = playerId;
+            document.getElementById('edit-player-name').value = player.name || '';
+            document.getElementById('edit-player-gender').value = normalizeGender(player.gender);
+            document.getElementById('edit-player-level').value = normalizeLevel(player.level);
+
+            document.getElementById('edit-player-modal').classList.remove('hidden');
+            document.getElementById('edit-player-modal').classList.add('flex');
+        }
+
+        function closeEditPlayerModal() {
+            document.getElementById('edit-player-modal').classList.add('hidden');
+            document.getElementById('edit-player-modal').classList.remove('flex');
+        }
+
+        function saveEditedPlayer(event) {
+            event.preventDefault();
+            const teamId = document.getElementById('edit-player-team-id').value;
+            const playerId = document.getElementById('edit-player-id').value;
+            const newName = document.getElementById('edit-player-name').value.trim();
+            const newGender = normalizeGender(document.getElementById('edit-player-gender').value);
+            const newLevel = normalizeLevel(document.getElementById('edit-player-level').value);
+
+            if (!newName) return;
+
+            const team = teams.find(c => c.id === teamId);
+            if (team && team.players) {
+                const player = team.players.find(p => p.id === playerId);
+                if (player) {
+                    player.name = newName;
+                    player.gender = newGender;
+                    player.level = newLevel;
+                    appState.clubs = teams;
+                    saveAppState();
+                    closeEditPlayerModal();
+                    showToast('✅ Đã cập nhật thông tin VĐV!');
+                }
+            }
         }
 
         function promptDeleteTeam(teamId) {
@@ -1101,22 +1249,6 @@
                     showToast('🗑️ Đã xóa VĐV!');
                 }
             });
-        }
-
-        function promptEditPlayer(teamId, playerId, currentName) {
-            const newName = prompt("Nhập tên mới cho vận động viên:", currentName);
-            if (newName && newName.trim() !== "") {
-                const team = teams.find(c => c.id === teamId);
-                if (team && team.players) {
-                    const player = team.players.find(p => p.id === playerId);
-                    if (player) {
-                        player.name = newName.trim();
-                        appState.clubs = teams;
-                        saveAppState();
-                        showToast('✅ Đã cập nhật tên VĐV!');
-                    }
-                }
-            }
         }
 
         function renderAdminMatchesList() {
@@ -1148,7 +1280,14 @@
             const name = document.getElementById('team-name').value.trim();
             const membersStr = document.getElementById('team-members').value.trim();
             if(!name || !membersStr) return;
-            const players = membersStr.split(',').map((m, idx) => ({ id: 'p_' + Date.now() + '_' + idx, name: m.trim(), level: 'A' })).filter(p => p.name);
+
+            const players = membersStr.split(',').map((item, idx) => {
+                const parts = item.split('-').map(s => s.trim());
+                const pName = parts[0] || '';
+                const pGender = parts[1] ? normalizeGender(parts[1]) : 'Nam';
+                const pLevel = parts[2] ? normalizeLevel(parts[2]) : 'A';
+                return { id: 'p_' + Date.now() + '_' + idx, name: pName, gender: pGender, level: pLevel };
+            }).filter(p => p.name);
             
             teams.push({ id: 't_' + Date.now(), name, players });
             document.getElementById('form-add-team').reset();
