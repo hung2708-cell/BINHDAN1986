@@ -39,10 +39,10 @@
     <header class="bg-slate-950/90 backdrop-blur-md sticky top-0 z-50 border-b border-slate-800/80">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
-                <!-- LOGO BÍNH DẦN PICKLEBALL -->
+                <!-- LOGO BÍNH DẦN PICKLEBALL (Dùng Icon Vector chuẩn, không lo mất ảnh) -->
                 <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('home')">
-                    <div class="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-tr from-brand-600 to-amber-500 flex items-center justify-center shadow-lg shadow-brand-500/30 border border-brand-500/40">
-                        <img src="logo_tiger.jpg" alt="Bính Dần Logo" class="w-full h-full object-cover">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-600 via-amber-500 to-brand-600 flex items-center justify-center shadow-lg shadow-brand-500/30 border border-amber-400/50 text-white font-black text-lg">
+                        <i class="fa-solid fa-cat" title="Bính Dần Tiger"></i>
                     </div>
                     <div>
                         <h1 class="font-bold text-base sm:text-lg tracking-wide text-white leading-tight">Pickleball Bính Dần 1986</h1>
@@ -86,7 +86,7 @@
                 </div>
                 <div class="relative z-10 max-w-3xl">
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-brand-500/10 text-brand-400 border border-brand-500/20 mb-3">
-                        <span class="w-2 h-2 rounded-full bg-brand-500 animate-pulse mr-2"></span> Đánh bằng bản lĩnh - Thắng bằng tinh thần
+                        <span class="w-2 h-2 rounded-full bg-brand-500 animate-pulse mr-2"></span> Bản mệnh Lô Trung Hỏa - Sẵn sàng bứt phá
                     </span>
                     <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-2">
                         Trạng Thái Thi Đấu <span class="text-brand-400">Tất Cả 8 Sân</span>
@@ -257,7 +257,7 @@
                     <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center"><i class="fa-solid fa-lock-open"></i></div>
                     <div>
                         <h2 class="text-xl font-bold text-white">Khu vực Quản trị viên</h2>
-                        <p class="text-xs text-slate-400">Mật khẩu mặc định: <code class="bg-slate-900 text-amber-400 px-1.5 py-0.5 rounded border border-slate-800">1986</code></p>
+                        <p class="text-xs text-slate-400">Thao tác yêu cầu xác thực mật khẩu bảo mật.</p>
                     </div>
                 </div>
                 <div class="flex flex-wrap gap-2">
@@ -834,7 +834,6 @@
                         return;
                     }
 
-                    // Gom nhóm VĐV theo tên đội/CLB
                     let teamsMap = {};
                     json.forEach((row, idx) => {
                         const teamName = row['Tên Đội / CLB'] || row['Đội'] || row['Team'] || 'Đội Mới';
@@ -851,7 +850,6 @@
                         });
                     });
 
-                    // Chuyển đổi thành mảng clubs mới
                     appState.clubs = Object.keys(teamsMap).map((tName, i) => ({
                         id: 't_imp_' + i + '_' + Date.now(),
                         name: tName,
@@ -998,7 +996,6 @@
         window.onload = () => { 
             initRealtimeSyncIndex(); 
             initApp(); 
-            // Khôi phục tab đang mở trước khi F5
             const lastTab = localStorage.getItem('CAY_COI_ACTIVE_TAB') || 'home';
             switchTab(lastTab);
         };
