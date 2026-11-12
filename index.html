@@ -149,12 +149,12 @@
             <div id="matches-by-court-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </section>
 
-        <!-- TAB 3: BRACKET SERIE A & B (VÒNG KNOCK-OUT, TỨ KẾT, CHUNG KẾT 2 NHÁNH) -->
+        <!-- TAB 3: BRACKET SERIE A & B (TỰ ĐỘNG CHIA NHÁNH & TIẾN VÒNG KẾ TIẾP) -->
         <section id="tab-bracket" class="tab-content hidden space-y-6">
             <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-800 flex justify-between items-center">
                 <div>
                     <h2 class="text-xl font-bold text-white flex items-center"><i class="fa-solid fa-sitemap text-brand-400 mr-2"></i> Vòng Knock-out: Nhánh Serie A & Serie B</h2>
-                    <p class="text-xs text-slate-400">Top 1-2 vòng bảng tự động vào <strong>Serie A</strong> (Tứ kết/Bán kết/Chung kết), Top 3-4 vào <strong>Serie B</strong>.</p>
+                    <p class="text-xs text-slate-400">Tự động điền tên các đội vào vòng sau khi vòng trước hoàn thành.</p>
                 </div>
                 <button onclick="renderBracket()" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 transition text-xs border border-slate-800"><i class="fa-solid fa-rotate mr-1"></i> Làm mới</button>
             </div>
@@ -691,12 +691,12 @@
             document.getElementById('match-detail-modal').classList.remove('flex'); 
         }
 
-        // TÍNH ĐIỂM VÒNG BẢNG & TỰ ĐỘNG CHIA NHÁNH KNOCK-OUT
+        // TÍNH ĐIỂM VÒNG BẢNG & TỰ ĐỘNG TIẾN VÒNG KNOCK-OUT (BÁN KẾT ➔ CHUNG KẾT)
         function calculateStandingsAndSeries() {
             let statsMap = {};
             teams.forEach(t => { statsMap[t.name] = { name: t.name, played: 0, won: 0, drawn: 0, lost: 0, points: 0 }; });
 
-            matches.filter(m => m.status === 'FINISHED').forEach(m => {
+            matches.filter(m => m.status === 'FINISHED' && (!m.knockoutRound)).forEach(m => {
                 const c1 = getClubName(m.club1Id), c2 = getClubName(m.club2Id);
                 if(!statsMap[c1]) statsMap[c1] = { name: c1, played: 0, won: 0, drawn: 0, lost: 0, points: 0 };
                 if(!statsMap[c2]) statsMap[c2] = { name: c2, played: 0, won: 0, drawn: 0, lost: 0, points: 0 };
@@ -709,12 +709,10 @@
             });
 
             let sortedArr = Object.values(statsMap).sort((a, b) => b.points - a.points);
-            
             sortedArr.forEach((st, idx) => {
                 if (idx < 2) st.series = 'Serie A (Top 1-2)';
                 else st.series = 'Serie B (Top 3-4)';
             });
-
             return sortedArr;
         }
 
@@ -742,47 +740,57 @@
         function renderBracket() {
             const standings = calculateStandingsAndSeries();
             
-            // Nhánh SERIE A (Top 1 và 2)
+            // Tìm các trận đấu knock-out đã lưu hoặc tạo sẵn trong appState
+            const koMatches = matches.filter(m => m.knockoutRound);
+            
+            // Nhánh SERIE A
             const aSemi = document.getElementById('serie-a-semifinals');
             const aFinal = document.getElementById('serie-a-final');
             if (standings.length >= 2) {
                 const t1 = standings[0].name, t2 = standings[1].name;
+                // Kiểm tra xem đã có kết quả Bán kết Serie A chưa để tự động đẩy vào Chung kết
+                const aSemiMatch = koMatches.find(m => m.series === 'A' && m.round === 'semifinal');
+                const aWinner = aSemiMatch && aSemiMatch.status === 'FINISHED' ? (aSemiMatch.score1 > aSemiMatch.score2 ? aSemiMatch.team1Name : aSemiMatch.team2Name) : 'Thắng Bán Kết A';
+
                 aSemi.innerHTML = `
                     <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-3 text-xs space-y-1.5">
-                        <div class="text-[10px] text-slate-400 flex justify-between"><span>Trận Bán Kết / Sân 1</span><span class="text-brand-400 font-bold">Chính thức</span></div>
-                        <div class="flex justify-between items-center bg-slate-900 p-2 rounded text-white font-semibold"><span>${t1} (Top 1)</span><span>-</span></div>
-                        <div class="flex justify-between items-center bg-slate-900 p-2 rounded text-white font-semibold"><span>${t2} (Top 2)</span><span>-</span></div>
+                        <div class="text-[10px] text-slate-400 flex justify-between"><span>Bán Kết Serie A • Sân 1</span><span class="text-brand-400 font-bold">${aSemiMatch?.status === 'FINISHED' ? 'Đã xong' : 'Đang đấu'}</span></div>
+                        <div class="flex justify-between items-center bg-slate-900 p-2 rounded text-white font-semibold"><span>${t1} (Top 1)</span><span class="font-bold text-brand-400">${aSemiMatch?.score1 || 0}</span></div>
+                        <div class="flex justify-between items-center bg-slate-900 p-2 rounded text-white font-semibold"><span>${t2} (Top 2)</span><span class="font-bold text-brand-400">${aSemiMatch?.score2 || 0}</span></div>
                     </div>
                 `;
                 aFinal.innerHTML = `
                     <div class="bg-gradient-to-br from-slate-950 to-amber-950/20 border border-amber-500/40 rounded-xl p-3.5 text-xs space-y-2 shadow-lg">
                         <div class="text-[10px] text-amber-400 font-bold flex justify-between"><span>🏆 Chung Kết Serie A • Sân Trung Tâm</span><span>Tranh Vô Địch</span></div>
-                        <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded text-white font-bold"><span>Thắng Bán Kết A1</span><span>-</span></div>
-                        <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded text-white font-bold"><span>Thắng Bán Kết A2</span><span>-</span></div>
+                        <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded text-white font-bold"><span>${aWinner !== 'Thắng Bán Kết A' ? aWinner : 'Đội Thắng BK A1'}</span><span>-</span></div>
+                        <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded text-white font-bold"><span>Đội Thắng BK A2</span><span>-</span></div>
                     </div>
                 `;
             } else {
-                aSemi.innerHTML = `<div class="text-center text-xs text-slate-500 py-4">Chưa đủ dữ liệu bảng xếp hạng cho nhánh Serie A.</div>`;
+                aSemi.innerHTML = `<div class="text-center text-xs text-slate-500 py-4">Chưa đủ dữ liệu vòng bảng cho nhánh Serie A.</div>`;
                 aFinal.innerHTML = '';
             }
 
-            // Nhánh SERIE B (Top 3 và 4)
+            // Nhánh SERIE B
             const bSemi = document.getElementById('serie-b-semifinals');
             const bFinal = document.getElementById('serie-b-final');
             if (standings.length >= 4) {
                 const t3 = standings[2].name, t4 = standings[3].name;
+                const bSemiMatch = koMatches.find(m => m.series === 'B' && m.round === 'semifinal');
+                const bWinner = bSemiMatch && bSemiMatch.status === 'FINISHED' ? (bSemiMatch.score1 > bSemiMatch.score2 ? bSemiMatch.team1Name : bSemiMatch.team2Name) : 'Thắng Bán Kết B';
+
                 bSemi.innerHTML = `
                     <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-3 text-xs space-y-1.5">
-                        <div class="text-[10px] text-slate-400 flex justify-between"><span>Trận Phân Hạng / Sân 2</span><span class="text-blue-400 font-bold">Chính thức</span></div>
-                        <div class="flex justify-between items-center bg-slate-900 p-2 rounded text-white font-semibold"><span>${t3} (Top 3)</span><span>-</span></div>
-                        <div class="flex justify-between items-center bg-slate-900 p-2 rounded text-white font-semibold"><span>${t4} (Top 4)</span><span>-</span></div>
+                        <div class="text-[10px] text-slate-400 flex justify-between"><span>Bán Kết Serie B • Sân 2</span><span class="text-blue-400 font-bold">${bSemiMatch?.status === 'FINISHED' ? 'Đã xong' : 'Đang đấu'}</span></div>
+                        <div class="flex justify-between items-center bg-slate-900 p-2 rounded text-white font-semibold"><span>${t3} (Top 3)</span><span class="font-bold text-blue-400">${bSemiMatch?.score1 || 0}</span></div>
+                        <div class="flex justify-between items-center bg-slate-900 p-2 rounded text-white font-semibold"><span>${t4} (Top 4)</span><span class="font-bold text-blue-400">${bSemiMatch?.score2 || 0}</span></div>
                     </div>
                 `;
                 bFinal.innerHTML = `
                     <div class="bg-gradient-to-br from-slate-950 to-blue-950/20 border border-blue-500/40 rounded-xl p-3.5 text-xs space-y-2 shadow-lg">
                         <div class="text-[10px] text-blue-400 font-bold flex justify-between"><span>🥇 Chung Kết Serie B • Sân Phụ</span><span>Tranh Hạng Ba</span></div>
-                        <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded text-white font-bold"><span>Thắng Bán Kết B1</span><span>-</span></div>
-                        <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded text-white font-bold"><span>Thắng Bán Kết B2</span><span>-</span></div>
+                        <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded text-white font-bold"><span>${bWinner !== 'Thắng Bán Kết B' ? bWinner : 'Đội Thắng BK B1'}</span><span>-</span></div>
+                        <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded text-white font-bold"><span>Đội Thắng BK B2</span><span>-</span></div>
                     </div>
                 `;
             } else {
