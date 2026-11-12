@@ -28,6 +28,7 @@
     <style>
         html, body {
             height: 100dvh;
+            width: 100vw;
             max-height: 100dvh;
             margin: 0;
             padding: 0;
@@ -60,162 +61,206 @@
             100% { transform: rotateY(1080deg) scale(1); }
         }
         .animate-coin { animation: coin-spin 0.65s ease-out; }
-        .fluid-score-num { font-size: clamp(1.85rem, 5dvh, 2.75rem); line-height: 1; }
-        .ref-score-btn { height: clamp(44px, 6.4dvh, 58px); }
+
+        /* Tỷ lệ tự co giãn linh hoạt cho cả dọc và ngang */
+        .fluid-score-num { font-size: clamp(1.75rem, 6.5dvh, 2.75rem); line-height: 1; }
+        .ref-score-btn { height: clamp(40px, 9.5dvh, 56px); }
+
+        /* BỐ CỤC KHI XOAY NGANG ĐIỆN THOẠI (LANDSCAPE) */
+        @media (orientation: landscape) and (max-height: 600px) {
+            body {
+                max-width: 100% !important;
+                flex-direction: row !important;
+                align-items: stretch !important;
+                gap: 8px !important;
+            }
+            #leftLandscapeCol {
+                width: 49% !important;
+                height: 100% !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+                gap: 5px !important;
+            }
+            #rightLandscapeCol {
+                width: 51% !important;
+                height: 100% !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+                gap: 5px !important;
+            }
+            #courtSvgWrapper {
+                height: auto !important;
+                flex: 1 1 0% !important;
+                min-height: 82px !important;
+            }
+            .fluid-score-num {
+                font-size: clamp(1.6rem, 11dvh, 2.5rem) !important;
+            }
+            .ref-score-btn {
+                height: clamp(36px, 12.5dvh, 52px) !important;
+            }
+        }
     </style>
 </head>
 <body class="w-full max-w-md mx-auto flex flex-col justify-between gap-1.5 select-none selection:bg-brand-500 selection:text-white">
 
-    <!-- 1. HEADER -->
-    <header class="bg-slate-900/95 border border-brand-500/30 rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-2 shadow-lg shrink-0 backdrop-blur-md">
-        <div class="flex items-center gap-2 min-w-0">
-            <div class="w-7 h-7 rounded-lg overflow-hidden bg-gradient-to-tr from-orange-600 via-amber-500 to-brand-600 flex items-center justify-center shadow shrink-0 border border-amber-400/40">
-                <img src="logo_tiger_2.jpg" alt="Logo Bính Dần" class="w-full h-full object-cover">
+    <!-- CỘT TRÁI (KHI DỌC NẰM TRÊN, KHI XOAY NGANG NẰM BÊN TRÁI) -->
+    <div id="leftLandscapeCol" class="flex flex-col gap-1.5 shrink-0">
+        <!-- 1. HEADER -->
+        <header class="bg-slate-900/95 border border-brand-500/30 rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-2 shadow-lg shrink-0 backdrop-blur-md">
+            <div class="flex items-center gap-2 min-w-0">
+                <div class="w-7 h-7 rounded-lg overflow-hidden bg-gradient-to-tr from-orange-600 via-amber-500 to-brand-600 flex items-center justify-center shadow shrink-0 border border-amber-400/40">
+                    <img src="logo_tiger_2.jpg" alt="Logo Bính Dần" class="w-full h-full object-cover">
+                </div>
+                <div class="min-w-0">
+                    <div class="text-[9px] text-brand-400 font-extrabold uppercase tracking-wide truncate leading-tight">Trọng Tài Bính Dần 1986</div>
+                    <div class="flex items-center gap-1.5 truncate mt-0.5">
+                        <span id="syncStatusDot" class="w-2 h-2 rounded-full bg-amber-400 live-dot shrink-0"></span>
+                        <span class="text-[11px] font-bold text-white truncate leading-tight" id="refereeCourtTitle">Đang chọn sân...</span>
+                    </div>
+                </div>
             </div>
-            <div class="min-w-0">
-                <div class="text-[9px] text-brand-400 font-extrabold uppercase tracking-wide truncate leading-tight">Trọng Tài Bính Dần 1986</div>
-                <div class="flex items-center gap-1.5 truncate mt-0.5">
-                    <span id="syncStatusDot" class="w-2 h-2 rounded-full bg-amber-400 live-dot shrink-0"></span>
-                    <span class="text-[11px] font-bold text-white truncate leading-tight" id="refereeCourtTitle">Đang chọn sân...</span>
+            <div class="shrink-0">
+                <select id="refereeCourtSelect" onchange="changeRefereeCourt(this.value)" class="bg-slate-950 border border-brand-500/40 rounded-lg px-2 py-1 text-brand-400 font-extrabold text-xs shadow-inner focus:outline-none">
+                    <option value="Sân 1">Sân 1</option><option value="Sân 2">Sân 2</option><option value="Sân 3">Sân 3</option><option value="Sân 4">Sân 4</option>
+                    <option value="Sân 5">Sân 5</option><option value="Sân 6">Sân 6</option><option value="Sân 7">Sân 7</option><option value="Sân 8">Sân 8</option>
+                </select>
+            </div>
+        </header>
+
+        <!-- 2. CHỌN NỘI DUNG THI ĐẤU TRÊN SÂN -->
+        <div class="bg-slate-900/70 border border-slate-800 rounded-xl px-2.5 py-1.5 space-y-1 shadow shrink-0 backdrop-blur-sm">
+            <div class="flex justify-between items-center text-[10px] font-bold leading-none">
+                <span class="text-amber-400 uppercase tracking-wide truncate" id="activeTieHeaderLabel"><i class="fa-solid fa-swords mr-1"></i>Đang tải cặp đấu...</span>
+                <span id="liveCurrentCourtBadge" class="text-brand-400 uppercase font-extrabold shrink-0">Sân 1</span>
+            </div>
+            <select id="liveMatchSelector" onchange="selectMatchForScoreboard(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs font-bold text-white focus:outline-none focus:border-brand-500"></select>
+        </div>
+
+        <!-- 3. SƠ ĐỒ SÂN 2D & CHỌN SÂN / BÓNG / GIAO / ĐỠ -->
+        <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-2 flex flex-col justify-between gap-1.5 shadow-lg flex-1 min-h-0 backdrop-blur-sm">
+            <div class="flex justify-between items-center text-[10px] font-extrabold text-amber-400 shrink-0 gap-1">
+                <span class="truncate"><i class="fa-solid fa-earth-asia mr-1"></i>Sơ Đồ Sân 2D</span>
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <button type="button" onclick="openCoinTossModal()" class="px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-extrabold text-[10px] shadow transition">
+                        <i class="fa-solid fa-coins mr-1"></i>Chọn Sân/Bóng
+                    </button>
+                    <button type="button" onclick="openRefereePlayerSetupModal(1)" class="px-2 py-0.5 rounded bg-brand-600 hover:bg-brand-500 text-white font-extrabold text-[10px] shadow transition">
+                        <i class="fa-solid fa-users-gear mr-1"></i>Đăng Ký VĐV
+                    </button>
+                </div>
+            </div>
+
+            <!-- Khung sân tự co giãn cả dọc và ngang -->
+            <div id="courtSvgWrapper" class="relative w-full h-[124px] sm:h-[140px] bg-emerald-950/90 rounded-lg border-2 border-emerald-500/40 overflow-hidden shadow-inner flex items-center justify-center">
+                <div id="leftCourtSideTag" class="absolute top-1 left-2 text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-black/45 text-slate-300 pointer-events-none z-10">Sân Trái</div>
+                <div id="rightCourtSideTag" class="absolute top-1 right-2 text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-black/45 text-slate-300 pointer-events-none z-10">Sân Phải</div>
+
+                <svg class="absolute inset-0 w-full h-full" viewBox="0 0 440 210" preserveAspectRatio="none">
+                    <defs>
+                        <marker id="arrowhead" markerWidth="7" markerHeight="5" refX="5" refY="2.5" orient="auto">
+                            <polygon points="0 0, 7 2.5, 0 5" fill="#f59e0b"/>
+                        </marker>
+                    </defs>
+                    <rect x="15" y="15" width="410" height="180" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.85"/>
+                    <line x1="220" y1="15" x2="220" y2="195" stroke="#ffffff" stroke-width="2" stroke-dasharray="6 4" opacity="0.8"/>
+                    <line x1="135" y1="15" x2="135" y2="195" stroke="#ffffff" stroke-width="1.8" opacity="0.7"/>
+                    <line x1="305" y1="15" x2="305" y2="195" stroke="#ffffff" stroke-width="1.8" opacity="0.7"/>
+                    <line x1="15" y1="105" x2="135" y2="105" stroke="#ffffff" stroke-width="1.5" opacity="0.65"/>
+                    <line x1="305" y1="105" x2="425" y2="105" stroke="#ffffff" stroke-width="1.5" opacity="0.65"/>
+                    <g id="courtDynamicVectors"></g>
+                </svg>
+                <div id="courtSvgPlayers" class="absolute inset-0 pointer-events-none"></div>
+            </div>
+
+            <!-- CHỌN TRỰC TIẾP NGƯỜI GIAO BÓNG & NGƯỜI ĐỠ BÓNG -->
+            <div class="grid grid-cols-2 gap-1.5 shrink-0">
+                <div class="bg-slate-950/90 border border-amber-500/30 rounded-lg px-2 py-1 flex flex-col justify-center">
+                    <label class="block text-[9px] font-extrabold text-amber-400 uppercase tracking-wider leading-tight mb-0.5">
+                        <i class="fa-solid fa-table-tennis-paddle-ball mr-1"></i>Giao bóng:
+                    </label>
+                    <select id="selectCurrentServerPlayer" onchange="handleManualServerSelect(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-[11px] font-bold text-white focus:outline-none focus:border-amber-400"></select>
+                </div>
+                <div class="bg-slate-950/90 border border-emerald-500/30 rounded-lg px-2 py-1 flex flex-col justify-center">
+                    <label class="block text-[9px] font-extrabold text-emerald-400 uppercase tracking-wider leading-tight mb-0.5">
+                        <i class="fa-solid fa-shield-halved mr-1"></i>Đỡ bóng:
+                    </label>
+                    <select id="selectCurrentReceiverPlayer" onchange="handleManualReceiverSelect(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-[11px] font-bold text-white focus:outline-none focus:border-emerald-400"></select>
                 </div>
             </div>
         </div>
-        <div class="shrink-0">
-            <select id="refereeCourtSelect" onchange="changeRefereeCourt(this.value)" class="bg-slate-950 border border-brand-500/40 rounded-lg px-2 py-1 text-brand-400 font-extrabold text-xs shadow-inner focus:outline-none">
-                <option value="Sân 1">Sân 1</option><option value="Sân 2">Sân 2</option><option value="Sân 3">Sân 3</option><option value="Sân 4">Sân 4</option>
-                <option value="Sân 5">Sân 5</option><option value="Sân 6">Sân 6</option><option value="Sân 7">Sân 7</option><option value="Sân 8">Sân 8</option>
-            </select>
-        </div>
-    </header>
-
-    <!-- 2. CHỌN NỘI DUNG THI ĐẤU TRÊN SÂN -->
-    <div class="bg-slate-900/70 border border-slate-800 rounded-xl px-2.5 py-1.5 space-y-1 shadow shrink-0 backdrop-blur-sm">
-        <div class="flex justify-between items-center text-[10px] font-bold leading-none">
-            <span class="text-amber-400 uppercase tracking-wide truncate" id="activeTieHeaderLabel"><i class="fa-solid fa-swords mr-1"></i>Đang tải cặp đấu...</span>
-            <span id="liveCurrentCourtBadge" class="text-brand-400 uppercase font-extrabold shrink-0">Sân 1</span>
-        </div>
-        <select id="liveMatchSelector" onchange="selectMatchForScoreboard(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-brand-500"></select>
     </div>
 
-    <!-- BANNER LUÂN PHIÊN 4 VĐV TRẬN ĐƠN -->
-    <div id="singlesRotationBanner" class="hidden px-2.5 py-1.5 rounded-xl bg-amber-950/90 border border-amber-500/70 text-amber-200 text-[11px] font-bold flex items-center justify-between gap-2 shadow shrink-0">
-        <div class="flex items-center gap-1.5 min-w-0">
-            <i class="fa-solid fa-people-arrows text-amber-400 text-xs shrink-0"></i>
-            <span id="singlesRotationText" class="truncate">VĐV #1/4 đang đánh (Đổi sau 4 điểm tổng)</span>
+    <!-- CỘT PHẢI (KHI DỌC NẰM DƯỚI, KHI XOAY NGANG NẰM BÊN PHẢI) -->
+    <div id="rightLandscapeCol" class="flex-1 min-h-0 flex flex-col justify-between gap-1.5">
+        <!-- BANNER LUÂN PHIÊN 4 VĐV TRẬN ĐƠN -->
+        <div id="singlesRotationBanner" class="hidden px-2.5 py-1 rounded-xl bg-amber-950/90 border border-amber-500/70 text-amber-200 text-[10px] font-bold flex items-center justify-between gap-2 shadow shrink-0">
+            <div class="flex items-center gap-1.5 min-w-0">
+                <i class="fa-solid fa-people-arrows text-amber-400 text-xs shrink-0"></i>
+                <span id="singlesRotationText" class="truncate">VĐV #1/4 đang đánh (Đổi sau 4 điểm tổng)</span>
+            </div>
+            <button type="button" onclick="openRefereePlayerSetupModal(1)" class="px-2 py-0.5 rounded bg-amber-500 text-slate-950 font-extrabold text-[9px] shrink-0">Đội hình</button>
         </div>
-        <button type="button" onclick="openRefereePlayerSetupModal(1)" class="px-2 py-0.5 rounded bg-amber-500 text-slate-950 font-extrabold text-[10px] shrink-0">Đội hình</button>
-    </div>
 
-    <!-- 3. SƠ ĐỒ SÂN 2D TỶ LỆ THU GỌN CÂN ĐỐI & CHỌN SÂN / BÓNG / GIAO / ĐỠ -->
-    <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-2 flex flex-col justify-center gap-1.5 shadow-lg shrink-0 backdrop-blur-sm">
-        <div class="flex justify-between items-center text-[10px] font-extrabold text-amber-400 shrink-0 gap-1">
-            <span class="truncate"><i class="fa-solid fa-earth-asia mr-1"></i>Sơ Đồ Sân 2D</span>
-            <div class="flex items-center gap-1.5 shrink-0">
-                <button type="button" onclick="openCoinTossModal()" class="px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-extrabold text-[10px] shadow transition">
-                    <i class="fa-solid fa-coins mr-1"></i>Chọn Sân/Bóng
+        <!-- 4. KHUNG TỶ SỐ TRỰC TIẾP & NÚT BẤM ĐIỂM -->
+        <div class="bg-slate-900/85 border-2 border-brand-500/40 rounded-xl p-2.5 flex-1 min-h-0 flex flex-col justify-between shadow-2xl backdrop-blur-md">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-1.5 gap-2 shrink-0">
+                <span id="liveMatchStageBadge" class="px-2 py-0.5 rounded bg-brand-600 text-white font-extrabold text-[10px] uppercase shadow truncate">Đang tải...</span>
+                <div class="font-score font-extrabold text-amber-300 text-xs sm:text-sm tracking-widest bg-slate-950 px-2 py-0.5 rounded-lg border border-amber-400/30 shadow-inner shrink-0" id="officialScoreCallout">0 - 0 - 2</div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 my-auto py-1">
+                <!-- ĐỘI 1 -->
+                <div class="bg-slate-950 border border-brand-500/30 rounded-xl p-2 space-y-1 relative flex flex-col justify-between shadow">
+                    <div id="team1ServeBadge" class="hidden absolute -top-2 -left-1 bg-brand-600 text-white px-1.5 py-0.5 rounded font-extrabold text-[8px] shadow uppercase">Phát (<span id="team1ServerNum">2</span>)</div>
+                    <div id="team1SideMiniBadge" class="absolute -top-2 right-1.5 bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded font-bold text-[8px] border border-slate-700">Sân Trái</div>
+                    <div>
+                        <div id="liveTeam1ClubLabel" class="text-[9px] text-brand-400 font-extrabold uppercase truncate leading-tight">Đội 1</div>
+                        <div id="liveTeam1Name" class="text-[11px] font-bold text-white truncate leading-tight mt-0.5">---</div>
+                    </div>
+                    <div class="text-center font-score fluid-score-num font-extrabold text-brand-400 py-0.5" id="liveTeam1Score">0</div>
+                    <div class="grid grid-cols-3 gap-1" id="team1ScoreActionArea"></div>
+                </div>
+
+                <!-- ĐỘI 2 -->
+                <div class="bg-slate-950 border border-fengshui-wood/30 rounded-xl p-2 space-y-1 relative flex flex-col justify-between shadow">
+                    <div id="team2ServeBadge" class="hidden absolute -top-2 -left-1 bg-fengshui-wood text-slate-950 px-1.5 py-0.5 rounded font-extrabold text-[8px] shadow uppercase">Phát (<span id="team2ServerNum">2</span>)</div>
+                    <div id="team2SideMiniBadge" class="absolute -top-2 right-1.5 bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded font-bold text-[8px] border border-slate-700">Sân Phải</div>
+                    <div>
+                        <div id="liveTeam2ClubLabel" class="text-[9px] text-fengshui-wood font-extrabold uppercase truncate leading-tight">Đội 2</div>
+                        <div id="liveTeam2Name" class="text-[11px] font-bold text-white truncate leading-tight mt-0.5">---</div>
+                    </div>
+                    <div class="text-center font-score fluid-score-num font-extrabold text-fengshui-wood py-0.5" id="liveTeam2Score">0</div>
+                    <div class="grid grid-cols-3 gap-1" id="team2ScoreActionArea"></div>
+                </div>
+            </div>
+
+            <!-- HÀNG NÚT ĐIỀU KHIỂN -->
+            <div class="grid grid-cols-3 gap-1.5 shrink-0">
+                <button type="button" onclick="triggerSideOutOrNextServer()" class="py-2 rounded-lg bg-slate-950 border border-slate-700 text-amber-300 font-extrabold text-[11px] shadow hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-arrows-rotate mr-1"></i>Đổi Phát
                 </button>
-                <button type="button" onclick="openRefereePlayerSetupModal(1)" class="px-2 py-0.5 rounded bg-brand-600 hover:bg-brand-500 text-white font-extrabold text-[10px] shadow transition">
-                    <i class="fa-solid fa-users-gear mr-1"></i>Đăng Ký VĐV
+                <button type="button" onclick="swapCourtEnds()" class="py-2 rounded-lg bg-slate-950 border border-slate-700 text-brand-400 font-extrabold text-[11px] shadow hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-right-left mr-1"></i>Đổi Sân
+                </button>
+                <button type="button" onclick="finishCurrentLiveMatchAndAdvance()" class="py-2 rounded-lg bg-fengshui-wood text-slate-950 font-extrabold text-[11px] shadow hover:opacity-90 transition">
+                    <i class="fa-solid fa-flag-checkered mr-1"></i>Chốt Trận
                 </button>
             </div>
         </div>
 
-        <!-- Khung sân thu gọn tỷ lệ chuẩn Pickleball (không bị quá cao) -->
-        <div class="relative w-full h-[126px] sm:h-[142px] bg-emerald-950/90 rounded-lg border-2 border-emerald-500/40 overflow-hidden shadow-inner flex items-center justify-center">
-            <!-- Nhãn chỉ hướng nửa sân Trái / Phải -->
-            <div id="leftCourtSideTag" class="absolute top-1 left-2 text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-black/45 text-slate-300 pointer-events-none z-10">Sân Trái</div>
-            <div id="rightCourtSideTag" class="absolute top-1 right-2 text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-black/45 text-slate-300 pointer-events-none z-10">Sân Phải</div>
-
-            <svg class="absolute inset-0 w-full h-full" viewBox="0 0 440 210" preserveAspectRatio="none">
-                <defs>
-                    <marker id="arrowhead" markerWidth="7" markerHeight="5" refX="5" refY="2.5" orient="auto">
-                        <polygon points="0 0, 7 2.5, 0 5" fill="#f59e0b"/>
-                    </marker>
-                </defs>
-                <rect x="15" y="15" width="410" height="180" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.85"/>
-                <line x1="220" y1="15" x2="220" y2="195" stroke="#ffffff" stroke-width="2" stroke-dasharray="6 4" opacity="0.8"/>
-                <line x1="135" y1="15" x2="135" y2="195" stroke="#ffffff" stroke-width="1.8" opacity="0.7"/>
-                <line x1="305" y1="15" x2="305" y2="195" stroke="#ffffff" stroke-width="1.8" opacity="0.7"/>
-                <line x1="15" y1="105" x2="135" y2="105" stroke="#ffffff" stroke-width="1.5" opacity="0.65"/>
-                <line x1="305" y1="105" x2="425" y2="105" stroke="#ffffff" stroke-width="1.5" opacity="0.65"/>
-                <g id="courtDynamicVectors"></g>
-            </svg>
-            <div id="courtSvgPlayers" class="absolute inset-0 pointer-events-none"></div>
+        <!-- BANNER HOÀN TẤT -->
+        <div id="matchFinishedCelebrationBanner" class="hidden px-2.5 py-1.5 rounded-xl bg-emerald-950 border border-emerald-500 text-emerald-300 text-[11px] font-extrabold text-center flex items-center justify-between shadow shrink-0">
+            <span>🏆 Nội dung đã hoàn tất!</span>
+            <button type="button" onclick="reopenFinishedMatch()" class="px-2 py-0.5 rounded bg-emerald-500 text-slate-950">Mở lại</button>
         </div>
-
-        <!-- CHỌN TRỰC TIẾP NGƯỜI GIAO BÓNG & NGƯỜI ĐỠ BÓNG -->
-        <div class="grid grid-cols-2 gap-1.5 shrink-0">
-            <div class="bg-slate-950/90 border border-amber-500/30 rounded-lg px-2 py-1 flex flex-col justify-center">
-                <label class="block text-[9px] font-extrabold text-amber-400 uppercase tracking-wider leading-tight mb-0.5">
-                    <i class="fa-solid fa-table-tennis-paddle-ball mr-1"></i>Giao bóng:
-                </label>
-                <select id="selectCurrentServerPlayer" onchange="handleManualServerSelect(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-[11px] font-bold text-white focus:outline-none focus:border-amber-400"></select>
-            </div>
-            <div class="bg-slate-950/90 border border-emerald-500/30 rounded-lg px-2 py-1 flex flex-col justify-center">
-                <label class="block text-[9px] font-extrabold text-emerald-400 uppercase tracking-wider leading-tight mb-0.5">
-                    <i class="fa-solid fa-shield-halved mr-1"></i>Đỡ bóng:
-                </label>
-                <select id="selectCurrentReceiverPlayer" onchange="handleManualReceiverSelect(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-[11px] font-bold text-white focus:outline-none focus:border-emerald-400"></select>
-            </div>
-        </div>
-    </div>
-
-    <!-- 4. KHUNG TỶ SỐ TRỰC TIẾP & NÚT BẤM ĐIỂM -->
-    <div class="bg-slate-900/85 border-2 border-brand-500/40 rounded-xl p-2.5 flex-1 min-h-0 flex flex-col justify-between shadow-2xl backdrop-blur-md">
-        <div class="flex justify-between items-center border-b border-slate-800 pb-1.5 gap-2 shrink-0">
-            <span id="liveMatchStageBadge" class="px-2 py-0.5 rounded bg-brand-600 text-white font-extrabold text-[10px] uppercase shadow truncate">Đang tải...</span>
-            <div class="font-score font-extrabold text-amber-300 text-xs sm:text-sm tracking-widest bg-slate-950 px-2 py-0.5 rounded-lg border border-amber-400/30 shadow-inner shrink-0" id="officialScoreCallout">0 - 0 - 2</div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2 my-auto py-1">
-            <!-- ĐỘI 1 -->
-            <div class="bg-slate-950 border border-brand-500/30 rounded-xl p-2 space-y-1 relative flex flex-col justify-between shadow">
-                <div id="team1ServeBadge" class="hidden absolute -top-2 -left-1 bg-brand-600 text-white px-1.5 py-0.5 rounded font-extrabold text-[8px] shadow uppercase">Phát (<span id="team1ServerNum">2</span>)</div>
-                <div id="team1SideMiniBadge" class="absolute -top-2 right-1.5 bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded font-bold text-[8px] border border-slate-700">Sân Trái</div>
-                <div>
-                    <div id="liveTeam1ClubLabel" class="text-[9px] text-brand-400 font-extrabold uppercase truncate leading-tight">Đội 1</div>
-                    <div id="liveTeam1Name" class="text-[11px] font-bold text-white truncate leading-tight mt-0.5">---</div>
-                </div>
-                <div class="text-center font-score fluid-score-num font-extrabold text-brand-400 py-1" id="liveTeam1Score">0</div>
-                <div class="grid grid-cols-3 gap-1" id="team1ScoreActionArea"></div>
-            </div>
-
-            <!-- ĐỘI 2 -->
-            <div class="bg-slate-950 border border-fengshui-wood/30 rounded-xl p-2 space-y-1 relative flex flex-col justify-between shadow">
-                <div id="team2ServeBadge" class="hidden absolute -top-2 -left-1 bg-fengshui-wood text-slate-950 px-1.5 py-0.5 rounded font-extrabold text-[8px] shadow uppercase">Phát (<span id="team2ServerNum">2</span>)</div>
-                <div id="team2SideMiniBadge" class="absolute -top-2 right-1.5 bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded font-bold text-[8px] border border-slate-700">Sân Phải</div>
-                <div>
-                    <div id="liveTeam2ClubLabel" class="text-[9px] text-fengshui-wood font-extrabold uppercase truncate leading-tight">Đội 2</div>
-                    <div id="liveTeam2Name" class="text-[11px] font-bold text-white truncate leading-tight mt-0.5">---</div>
-                </div>
-                <div class="text-center font-score fluid-score-num font-extrabold text-fengshui-wood py-1" id="liveTeam2Score">0</div>
-                <div class="grid grid-cols-3 gap-1" id="team2ScoreActionArea"></div>
-            </div>
-        </div>
-
-        <!-- HÀNG NÚT ĐIỀU KHIỂN -->
-        <div class="grid grid-cols-3 gap-1.5 shrink-0">
-            <button type="button" onclick="triggerSideOutOrNextServer()" class="py-2 rounded-lg bg-slate-950 border border-slate-700 text-amber-300 font-extrabold text-[11px] shadow hover:bg-slate-800 transition">
-                <i class="fa-solid fa-arrows-rotate mr-1"></i>Đổi Phát
-            </button>
-            <button type="button" onclick="swapCourtEnds()" class="py-2 rounded-lg bg-slate-950 border border-slate-700 text-brand-400 font-extrabold text-[11px] shadow hover:bg-slate-800 transition">
-                <i class="fa-solid fa-right-left mr-1"></i>Đổi Sân
-            </button>
-            <button type="button" onclick="finishCurrentLiveMatchAndAdvance()" class="py-2 rounded-lg bg-fengshui-wood text-slate-950 font-extrabold text-[11px] shadow hover:opacity-90 transition">
-                <i class="fa-solid fa-flag-checkered mr-1"></i>Chốt Trận
-            </button>
-        </div>
-    </div>
-
-    <!-- BANNER HOÀN TẤT -->
-    <div id="matchFinishedCelebrationBanner" class="hidden px-2.5 py-1.5 rounded-xl bg-emerald-950 border border-emerald-500 text-emerald-300 text-[11px] font-extrabold text-center flex items-center justify-between shadow shrink-0">
-        <span>🏆 Nội dung đã hoàn tất!</span>
-        <button type="button" onclick="reopenFinishedMatch()" class="px-2 py-0.5 rounded bg-emerald-500 text-slate-950">Mở lại</button>
     </div>
 
     <!-- MODAL TUNG ĐỒNG XU & CHỌN SÂN / CHỌN BÓNG TRƯỚC TRẬN -->
     <div id="coinTossModal" onclick="if(event.target === this) closeCoinTossModal()" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/90 p-3 backdrop-blur-md">
-        <div class="bg-slate-900 border-2 border-amber-500/50 rounded-2xl max-w-sm w-full p-4 space-y-3.5 shadow-2xl">
+        <div class="bg-slate-900 border-2 border-amber-500/50 rounded-2xl max-w-sm w-full p-4 space-y-3 shadow-2xl max-h-[92dvh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-800 pb-2">
                 <div class="flex items-center gap-2">
                     <div class="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center"><i class="fa-solid fa-coins"></i></div>
@@ -227,8 +272,8 @@
                 <button type="button" onclick="closeCoinTossModal()" class="w-7 h-7 rounded-lg bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center"><i class="fa-solid fa-xmark text-sm"></i></button>
             </div>
 
-            <div class="bg-slate-950/90 border border-slate-800 rounded-xl p-3 text-center space-y-2">
-                <div id="coinVisualIcon" class="w-11 h-11 mx-auto rounded-full bg-gradient-to-tr from-amber-600 to-yellow-300 text-slate-950 font-black text-base flex items-center justify-center shadow-lg border-2 border-amber-200">
+            <div class="bg-slate-950/90 border border-slate-800 rounded-xl p-2.5 text-center space-y-1.5">
+                <div id="coinVisualIcon" class="w-10 h-10 mx-auto rounded-full bg-gradient-to-tr from-amber-600 to-yellow-300 text-slate-950 font-black text-sm flex items-center justify-center shadow-lg border-2 border-amber-200">
                     <i class="fa-solid fa-trophy"></i>
                 </div>
                 <div id="coinTossResultText" class="text-xs font-bold text-slate-300">Bấm tung đồng xu để xác định đội ưu tiên</div>
@@ -237,7 +282,7 @@
                 </button>
             </div>
 
-            <div class="space-y-2.5 text-xs">
+            <div class="space-y-2 text-xs">
                 <div class="space-y-1">
                     <label class="block text-[10px] font-extrabold text-amber-400 uppercase">1. Đội giao bóng đầu tiên (Chọn Bóng):</label>
                     <div class="grid grid-cols-2 gap-2">
