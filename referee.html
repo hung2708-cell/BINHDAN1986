@@ -162,16 +162,11 @@
                             <polygon points="0 0, 7 2.5, 0 5" fill="#f59e0b"/>
                         </marker>
                     </defs>
-                    <!-- Khung biên ngoài -->
                     <rect x="15" y="15" width="410" height="180" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.85"/>
-                    <!-- Vùng bếp (NVZ) tô mờ nhẹ để dễ phân biệt -->
                     <rect x="156" y="15" width="128" height="180" fill="#ffffff" opacity="0.04"/>
-                    <!-- Lưới trung tâm -->
                     <line x1="220" y1="15" x2="220" y2="195" stroke="#ffffff" stroke-width="2.2" stroke-dasharray="6 4" opacity="0.85"/>
-                    <!-- 2 Vạch bếp gần với lưới hơn -->
                     <line x1="156" y1="15" x2="156" y2="195" stroke="#ffffff" stroke-width="1.8" opacity="0.8"/>
                     <line x1="284" y1="15" x2="284" y2="195" stroke="#ffffff" stroke-width="1.8" opacity="0.8"/>
-                    <!-- Vạch chia đôi sân sau (từ biên cuối sân đến vạch bếp) -->
                     <line x1="15" y1="105" x2="156" y2="105" stroke="#ffffff" stroke-width="1.5" opacity="0.65"/>
                     <line x1="284" y1="105" x2="425" y2="105" stroke="#ffffff" stroke-width="1.5" opacity="0.65"/>
                     <g id="courtDynamicVectors"></g>
@@ -548,13 +543,15 @@
             showToast(`✅ ${serverClub} giao bóng trước (${tempTossSwapped ? 'Đổi bên sân' : 'Giữ bên sân'})!`);
         }
 
+        // QUY TẮC THẮNG TRẬN:
+        // - Nội dung Đôi: Chạm 15 điểm là thắng ngay (15đ)
+        // - Nội dung Đơn: Chạm 21 điểm là thắng ngay (21đ)
         function evaluateMatchWinCondition(m) {
             const isSingles = (m.catKey === 'DON');
-            const target = parseInt(m.targetPoints) || (isSingles ? 21 : 15);
+            const target = isSingles ? 21 : 15;
             const s1 = parseInt(m.score1) || 0, s2 = parseInt(m.score2) || 0;
             if (s1 >= target || s2 >= target) {
-                const diff = Math.abs(s1 - s2);
-                if (s1 === 21 || s2 === 21 || diff >= 2) return { isWon: true, winnerScore: Math.max(s1, s2), loserScore: Math.min(s1, s2) };
+                return { isWon: true, winnerScore: Math.max(s1, s2), loserScore: Math.min(s1, s2) };
             }
             return { isWon: false };
         }
@@ -995,19 +992,25 @@
                 if (cs && !isSingles && delta > 0) { const tmp = cs.t2Left; cs.t2Left = cs.t2Right; cs.t2Right = tmp; }
             }
 
-            const currentTotalScore = (parseInt(m.score1) || 0) + (parseInt(m.score2) || 0);
-            const target = parseInt(m.targetPoints) || (isSingles ? 21 : 15);
-            const midPoint = (isSingles || target === 21) ? 11 : 8;
+            const s1 = parseInt(m.score1) || 0;
+            const s2 = parseInt(m.score2) || 0;
+            const maxTeamScore = Math.max(s1, s2);
+            const currentTotalScore = s1 + s2;
+            const target = isSingles ? 21 : 15;
+            // QUY TẮC ĐỔI SÂN:
+            // - Nội dung Đôi (chạm 15): Một đội đạt 8 điểm thì đổi sân
+            // - Nội dung Đơn (chạm 21): Một đội đạt 11 điểm thì đổi sân
+            const switchScoreThreshold = isSingles ? 11 : 8;
 
-            if (currentTotalScore === midPoint && !m.swappedAtMid && delta > 0) {
+            if (maxTeamScore === switchScoreThreshold && !m.swappedAtMid && delta > 0) {
                 cs.swappedEnds = !cs.swappedEnds;
                 m.swappedAtMid = true;
-                showToast(`🔄 Tổng ${midPoint} điểm: Hai đội đổi sân!`);
+                showToast(`🔄 Chạm ${switchScoreThreshold} điểm: Hai đội đổi sân!`);
             }
 
             if (isSingles) {
                 syncMatchCourtStateFromLineup(m, false);
-                if (delta > 0 && currentTotalScore > 0 && currentTotalScore % 4 === 0 && currentTotalScore < target) {
+                if (delta > 0 && currentTotalScore > 0 && currentTotalScore % 4 === 0 && maxTeamScore < target) {
                     const nextSlot = (Math.floor(currentTotalScore / 4) % 4) + 1;
                     showToast(`🔁 Tổng điểm ${currentTotalScore}: Đổi sang VĐV số #${nextSlot}/4!`);
                 }
@@ -1038,9 +1041,6 @@
             }
         }
 
-        // ĐỔI PHÁT BÓNG:
-        // - Lượt 1 -> Lượt 2 (cùng đội): Giữ nguyên chỗ đứng 2 VĐV, chuyển người giao & mũi tên sang ô còn lại!
-        // - Lượt 2 -> Side-Out (đổi đội): Chuyển giao sang đội đối phương, đổi vị trí cuối sân / vạch bếp & xoay mũi tên!
         function triggerSideOutOrNextServer() {
             const { match: m } = findMatchById(state.activeLiveMatchId);
             if (!m) return;
@@ -1135,7 +1135,7 @@
             }
 
             const isSingles = (m.catKey === 'DON');
-            if (isSingles) m.targetPoints = 21;
+            m.targetPoints = isSingles ? 21 : 15;
 
             syncMatchCourtStateFromLineup(m, true);
             const cs = m.courtState;
@@ -1151,14 +1151,15 @@
             if (isSingles && !isMatchFinished) {
                 const rotIdx = (Math.floor(totalScore / 4) % 4) + 1;
                 const nextSwapAt = (Math.floor(totalScore / 4) + 1) * 4;
-                document.getElementById('singlesRotationText').textContent = `VĐV #${rotIdx}/4 đang đánh • Đổi VĐV ở tổng ${nextSwapAt}đ (11đ đổi sân)`;
+                document.getElementById('singlesRotationText').textContent = `VĐV #${rotIdx}/4 đang đánh • Đổi VĐV ở tổng ${nextSwapAt}đ (11đ đổi sân • Chạm 21)`;
                 rotBanner.classList.remove('hidden');
             } else {
                 rotBanner.classList.add('hidden');
             }
 
             const cleanStageLabel = (m.catLabel || '').replace(/^Vòng \d+\s*•\s*/i, '');
-            document.getElementById('liveMatchStageBadge').textContent = `${cleanStageLabel} • ${cl1} vs ${cl2}`;
+            const ruleTag = isSingles ? 'Chạm 21 • 11đ đổi sân' : 'Chạm 15 • 8đ đổi sân';
+            document.getElementById('liveMatchStageBadge').textContent = `${cleanStageLabel} (${ruleTag})`;
             document.getElementById('liveTeam1ClubLabel').textContent = cl1;
             document.getElementById('liveTeam2ClubLabel').textContent = cl2;
             document.getElementById('liveTeam1Name').textContent = m.team1Name || cs.t1Right;
@@ -1203,9 +1204,6 @@
                 ` : `<div class="col-span-3 ref-score-btn rounded-lg bg-slate-900 text-slate-500 text-[11px] font-bold flex items-center justify-center">🔒 Khóa</div>`;
             }
 
-            // VỊ TRÍ ĐỨNG & Ô GIAO BÓNG CHUẨN XÁC:
-            // - Lượt 1 (serverNum === 1): Điểm chẵn giao từ ô Phải, điểm lẻ giao từ ô Trái
-            // - Lượt 2 (serverNum === 2): Giao từ ô còn lại (ngược với ô của Lượt 1) -> Mũi tên nhảy sang ô khác!
             const isEvenScore = (servingScore % 2 === 0);
             const isFirstServerSlot = isSingles || (serverNum === 1);
             const serveFromRightBox = isFirstServerSlot ? isEvenScore : !isEvenScore;
@@ -1230,10 +1228,10 @@
                     { team: rightTeamNum, x: 394, y: activeYRight, name: rightPlayerName, color: leftIsT1 ? '#22c55e' : '#f43f5e', isServer: (servingTeam === rightTeamNum) }
                 ];
             } else {
-                const leftTopName = String(leftIsT1 ? cs.t1Left : cs.t2Left);     // Ô Trái của đội trái (y = 58)
-                const leftBottomName = String(leftIsT1 ? cs.t1Right : cs.t2Right); // Ô Phải của đội trái (y = 152)
-                const rightTopName = String(leftIsT1 ? cs.t2Right : cs.t1Right);   // Ô Phải của đội phải (y = 58)
-                const rightBottomName = String(leftIsT1 ? cs.t2Left : cs.t1Left);  // Ô Trái của đội phải (y = 152)
+                const leftTopName = String(leftIsT1 ? cs.t1Left : cs.t2Left);
+                const leftBottomName = String(leftIsT1 ? cs.t1Right : cs.t2Right);
+                const rightTopName = String(leftIsT1 ? cs.t2Right : cs.t1Right);
+                const rightBottomName = String(leftIsT1 ? cs.t2Left : cs.t1Left);
 
                 const isLeftServing = (servingTeam === leftTeamNum);
 
