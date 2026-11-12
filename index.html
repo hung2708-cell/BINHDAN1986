@@ -124,7 +124,6 @@
                     </h3>
                     <span class="text-xs text-slate-400">Cập nhật thời gian thực</span>
                 </div>
-                <!-- DANH SÁCH 8 SÂN ĐẤU HIỂN THỊ TỰ ĐỘNG -->
                 <div id="overview-courts-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div>
             </div>
         </section>
@@ -706,31 +705,7 @@
             container.innerHTML = html;
         }
 
-        function openCourtDetailModal(courtName) {
-            const courtMatches = matches.filter(m => (m.court || 'Sân 1') === courtName);
-            document.getElementById('detail-modal-title').textContent = `Tất cả nội dung trên ${courtName}`;
-            document.getElementById('detail-modal-content').innerHTML = courtMatches.length ? courtMatches.map(m => `
-                <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-1.5">
-                    <div class="flex justify-between items-center text-[11px] text-amber-400 font-bold">
-                        <span>${m.catLabel || 'Trận'}</span>
-                        <span>${m.status === 'FINISHED' ? 'Đã xong' : (m.status === 'LIVE' ? 'Đang LIVE' : 'Sắp diễn ra')}</span>
-                    </div>
-                    <div class="flex justify-between items-center text-xs font-semibold text-white">
-                        <span class="truncate max-w-[40%]">${m.team1Name}</span>
-                        <span class="font-score font-black text-brand-400 text-base px-2">${m.score1 || 0} - ${m.score2 || 0}</span>
-                        <span class="truncate max-w-[40%] text-right">${m.team2Name}</span>
-                    </div>
-                </div>
-            `).join('') : '<div class="text-center text-slate-500 py-6">Chưa có trận đấu nào.</div>';
-            document.getElementById('match-detail-modal').classList.remove('hidden');
-            document.getElementById('match-detail-modal').classList.add('flex');
-        }
-
-        function closeMatchDetailModal() { 
-            document.getElementById('match-detail-modal').classList.add('hidden'); 
-            document.getElementById('match-detail-modal').classList.remove('flex'); 
-        }
-
+        // TÍNH TOÁN & HIỂN THỊ LIÊN TỤC DANH SÁCH CÁC ĐỘI NGAY TRÊN BẢNG XẾP HẠNG
         function calculateStandingsAndSeries() {
             let statsMap = {};
             teams.forEach(t => { 
@@ -798,7 +773,7 @@
                         <td class="py-3 px-4 text-center"><span class="px-2.5 py-1 rounded-full text-[11px] font-extrabold border ${badgeColor}">${st.series}</span></td>
                     </tr>
                 `;
-            }).join('') : `<tr><td colspan="8" class="text-center py-6 text-slate-500">Chưa có dữ liệu vòng bảng.</td></tr>`;
+            }).join('') : `<tr><td colspan="8" class="text-center py-6 text-slate-500">Chưa có dữ liệu đội tuyển.</td></tr>`;
         }
 
         function renderBracket() {
@@ -995,7 +970,7 @@
                         <span class="text-slate-400 font-bold">-</span>
                         <input type="number" id="admin-s2-${m.id}" value="${m.score2 || 0}" class="w-12 bg-slate-900 border border-slate-700 rounded text-center text-sm text-white font-bold p-1">
                         <button onclick="updateMatchDirect('${m.id}')" class="px-3 py-1 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-xs font-semibold transition">Lưu</button>
-                        <button onclick="promptDeleteMatch('${m.id}')" class="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-lg text-xs"><i class="fa-solid fa-trash"></i></button>
+                        <button onclick="promptDeleteMatch('${m.id}')" class="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-xs"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </div>
             `).join('');
