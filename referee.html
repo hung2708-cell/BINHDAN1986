@@ -151,7 +151,7 @@
                 </div>
             </div>
 
-            <!-- Khung sân -->
+            <!-- Khung sân: 2 vạch bếp gần lưới hơn (x=156 và x=284, lưới ở x=220) -->
             <div id="courtSvgWrapper" class="relative w-full h-[126px] sm:h-[142px] bg-emerald-950/90 rounded-lg border-2 border-emerald-500/40 overflow-hidden shadow-inner flex items-center justify-center">
                 <div id="leftCourtSideTag" class="absolute top-1 left-2 text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-black/45 text-slate-300 pointer-events-none z-10">Sân Trái</div>
                 <div id="rightCourtSideTag" class="absolute top-1 right-2 text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-black/45 text-slate-300 pointer-events-none z-10">Sân Phải</div>
@@ -162,12 +162,18 @@
                             <polygon points="0 0, 7 2.5, 0 5" fill="#f59e0b"/>
                         </marker>
                     </defs>
+                    <!-- Khung biên ngoài -->
                     <rect x="15" y="15" width="410" height="180" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.85"/>
-                    <line x1="220" y1="15" x2="220" y2="195" stroke="#ffffff" stroke-width="2" stroke-dasharray="6 4" opacity="0.8"/>
-                    <line x1="135" y1="15" x2="135" y2="195" stroke="#ffffff" stroke-width="1.8" opacity="0.7"/>
-                    <line x1="305" y1="15" x2="305" y2="195" stroke="#ffffff" stroke-width="1.8" opacity="0.7"/>
-                    <line x1="15" y1="105" x2="135" y2="105" stroke="#ffffff" stroke-width="1.5" opacity="0.65"/>
-                    <line x1="305" y1="105" x2="425" y2="105" stroke="#ffffff" stroke-width="1.5" opacity="0.65"/>
+                    <!-- Vùng bếp (NVZ) tô mờ nhẹ để dễ phân biệt -->
+                    <rect x="156" y="15" width="128" height="180" fill="#ffffff" opacity="0.04"/>
+                    <!-- Lưới trung tâm -->
+                    <line x1="220" y1="15" x2="220" y2="195" stroke="#ffffff" stroke-width="2.2" stroke-dasharray="6 4" opacity="0.85"/>
+                    <!-- 2 Vạch bếp gần với lưới hơn -->
+                    <line x1="156" y1="15" x2="156" y2="195" stroke="#ffffff" stroke-width="1.8" opacity="0.8"/>
+                    <line x1="284" y1="15" x2="284" y2="195" stroke="#ffffff" stroke-width="1.8" opacity="0.8"/>
+                    <!-- Vạch chia đôi sân sau (từ biên cuối sân đến vạch bếp) -->
+                    <line x1="15" y1="105" x2="156" y2="105" stroke="#ffffff" stroke-width="1.5" opacity="0.65"/>
+                    <line x1="284" y1="105" x2="425" y2="105" stroke="#ffffff" stroke-width="1.5" opacity="0.65"/>
                     <g id="courtDynamicVectors"></g>
                 </svg>
                 <div id="courtSvgPlayers" class="absolute inset-0 pointer-events-none"></div>
@@ -1026,6 +1032,7 @@
             }
         }
 
+        // ĐỔI PHÁT BÓNG: LẬP TỨC ĐỔI VỊ TRÍ ĐỨNG CỦA CÁC VĐV (BÊN GIAO MỚI LÙI VỀ CUỐI SÂN, BÊN ĐỠ MỚI LÊN SÁT VẠCH BẾP) & CHUYỂN MŨI TÊN
         function triggerSideOutOrNextServer() {
             const { match: m } = findMatchById(state.activeLiveMatchId);
             if (!m) return;
@@ -1178,9 +1185,9 @@
                 ` : `<div class="col-span-3 ref-score-btn rounded-lg bg-slate-900 text-slate-500 text-[11px] font-bold flex items-center justify-center">🔒 Khóa</div>`;
             }
 
-            // VỊ TRÍ ĐỨNG CHUẨN PICKLEBALL KHI GIAO BÓNG:
-            // - Bên giao bóng (2 người): Cả 2 đều đứng sát cuối sân (Baseline: x = 44 bên trái, x = 396 bên phải)
-            // - Bên đỡ bóng (2 người): Người đỡ chéo góc đứng cuối sân (x = 396 hoặc 44), đồng đội đứng trên lưới (NVZ: x = 282 hoặc 158)
+            // VỊ TRÍ ĐỨNG CHUẨN PICKLEBALL VỚI 2 VẠCH BẾP GẦN LƯỚI (x = 156 & x = 284, Lưới ở x = 220):
+            // - Vạch cuối sân trái: x = 44 | Sát mép ngoài vạch bếp trái (không vượt vạch bếp): x = 136
+            // - Vạch cuối sân phải: x = 396 | Sát mép ngoài vạch bếp phải (không vượt vạch bếp): x = 304
             const isEvenScore = (servingScore % 2 === 0);
             const leftTeamNum = leftIsT1 ? 1 : 2;
             const rightTeamNum = leftIsT1 ? 2 : 1;
@@ -1209,27 +1216,26 @@
 
                 const isLeftServing = (servingTeam === leftTeamNum);
 
-                // Tọa độ X cho đội bên trái:
-                // - Nếu giao bóng: cả 2 đứng cuối sân (x = 44)
-                // - Nếu đỡ bóng: người đỡ chéo góc với người giao đứng cuối sân (x = 44), đồng đội đứng trên lưới (x = 158)
+                // Đội bên trái:
+                // - Nếu đang giao: cả 2 đứng cuối sân (x = 44)
+                // - Nếu đang đỡ: người đỡ chéo góc đứng cuối sân (x = 44), đồng đội đứng sát mép ngoài vạch bếp (x = 136)
                 let leftTopX = 44;
                 let leftBottomX = 44;
                 if (!isLeftServing) {
-                    // Đội phải đang giao ở ô phải (y=58 khi chẵn -> chéo sang ô y=152 của đội trái; y=152 khi lẻ -> chéo sang ô y=58 của đội trái)
                     const leftReceiverY = 210 - rightServerY;
-                    leftTopX = (leftReceiverY === 58) ? 44 : 158;
-                    leftBottomX = (leftReceiverY === 152) ? 44 : 158;
+                    leftTopX = (leftReceiverY === 58) ? 44 : 136;
+                    leftBottomX = (leftReceiverY === 152) ? 44 : 136;
                 }
 
-                // Tọa độ X cho đội bên phải:
-                // - Nếu giao bóng: cả 2 đứng cuối sân (x = 396)
-                // - Nếu đỡ bóng: người đỡ chéo góc với người giao đứng cuối sân (x = 396), đồng đội đứng trên lưới (x = 282)
+                // Đội bên phải:
+                // - Nếu đang giao: cả 2 đứng cuối sân (x = 396)
+                // - Nếu đang đỡ: người đỡ chéo góc đứng cuối sân (x = 396), đồng đội đứng sát mép ngoài vạch bếp (x = 304)
                 let rightTopX = 396;
                 let rightBottomX = 396;
                 if (isLeftServing) {
                     const rightReceiverY = 210 - leftServerY;
-                    rightTopX = (rightReceiverY === 58) ? 396 : 282;
-                    rightBottomX = (rightReceiverY === 152) ? 396 : 282;
+                    rightTopX = (rightReceiverY === 58) ? 396 : 304;
+                    rightBottomX = (rightReceiverY === 152) ? 396 : 304;
                 }
 
                 dots = [
