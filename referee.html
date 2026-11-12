@@ -166,7 +166,7 @@
         <button type="button" onclick="reopenFinishedMatch()" class="px-2.5 py-0.5 rounded bg-emerald-500 text-slate-950">Mở lại</button>
     </div>
 
-    <!-- MODAL ĐĂNG KÝ VĐV CHO TOÀN BỘ 5 NỘI DUNG THEO TỪNG ĐỘI (BƯỚC 1: ĐỘI 1 -> XÁC NHẬN KHÓA -> BƯỚC 2: ĐỘI 2) -->
+    <!-- MODAL ĐĂNG KÝ VĐV CHO TOÀN BỘ 5 NỘI DUNG THEO TỪNG ĐỘI (LỌC GIỚI TÍNH CHẶT CHẼ) -->
     <div id="refereePlayerSetupModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/95 p-3 backdrop-blur-md">
         <div class="bg-slate-900 border-2 border-brand-500/60 rounded-2xl max-w-md w-full p-4 space-y-3 shadow-2xl max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-start border-b border-slate-800 pb-2.5 shrink-0">
@@ -177,7 +177,6 @@
                 <button type="button" onclick="forceCloseSetupModal()" class="w-7 h-7 rounded-lg bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center shrink-0"><i class="fa-solid fa-xmark text-sm"></i></button>
             </div>
 
-            <!-- Nút điền nhanh + danh sách 5 nội dung cuộn mượt -->
             <div id="refereePlayerSetupContent" class="space-y-3 text-xs overflow-y-auto pr-1 flex-1"></div>
 
             <div id="refereePlayerSetupFooter" class="pt-2 border-t border-slate-800 shrink-0"></div>
@@ -263,6 +262,20 @@
             } catch (e) {}
         }
 
+        function isPlayerFemale(p) {
+            const g = String(p?.gender || '').trim().toLowerCase();
+            return g === 'nữ' || g === 'nu' || g === 'f' || g === 'female';
+        }
+
+        // Xác định quy định giới tính của từng nội dung: 'NAM' | 'NU' | 'NAM_NU' | 'ANY'
+        function getMatchGenderRule(matchObj) {
+            const label = String(matchObj?.catLabel || '').toLowerCase();
+            if (label.includes('đôi nam nữ') || label.includes('nam nữ')) return 'NAM_NU';
+            if (label.includes('đôi nữ')) return 'NU';
+            if (label.includes('đôi nam')) return 'NAM';
+            return 'ANY';
+        }
+
         function getClubById(clubId) { return (state.clubs || []).find(c => c.id === clubId) || { id: clubId, name: 'CLB', players: [] }; }
         function getPlayerById(clubId, playerId) { return (getClubById(clubId).players || []).find(p => p.id === playerId) || null; }
         
@@ -272,7 +285,6 @@
             return list;
         }
 
-        // CHỈ LẤY ĐÚNG 5 TRẬN CỦA CẶP 2 CLB ĐANG THI ĐẤU HIỆN TẠI TRÊN SÂN NÀY
         function getActiveTieMatchesForCourt(courtName) {
             const courtMatches = getAllMatchesFlat().filter(x => (x.court || 'Sân 1') === courtName);
             if (courtMatches.length === 0) return [];
@@ -359,7 +371,7 @@
             return count;
         }
 
-        // MỞ MODAL CHỌN ĐỦ VĐV CHO TOÀN BỘ 5 NỘI DUNG CỦA TỪNG ĐỘI (BƯỚC 1: ĐỘI 1 -> XÁC NHẬN KHÓA -> BƯỚC 2: ĐỘI 2)
+        // MỞ MODAL CHỌN ĐỦ VĐV CHO TOÀN BỘ 5 NỘI DUNG - LỌC CHẶT CHẼ NAM / NỮ THEO TỪNG NỘI DUNG
         function openRefereePlayerSetupModal(step = 1) {
             const activeTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
             if (!activeTieMatches.length) return;
@@ -398,31 +410,72 @@
             } else {
                 activeTieMatches.forEach((m, idx) => {
                     const req = m.catKey === 'DON' ? 1 : 2;
-                    const selIds = m[arrKey] || [];
+                    const genderRule = getMatchGenderRule(m);
+                    
+                    // Dọn dẹp nếu có ID không hợp lệ giới tính lưu từ trước
+                    let selIds = (m[arrKey] || []).filter(pid => {
+                        const pObj = players.find(x => x.id === pid);
+                        if (!pObj) return false;
+                        if (genderRule === 'NAM' && isPlayerFemale(pObj)) return false;
+                        if (genderRule === 'NU' && !isPlayerFemale(pObj)) return false;
+                        return true;
+                    });
+                    m[arrKey] = selIds;
+
+                    // Lọc danh sách VĐV hiển thị đúng với nội dung:
+                    // - Đôi Nam: Chỉ hiện VĐV Nam
+                    // - Đôi Nữ: Chỉ hiện VĐV Nữ
+                    // - Đôi Nam Nữ / Đơn: Hiện cả Nam & Nữ
+                    const eligiblePlayers = players.filter(p => {
+                        if (genderRule === 'NAM') return !isPlayerFemale(p);
+                        if (genderRule === 'NU') return isPlayerFemale(p);
+                        return true;
+                    });
+
+                    // Kiểm tra nếu là Đôi Nam Nữ thì đã chọn Nam hay Nữ chưa để khóa giới tính đã đủ 1 người
+                    const selectedObjs = selIds.map(pid => players.find(x => x.id === pid)).filter(Boolean);
+                    const hasSelectedMale = selectedObjs.some(x => !isPlayerFemale(x));
+                    const hasSelectedFemale = selectedObjs.some(x => isPlayerFemale(x));
+
                     const isComplete = selIds.length >= req;
                     const cleanCat = (m.catLabel || `Trận ${idx + 1}`).replace(/^Vòng \d+\s*•\s*/i, '');
 
-                    const playerButtonsHtml = players.map(p => {
-                        const isSelected = selIds.includes(p.id);
-                        const doublesCount = m.catKey === 'DOI' ? getPlayerDoublesCountInTie(activeTieMatches, step, p.id, m.id) : 0;
-                        const isExceeded = (m.catKey === 'DOI' && doublesCount >= 2 && !isSelected);
+                    let filterHintBadge = '';
+                    if (genderRule === 'NAM') {
+                        filterHintBadge = `<span class="text-[9px] px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-400 border border-sky-500/30 font-bold">Chỉ Nam</span>`;
+                    } else if (genderRule === 'NU') {
+                        filterHintBadge = `<span class="text-[9px] px-1.5 py-0.5 rounded bg-pink-500/15 text-pink-400 border border-pink-500/30 font-bold">Chỉ Nữ</span>`;
+                    } else if (genderRule === 'NAM_NU') {
+                        filterHintBadge = `<span class="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/30 font-bold">1 Nam + 1 Nữ</span>`;
+                    }
 
-                        const isFemale = String(p.gender || '').toLowerCase().includes('nữ');
-                        const genderColor = isFemale ? 'text-pink-400' : 'text-sky-400';
-                        const genderSymbol = isFemale ? '♀' : '♂';
+                    const playerButtonsHtml = eligiblePlayers.length > 0 ? eligiblePlayers.map(p => {
+                        const isSelected = selIds.includes(p.id);
+                        const isFem = isPlayerFemale(p);
+                        const doublesCount = m.catKey === 'DOI' ? getPlayerDoublesCountInTie(activeTieMatches, step, p.id, m.id) : 0;
+                        
+                        const isExceededDoubles = (m.catKey === 'DOI' && doublesCount >= 2 && !isSelected);
+                        const isGenderSlotFull = (genderRule === 'NAM_NU' && !isSelected && ((isFem && hasSelectedFemale) || (!isFem && hasSelectedMale)));
+                        const isDisabled = isExceededDoubles || isGenderSlotFull;
+
+                        const genderColor = isFem ? 'text-pink-400' : 'text-sky-400';
+                        const genderSymbol = isFem ? '♀' : '♂';
 
                         return `
-                            <button type="button" ${isExceeded ? 'disabled' : ''} onclick="togglePlayerInTieMatch('${m.id}', ${step}, '${p.id}', ${req})" class="px-2 py-1.5 rounded-lg border text-[11px] font-bold transition flex items-center justify-between gap-1 ${isExceeded ? 'opacity-35 bg-slate-950 border-slate-800 cursor-not-allowed' : (isSelected ? (isStep1 ? 'bg-brand-600 text-white border-brand-400 shadow' : 'bg-emerald-600 text-white border-emerald-400 shadow') : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-600')}">
+                            <button type="button" ${isDisabled ? 'disabled' : ''} onclick="togglePlayerInTieMatch('${m.id}', ${step}, '${p.id}', ${req})" class="px-2 py-1.5 rounded-lg border text-[11px] font-bold transition flex items-center justify-between gap-1 ${isDisabled ? 'opacity-30 bg-slate-950 border-slate-800 cursor-not-allowed' : (isSelected ? (isStep1 ? 'bg-brand-600 text-white border-brand-400 shadow' : 'bg-emerald-600 text-white border-emerald-400 shadow') : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-600')}">
                                 <span class="truncate"><span class="${isSelected ? 'text-white' : genderColor} mr-0.5">${genderSymbol}</span>${p.name}</span>
                                 <span class="text-[9px] px-1 rounded ${isSelected ? 'bg-black/25 text-white' : 'bg-slate-800 text-amber-300'} shrink-0">${p.level || 'A'}${m.catKey === 'DOI' ? ` (${doublesCount}/2)` : ''}</span>
                             </button>
                         `;
-                    }).join('');
+                    }).join('') : `<div class="col-span-2 text-center py-2 text-[11px] text-rose-400 italic">CLB ${activeClub.name} chưa có VĐV ${genderRule === 'NU' ? 'Nữ' : 'Nam'}!</div>`;
 
                     html += `
                         <div class="p-2.5 rounded-xl bg-slate-950/80 border ${isComplete ? 'border-emerald-500/40' : 'border-amber-500/40'} space-y-2">
-                            <div class="flex justify-between items-center">
-                                <span class="text-[11px] font-extrabold text-amber-400 truncate pr-2">${cleanCat}</span>
+                            <div class="flex justify-between items-center gap-1.5">
+                                <div class="flex items-center gap-1.5 min-w-0">
+                                    <span class="text-[11px] font-extrabold text-amber-400 truncate">${cleanCat}</span>
+                                    ${filterHintBadge}
+                                </div>
                                 <span class="px-2 py-0.5 rounded text-[10px] font-black shrink-0 ${isComplete ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-300'}">
                                     ${isComplete ? `✓ Đủ ${selIds.length}/${req}` : `Chọn ${selIds.length}/${req}`}
                                 </span>
@@ -462,12 +515,42 @@
         function togglePlayerInTieMatch(matchId, side, playerId, maxReq) {
             const { match: m } = findMatchById(matchId);
             if (!m) return;
+            const clubId = side === 1 ? m.club1Id : m.club2Id;
+            const club = getClubById(clubId);
+            const playerObj = getPlayerById(clubId, playerId);
+            if (!playerObj) return;
+
+            const genderRule = getMatchGenderRule(m);
+            const isFem = isPlayerFemale(playerObj);
+
+            // Chặn cứng sai giới tính theo từng nội dung
+            if (genderRule === 'NAM' && isFem) {
+                showToast('⚠️ Nội dung Đôi Nam không thể chọn VĐV Nữ!');
+                return;
+            }
+            if (genderRule === 'NU' && !isFem) {
+                showToast('⚠️ Nội dung Đôi Nữ không thể chọn VĐV Nam!');
+                return;
+            }
+
             const arrKey = side === 1 ? 'team1PlayerIds' : 'team2PlayerIds';
             let cur = m[arrKey] || [];
 
             if (cur.includes(playerId)) {
                 m[arrKey] = cur.filter(id => id !== playerId);
             } else {
+                if (genderRule === 'NAM_NU') {
+                    const selectedObjs = cur.map(pid => (club.players || []).find(x => x.id === pid)).filter(Boolean);
+                    if (isFem && selectedObjs.some(x => isPlayerFemale(x))) {
+                        showToast('⚠️ Đôi Nam Nữ đã đủ 1 VĐV Nữ, hãy chọn tiếp 1 VĐV Nam!');
+                        return;
+                    }
+                    if (!isFem && selectedObjs.some(x => !isPlayerFemale(x))) {
+                        showToast('⚠️ Đôi Nam Nữ đã đủ 1 VĐV Nam, hãy chọn tiếp 1 VĐV Nữ!');
+                        return;
+                    }
+                }
+
                 if (cur.length >= maxReq) {
                     if (maxReq === 1) {
                         m[arrKey] = [playerId];
@@ -486,7 +569,6 @@
             renderRefereeApp();
         }
 
-        // TỰ ĐỘNG ĐIỀN NHANH ĐỦ VĐV CHO CẢ 5 NỘI DUNG CỦA ĐỘI ĐANG CHỌN (ĐÚNG GIỚI TÍNH & KHÔNG QUÁ 2 TRẬN ĐÔI)
         function autoFillAllMatchesForSide(side) {
             const activeTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
             if (!activeTieMatches.length) return;
@@ -496,12 +578,11 @@
             if (!players.length) return;
 
             const arrKey = side === 1 ? 'team1PlayerIds' : 'team2PlayerIds';
-            // Reset lựa chọn hiện tại của đội này trước khi điền tự động
             activeTieMatches.forEach(m => { m[arrKey] = []; });
 
             activeTieMatches.forEach(m => {
                 const req = m.catKey === 'DON' ? 1 : 2;
-                const labelLower = (m.catLabel || '').toLowerCase();
+                const genderRule = getMatchGenderRule(m);
                 let picked = [];
 
                 const getAvailable = (genderFilter) => {
@@ -509,28 +590,25 @@
                         if (picked.includes(p.id)) return false;
                         if (m.catKey === 'DOI' && getPlayerDoublesCountInTie(activeTieMatches, side, p.id, m.id) >= 2) return false;
                         if (!genderFilter) return true;
-                        const isFem = String(p.gender || '').toLowerCase().includes('nữ');
+                        const isFem = isPlayerFemale(p);
                         return genderFilter === 'Nữ' ? isFem : !isFem;
                     });
                 };
 
-                if (labelLower.includes('đôi nam nữ')) {
+                if (genderRule === 'NAM_NU') {
                     const men = getAvailable('Nam');
                     const women = getAvailable('Nữ');
                     if (men.length > 0) picked.push(men[0].id);
                     if (women.length > 0) picked.push(women[0].id);
-                } else if (labelLower.includes('đôi nữ')) {
+                } else if (genderRule === 'NU') {
                     const women = getAvailable('Nữ');
                     women.slice(0, 2).forEach(p => picked.push(p.id));
-                } else if (labelLower.includes('đôi nam')) {
+                } else if (genderRule === 'NAM') {
                     const men = getAvailable('Nam');
                     men.slice(0, 2).forEach(p => picked.push(p.id));
-                }
-
-                // Nếu chưa đủ số lượng (do CLB thiếu Nam hoặc Nữ), lấy tiếp VĐV hợp lệ bất kỳ còn lượt
-                if (picked.length < req) {
-                    const fallback = getAvailable(null);
-                    fallback.slice(0, req - picked.length).forEach(p => picked.push(p.id));
+                } else {
+                    const anyPlayers = getAvailable(null);
+                    anyPlayers.slice(0, req).forEach(p => picked.push(p.id));
                 }
 
                 m[arrKey] = picked;
@@ -540,7 +618,7 @@
             saveState();
             openRefereePlayerSetupModal(side);
             renderRefereeApp();
-            showToast(`🪄 Đã tự động điền đủ VĐV cả 5 trận cho ${club.name}!`);
+            showToast(`🪄 Đã lọc đúng giới tính & tự động điền VĐV cho ${club.name}!`);
         }
 
         function proceedToTeam2Setup() {
