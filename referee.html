@@ -601,8 +601,11 @@
             const cs = m.courtState;
 
             const servingTeam = m.servingTeam || 1;
+            const serverNum = isSingles ? 1 : (m.serverNum || 2);
             const servingScore = servingTeam === 1 ? (parseInt(m.score1) || 0) : (parseInt(m.score2) || 0);
             const isEvenScore = (servingScore % 2 === 0);
+            const isFirstServerSlot = isSingles || (serverNum === 1);
+            const serveFromRightBox = isFirstServerSlot ? isEvenScore : !isEvenScore;
 
             if (isSingles) {
                 if (servingTeam === 1) cs.t1Right = selectedName;
@@ -611,12 +614,12 @@
                 if (servingTeam === 1) {
                     const p1List = (m.team1PlayerIds || []).map(pid => getPlayerById(m.club1Id, pid)?.name).filter(Boolean);
                     const partner = p1List.find(n => n !== selectedName) || selectedName;
-                    if (isEvenScore) { cs.t1Right = selectedName; cs.t1Left = partner; }
+                    if (serveFromRightBox) { cs.t1Right = selectedName; cs.t1Left = partner; }
                     else { cs.t1Left = selectedName; cs.t1Right = partner; }
                 } else {
                     const p2List = (m.team2PlayerIds || []).map(pid => getPlayerById(m.club2Id, pid)?.name).filter(Boolean);
                     const partner = p2List.find(n => n !== selectedName) || selectedName;
-                    if (isEvenScore) { cs.t2Right = selectedName; cs.t2Left = partner; }
+                    if (serveFromRightBox) { cs.t2Right = selectedName; cs.t2Left = partner; }
                     else { cs.t2Left = selectedName; cs.t2Right = partner; }
                 }
             }
@@ -634,8 +637,11 @@
 
             const servingTeam = m.servingTeam || 1;
             const receivingTeam = servingTeam === 1 ? 2 : 1;
+            const serverNum = isSingles ? 1 : (m.serverNum || 2);
             const servingScore = servingTeam === 1 ? (parseInt(m.score1) || 0) : (parseInt(m.score2) || 0);
             const isEvenScore = (servingScore % 2 === 0);
+            const isFirstServerSlot = isSingles || (serverNum === 1);
+            const serveFromRightBox = isFirstServerSlot ? isEvenScore : !isEvenScore;
 
             if (isSingles) {
                 if (receivingTeam === 1) cs.t1Right = selectedName;
@@ -644,12 +650,12 @@
                 if (receivingTeam === 1) {
                     const p1List = (m.team1PlayerIds || []).map(pid => getPlayerById(m.club1Id, pid)?.name).filter(Boolean);
                     const partner = p1List.find(n => n !== selectedName) || selectedName;
-                    if (isEvenScore) { cs.t1Right = selectedName; cs.t1Left = partner; }
+                    if (serveFromRightBox) { cs.t1Right = selectedName; cs.t1Left = partner; }
                     else { cs.t1Left = selectedName; cs.t1Right = partner; }
                 } else {
                     const p2List = (m.team2PlayerIds || []).map(pid => getPlayerById(m.club2Id, pid)?.name).filter(Boolean);
                     const partner = p2List.find(n => n !== selectedName) || selectedName;
-                    if (isEvenScore) { cs.t2Right = selectedName; cs.t2Left = partner; }
+                    if (serveFromRightBox) { cs.t2Right = selectedName; cs.t2Left = partner; }
                     else { cs.t2Left = selectedName; cs.t2Right = partner; }
                 }
             }
@@ -1051,21 +1057,15 @@
                 const curTeam = m.servingTeam || 1;
 
                 if (curServerNum === 1) {
-                    // Chuyển sang người giao thứ 2: KHÔNG hoán đổi chỗ 2 VĐV, chỉ chuyển người phát sang ô còn lại
                     m.serverNum = 2;
                     showToast(`2️⃣ Người giao bóng số 2 (Ô còn lại)!`);
                 } else {
-                    // Mất lượt giao thứ 2 -> Đổi sang đội đối phương với lượt giao số 1
                     m.servingTeam = curTeam === 1 ? 2 : 1;
                     m.serverNum = 1;
                     const newServerClub = getClubById(m.servingTeam === 1 ? m.club1Id : m.club2Id).name;
                     showToast(`🔄 Đổi giao bóng sang ${newServerClub} (Lượt 1)!`);
                 }
             }
-
-            saveState();
-            renderRefereeApp();
-        }
 
             saveState();
             renderRefereeApp();
@@ -1203,15 +1203,18 @@
                 ` : `<div class="col-span-3 ref-score-btn rounded-lg bg-slate-900 text-slate-500 text-[11px] font-bold flex items-center justify-center">🔒 Khóa</div>`;
             }
 
-            // VỊ TRÍ ĐỨNG CHUẨN PICKLEBALL VỚI 2 VẠCH BẾP GẦN LƯỚI (x = 156 & x = 284, Lưới ở x = 220):
-            // - Vạch cuối sân trái: x = 44 | Sát mép ngoài vạch bếp trái (không vượt vạch bếp): x = 136
-            // - Vạch cuối sân phải: x = 396 | Sát mép ngoài vạch bếp phải (không vượt vạch bếp): x = 304
+            // VỊ TRÍ ĐỨNG & Ô GIAO BÓNG CHUẨN XÁC:
+            // - Lượt 1 (serverNum === 1): Điểm chẵn giao từ ô Phải, điểm lẻ giao từ ô Trái
+            // - Lượt 2 (serverNum === 2): Giao từ ô còn lại (ngược với ô của Lượt 1) -> Mũi tên nhảy sang ô khác!
             const isEvenScore = (servingScore % 2 === 0);
+            const isFirstServerSlot = isSingles || (serverNum === 1);
+            const serveFromRightBox = isFirstServerSlot ? isEvenScore : !isEvenScore;
+
             const leftTeamNum = leftIsT1 ? 1 : 2;
             const rightTeamNum = leftIsT1 ? 2 : 1;
 
-            const leftServerY = isEvenScore ? 152 : 58;
-            const rightServerY = isEvenScore ? 58 : 152;
+            const leftServerY = serveFromRightBox ? 152 : 58;
+            const rightServerY = serveFromRightBox ? 58 : 152;
 
             let dots = [];
 
@@ -1234,9 +1237,6 @@
 
                 const isLeftServing = (servingTeam === leftTeamNum);
 
-                // Đội bên trái:
-                // - Nếu đang giao: cả 2 đứng cuối sân (x = 44)
-                // - Nếu đang đỡ: người đỡ chéo góc đứng cuối sân (x = 44), đồng đội đứng sát mép ngoài vạch bếp (x = 136)
                 let leftTopX = 44;
                 let leftBottomX = 44;
                 if (!isLeftServing) {
@@ -1245,9 +1245,6 @@
                     leftBottomX = (leftReceiverY === 152) ? 44 : 136;
                 }
 
-                // Đội bên phải:
-                // - Nếu đang giao: cả 2 đứng cuối sân (x = 396)
-                // - Nếu đang đỡ: người đỡ chéo góc đứng cuối sân (x = 396), đồng đội đứng sát mép ngoài vạch bếp (x = 304)
                 let rightTopX = 396;
                 let rightBottomX = 396;
                 if (isLeftServing) {
@@ -1257,10 +1254,10 @@
                 }
 
                 dots = [
-                    { team: leftTeamNum, x: leftTopX, y: 58, name: leftTopName, color: leftIsT1 ? '#f43f5e' : '#22c55e', isServer: isLeftServing && !isEvenScore },
-                    { team: leftTeamNum, x: leftBottomX, y: 152, name: leftBottomName, color: leftIsT1 ? '#f43f5e' : '#22c55e', isServer: isLeftServing && isEvenScore },
-                    { team: rightTeamNum, x: rightTopX, y: 58, name: rightTopName, color: leftIsT1 ? '#22c55e' : '#f43f5e', isServer: !isLeftServing && isEvenScore },
-                    { team: rightTeamNum, x: rightBottomX, y: 152, name: rightBottomName, color: leftIsT1 ? '#22c55e' : '#f43f5e', isServer: !isLeftServing && !isEvenScore }
+                    { team: leftTeamNum, x: leftTopX, y: 58, name: leftTopName, color: leftIsT1 ? '#f43f5e' : '#22c55e', isServer: isLeftServing && (leftServerY === 58) },
+                    { team: leftTeamNum, x: leftBottomX, y: 152, name: leftBottomName, color: leftIsT1 ? '#f43f5e' : '#22c55e', isServer: isLeftServing && (leftServerY === 152) },
+                    { team: rightTeamNum, x: rightTopX, y: 58, name: rightTopName, color: leftIsT1 ? '#22c55e' : '#f43f5e', isServer: !isLeftServing && (rightServerY === 58) },
+                    { team: rightTeamNum, x: rightBottomX, y: 152, name: rightBottomName, color: leftIsT1 ? '#22c55e' : '#f43f5e', isServer: !isLeftServing && (rightServerY === 152) }
                 ];
             }
 
