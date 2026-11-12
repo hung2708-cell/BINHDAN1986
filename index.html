@@ -438,7 +438,7 @@
             if(e.key === 'Enter') confirmPasswordAction(); 
         });
 
-        // THUẬT TOÁN TỰ ĐỘNG XẾP LỊCH VÒNG TRÒN (CIRCLE METHOD) CHO GIẢI ĐỒNG ĐỘI
+        // THUẬT TOÁN TỰ ĐỘNG XẾP LỊCH VÒNG TRÒN (CIRCLE METHOD) - MỖI CẶP ĐẤU GIỮA 2 ĐỘI ĐÁNH TRỌN VẸN TRÊN 1 SÂN
         function promptGenerateCircleSchedule() {
             openPasswordModal("Xác nhận Tự động sắp xếp lịch vòng tròn", () => {
                 if (teams.length < 2) {
@@ -470,25 +470,30 @@
                     }
 
                     roundPairings.forEach(pair => {
+                        // Lần lượt phân bổ các cặp đấu vào các sân từ Sân 1 đến Sân 8
+                        let assignedCourt = COURTS_LIST[courtIndex % COURTS_LIST.length];
+                        
+                        // 5 trận đấu của cặp CLB này nằm trọn trên ĐÚNG 1 SÂN đó
                         let tieMatches = [
-                            { id: 'm_' + matchIdCounter++, club1Id: pair.home.id, club2Id: pair.away.id, catKey: 'DOI', catLabel: 'Trận 1: Đôi Nam', court: COURTS_LIST[courtIndex % 8], score1: 0, score2: 0, status: 'UPCOMING', maxPlayers: 2, targetPoints: 15 },
-                            { id: 'm_' + matchIdCounter++, club1Id: pair.home.id, club2Id: pair.away.id, catKey: 'DOI', catLabel: 'Trận 2: Đôi Nữ', court: COURTS_LIST[(courtIndex+1) % 8], score1: 0, score2: 0, status: 'UPCOMING', maxPlayers: 2, targetPoints: 15 },
-                            { id: 'm_' + matchIdCounter++, club1Id: pair.home.id, club2Id: pair.away.id, catKey: 'DOI', catLabel: 'Trận 3: Đôi Nam Nữ 1', court: 'Sân 3', score1: 0, score2: 0, status: 'UPCOMING', maxPlayers: 2, targetPoints: 15 },
-                            { id: 'm_' + matchIdCounter++, club1Id: pair.home.id, club2Id: pair.away.id, catKey: 'DOI', catLabel: 'Trận 4: Đôi Nam Nữ 2', court: 'Sân 4', score1: 0, score2: 0, status: 'UPCOMING', maxPlayers: 2, targetPoints: 15 },
-                            { id: 'm_' + matchIdCounter++, club1Id: pair.home.id, club2Id: pair.away.id, catKey: 'DON', catLabel: 'Trận 5: Đơn Quyết Định', court: 'Sân 5', score1: 0, score2: 0, status: 'UPCOMING', maxPlayers: 1, targetPoints: 21 }
+                            { id: 'm_' + matchIdCounter++, club1Id: pair.home.id, club2Id: pair.away.id, catKey: 'DOI', catLabel: 'Trận 1: Đôi Nam', court: assignedCourt, score1: 0, score2: 0, status: 'UPCOMING', maxPlayers: 2, targetPoints: 15 },
+                            { id: 'm_' + matchIdCounter++, club1Id: pair.home.id, club2Id: pair.away.id, catKey: 'DOI', catLabel: 'Trận 2: Đôi Nữ', court: assignedCourt, score1: 0, score2: 0, status: 'UPCOMING', maxPlayers: 2, targetPoints: 15 },
+                            { id: 'm_' + matchIdCounter++, club1Id: pair.home.id, club2Id: pair.away.id, catKey: 'DOI', catLabel: 'Trận 3: Đôi Nam Nữ 1', court: assignedCourt, score1: 0, score2: 0, status: 'UPCOMING', maxPlayers: 2, targetPoints: 15 },
+                            { id: 'm_' + matchIdCounter++, club1Id: pair.home.id, club2Id: pair.away.id, catKey: 'DOI', catLabel: 'Trận 4: Đôi Nam Nữ 2', court: assignedCourt, score1: 0, score2: 0, status: 'UPCOMING', maxPlayers: 2, targetPoints: 15 },
+                            { id: 'm_' + matchIdCounter++, club1Id: pair.home.id, club2Id: pair.away.id, catKey: 'DON', catLabel: 'Trận 5: Đơn Quyết Định', court: assignedCourt, score1: 0, score2: 0, status: 'UPCOMING', maxPlayers: 1, targetPoints: 21 }
                         ];
+                        
                         generatedTies.push({ id: 'tie_' + Math.random(), matches: tieMatches });
-                        courtIndex += 2;
+                        courtIndex++;
                     });
 
-                    // Xoay vòng thuật toán Circle Method (cố định phần tử 0, dịch chuyển các phần tử còn lại)
+                    // Xoay vòng thuật toán Circle Method
                     let temp = list.pop();
                     list.splice(1, 0, temp);
                 }
 
                 appState.ties = generatedTies;
                 saveAppState();
-                showToast(`🪄 Đã tạo lịch vòng tròn thành công cho ${teams.length} đội!`);
+                showToast(`🪄 Đã xếp lịch thành công! Mỗi cặp đấu CLB được phân bổ trọn vẹn trên 1 sân.`);
             });
         }
 
