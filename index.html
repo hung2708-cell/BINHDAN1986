@@ -31,6 +31,16 @@
             }
         }
     </script>
+    <style>
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+    </style>
 </head>
 <body class="h-full font-sans text-slate-100 flex flex-col justify-between selection:bg-brand-500 selection:text-white">
 
@@ -55,7 +65,7 @@
                         <i class="fa-solid fa-house mr-1.5"></i> Tổng quan
                     </button>
                     <button onclick="switchTab('matches')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-900/50" data-tab="matches">
-                        <i class="fa-solid fa-calendar-days mr-1.5"></i> Lịch thi đấu
+                        <i class="fa-solid fa-calendar-days mr-1.5"></i> Lịch thi đấu theo Sân
                     </button>
                     <button onclick="switchTab('bracket')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-900/50" data-tab="bracket">
                         <i class="fa-solid fa-sitemap mr-1.5"></i> Sơ đồ Nhánh đấu
@@ -83,7 +93,7 @@
         <!-- Mobile Menu Dropdown -->
         <div id="mobile-menu" class="hidden lg:hidden px-4 pt-2 pb-4 space-y-1 bg-slate-950 border-b border-slate-800">
             <button onclick="switchTab('home'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-brand-400 bg-slate-900">Tổng quan</button>
-            <button onclick="switchTab('matches'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">Lịch thi đấu</button>
+            <button onclick="switchTab('matches'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">Lịch thi đấu theo Sân</button>
             <button onclick="switchTab('bracket'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">Sơ đồ Nhánh đấu</button>
             <button onclick="switchTab('standings'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">Bảng xếp hạng</button>
             <button onclick="switchTab('teams'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">Đội tuyển</button>
@@ -108,11 +118,11 @@
                         Giải Pickleball Đồng Đội <span class="text-brand-400">Bính Dần 1986</span>
                     </h2>
                     <p class="text-slate-300 text-sm sm:text-base mb-6 leading-relaxed">
-                        Nơi hội tụ bản lĩnh và sự gắn kết của các tay vợt tuổi Bính Dần 1986. Cập nhật lịch thi đấu, sơ đồ nhánh đấu và tỷ số trực tiếp từng trận đấu.
+                        Nơi hội tụ bản lĩnh và sự gắn kết của các tay vợt tuổi Bính Dần 1986. Cập nhật lịch thi đấu theo từng sân và tỷ số trực tiếp.
                     </p>
                     <div class="flex flex-wrap gap-3">
                         <button onclick="switchTab('matches')" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-medium text-sm transition shadow-lg shadow-brand-600/30 flex items-center">
-                            <i class="fa-solid fa-bolt mr-2"></i> Xem tỷ số trực tiếp
+                            <i class="fa-solid fa-bolt mr-2"></i> Xem các sân thi đấu
                         </button>
                         <button onclick="switchTab('bracket')" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm transition border border-slate-700 flex items-center">
                             <i class="fa-solid fa-sitemap mr-2 text-brand-400"></i> Sơ đồ Nhánh đấu
@@ -177,22 +187,24 @@
             </div>
         </section>
 
-        <!-- TAB 2: MATCHES & SCORES -->
+        <!-- TAB 2: MATCHES & SCORES BY COURT (HIỂN THỊ THEO TỪNG SÂN THI ĐẤU) -->
         <section id="tab-matches" class="tab-content hidden space-y-6">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900/50 p-4 rounded-2xl border border-slate-800">
+            <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h2 class="text-xl font-bold text-white">Lịch thi đấu & Tỷ số</h2>
-                    <p class="text-xs text-slate-400">Theo dõi kết quả các trận đấu vòng bảng và vòng loại.</p>
+                    <h2 class="text-xl font-bold text-white">Lịch thi đấu theo Từng Sân</h2>
+                    <p class="text-xs text-slate-400">Chọn sân thi đấu để xem chi tiết các trận đấu trên sân đó.</p>
                 </div>
-                <div class="flex flex-wrap gap-2">
-                    <button onclick="filterMatches('all')" class="match-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-brand-600 text-white transition" data-filter="all">Tất cả</button>
-                    <button onclick="filterMatches('live')" class="match-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-900 text-slate-300 hover:bg-slate-800 transition" data-filter="live">Đang đấu</button>
-                    <button onclick="filterMatches('upcoming')" class="match-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-900 text-slate-300 hover:bg-slate-800 transition" data-filter="upcoming">Sắp đấu</button>
-                    <button onclick="filterMatches('finished')" class="match-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-900 text-slate-300 hover:bg-slate-800 transition" data-filter="finished">Đã xong</button>
+                <!-- Bộ lọc chọn Sân -->
+                <div id="court-filter-buttons" class="flex flex-wrap gap-2">
+                    <button onclick="filterCourt('Sân 1')" class="court-btn px-3.5 py-1.5 rounded-xl text-xs font-bold bg-brand-600 text-white transition shadow">Sân 1</button>
+                    <button onclick="filterCourt('Sân 2')" class="court-btn px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-slate-300 hover:bg-slate-800 transition border border-slate-800">Sân 2</button>
+                    <button onclick="filterCourt('Sân 3')" class="court-btn px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-slate-300 hover:bg-slate-800 transition border border-slate-800">Sân 3</button>
+                    <button onclick="filterCourt('Sân 4')" class="court-btn px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-slate-300 hover:bg-slate-800 transition border border-slate-800">Sân 4</button>
                 </div>
             </div>
 
-            <div id="matches-list-container" class="space-y-4">
+            <!-- Danh sách trận đấu theo sân được chọn -->
+            <div id="matches-by-court-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Dynamic populated -->
             </div>
         </section>
@@ -434,31 +446,32 @@
     </main>
 
     <!-- CUSTOM PASSWORD MODAL -->
-<div id="password-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
-    <div class="bg-slate-950 border border-slate-800 w-full max-w-md p-6 rounded-2xl shadow-2xl space-y-4">
-        <div class="flex items-center space-x-3 text-brand-400">
-            <div class="w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center text-lg">
-                <i class="fa-solid fa-lock"></i>
+    <div id="password-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
+        <div id="modal-box" class="bg-slate-950 border border-slate-800 w-full max-w-md p-6 rounded-2xl shadow-2xl space-y-4 relative transition-all">
+            <div class="flex items-center space-x-3 text-brand-400">
+                <div class="w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center text-lg shrink-0">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <div>
+                    <h3 id="modal-title" class="font-bold text-white text-base">Xác nhận bảo mật</h3>
+                    <p class="text-xs text-slate-400">Vui lòng nhập mật khẩu quản trị để tiếp tục.</p>
+                </div>
             </div>
-            <div>
-                <h3 id="modal-title" class="font-bold text-white text-base">Xác nhận bảo mật</h3>
-                <p class="text-xs text-slate-400">Vui lòng nhập mật khẩu quản trị để tiếp tục.</p>
+            
+            <div class="space-y-2">
+                <label class="block text-xs font-medium text-slate-400">Mật khẩu xác nhận</label>
+                <input type="password" id="modal-password-input" placeholder="Nhập mật khẩu..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500 font-mono tracking-widest">
+                <div class="min-h-[20px] flex items-center">
+                    <p id="modal-error-msg" class="text-xs text-rose-500 font-semibold hidden">Sai mật khẩu!</p>
+                </div>
             </div>
-        </div>
-        
-        <div class="space-y-2">
-            <label class="block text-xs font-medium text-slate-400">Mật khẩu xác nhận</label>
-            <input type="password" id="modal-password-input" placeholder="Nhập mật khẩu..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500 font-mono tracking-widest">
-            <!-- Chỉ báo lỗi sai mật khẩu, hoàn toàn không hiển thị nhắc nhở -->
-            <p id="modal-error-msg" class="text-xs text-rose-500 hidden font-semibold">Sai mật khẩu!</p>
-        </div>
 
-        <div class="flex items-center justify-end space-x-3 pt-2 border-t border-slate-800">
-            <button onclick="closePasswordModal()" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold transition">Hủy bỏ</button>
-            <button onclick="confirmPasswordAction()" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold transition shadow-lg">Xác nhận</button>
+            <div class="flex items-center justify-end space-x-3 pt-2 border-t border-slate-800">
+                <button onclick="closePasswordModal()" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold transition">Hủy bỏ</button>
+                <button onclick="confirmPasswordAction()" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold transition shadow-lg">Xác nhận</button>
+            </div>
         </div>
     </div>
-</div>
 
     <!-- TOAST NOTIFICATION CONTAINER -->
     <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
@@ -591,7 +604,6 @@
             if(e.key === 'Enter') confirmPasswordAction();
         });
 
-        // HÀM KHÔI PHỤC DỮ LIỆU MẪU CHUẨN XÁC
         function promptResetDefault() {
             openPasswordModal("Khôi phục dữ liệu mẫu", () => {
                 appState = { 
@@ -607,7 +619,6 @@
             });
         }
 
-        // HÀM XÓA TRẬN ĐẤU CHUẨN XÁC
         function promptDeleteMatch(matchId) {
             openPasswordModal("Xác nhận xóa trận đấu", () => {
                 if (appState.ties) {
@@ -645,7 +656,7 @@
         function initApp() {
             renderStats();
             renderHomeMatches();
-            renderMatches('all');
+            filterCourt('Sân 1');
             renderBracket();
             renderStandings();
             renderTeams();
@@ -668,29 +679,24 @@
             container.innerHTML = matches.slice(0, 4).map(m => createMatchCardHTML(m)).join('');
         }
 
-        let currentMatchFilter = 'all';
-        function filterMatches(filter) {
-            currentMatchFilter = filter;
-            document.querySelectorAll('.match-filter-btn').forEach(btn => {
-                btn.classList.remove('bg-brand-600', 'text-white');
-                btn.classList.add('bg-slate-900', 'text-slate-300');
-                if(btn.getAttribute('data-filter') === filter) {
-                    btn.classList.remove('bg-slate-900', 'text-slate-300');
-                    btn.classList.add('bg-brand-600', 'text-white');
+        // LỌC TRẬN ĐẤU THEO TỪNG SÂN
+        let currentCourtFilter = 'Sân 1';
+        function filterCourt(courtName) {
+            currentCourtFilter = courtName;
+            document.querySelectorAll('.court-btn').forEach(btn => {
+                btn.classList.remove('bg-brand-600', 'text-white', 'shadow');
+                btn.classList.add('bg-slate-900', 'text-slate-300', 'border', 'border-slate-800');
+                if(btn.textContent.trim() === courtName) {
+                    btn.classList.remove('bg-slate-900', 'text-slate-300', 'border', 'border-slate-800');
+                    btn.classList.add('bg-brand-600', 'text-white', 'shadow');
                 }
             });
-            renderMatches(filter);
-        }
 
-        function renderMatches(filter) {
-            const container = document.getElementById('matches-list-container');
-            let filtered = matches;
-            if (filter === 'live') filtered = matches.filter(m => m.status === 'LIVE');
-            else if (filter === 'upcoming') filtered = matches.filter(m => m.status === 'UPCOMING' || !m.status);
-            else if (filter === 'finished') filtered = matches.filter(m => m.status === 'FINISHED');
+            const container = document.getElementById('matches-by-court-container');
+            const filtered = matches.filter(m => (m.court || 'Sân 1') === courtName);
 
             if (filtered.length === 0) {
-                container.innerHTML = `<div class="text-center py-12 text-slate-500 bg-slate-900/30 rounded-2xl border border-slate-800">Không có trận đấu nào trong danh mục này.</div>`;
+                container.innerHTML = `<div class="col-span-full text-center py-12 text-slate-500 bg-slate-900/30 rounded-2xl border border-slate-800">Không có trận đấu nào trên ${courtName}.</div>`;
                 return;
             }
             container.innerHTML = filtered.map(m => createMatchCardHTML(m)).join('');
