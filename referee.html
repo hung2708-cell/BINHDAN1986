@@ -62,11 +62,9 @@
         }
         .animate-coin { animation: coin-spin 0.65s ease-out; }
 
-        /* Tỷ lệ tự co giãn linh hoạt cho cả dọc và ngang */
         .fluid-score-num { font-size: clamp(1.75rem, 6.5dvh, 2.75rem); line-height: 1; }
         .ref-score-btn { height: clamp(40px, 9.5dvh, 56px); }
 
-        /* BỐ CỤC KHI XOAY NGANG ĐIỆN THOẠI (LANDSCAPE) */
         @media (orientation: landscape) and (max-height: 600px) {
             body {
                 max-width: 100% !important;
@@ -106,7 +104,7 @@
 </head>
 <body class="w-full max-w-md mx-auto flex flex-col justify-between gap-1.5 select-none selection:bg-brand-500 selection:text-white">
 
-    <!-- CỘT TRÁI (KHI DỌC NẰM TRÊN, KHI XOAY NGANG NẰM BÊN TRÁI) -->
+    <!-- CỘT TRÁI -->
     <div id="leftLandscapeCol" class="flex flex-col gap-1.5 shrink-0">
         <!-- 1. HEADER -->
         <header class="bg-slate-900/95 border border-brand-500/30 rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-2 shadow-lg shrink-0 backdrop-blur-md">
@@ -153,8 +151,8 @@
                 </div>
             </div>
 
-            <!-- Khung sân tự co giãn cả dọc và ngang -->
-            <div id="courtSvgWrapper" class="relative w-full h-[124px] sm:h-[140px] bg-emerald-950/90 rounded-lg border-2 border-emerald-500/40 overflow-hidden shadow-inner flex items-center justify-center">
+            <!-- Khung sân -->
+            <div id="courtSvgWrapper" class="relative w-full h-[126px] sm:h-[142px] bg-emerald-950/90 rounded-lg border-2 border-emerald-500/40 overflow-hidden shadow-inner flex items-center justify-center">
                 <div id="leftCourtSideTag" class="absolute top-1 left-2 text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-black/45 text-slate-300 pointer-events-none z-10">Sân Trái</div>
                 <div id="rightCourtSideTag" class="absolute top-1 right-2 text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-black/45 text-slate-300 pointer-events-none z-10">Sân Phải</div>
 
@@ -193,7 +191,7 @@
         </div>
     </div>
 
-    <!-- CỘT PHẢI (KHI DỌC NẰM DƯỚI, KHI XOAY NGANG NẰM BÊN PHẢI) -->
+    <!-- CỘT PHẢI -->
     <div id="rightLandscapeCol" class="flex-1 min-h-0 flex flex-col justify-between gap-1.5">
         <!-- BANNER LUÂN PHIÊN 4 VĐV TRẬN ĐƠN -->
         <div id="singlesRotationBanner" class="hidden px-2.5 py-1 rounded-xl bg-amber-950/90 border border-amber-500/70 text-amber-200 text-[10px] font-bold flex items-center justify-between gap-2 shadow shrink-0">
@@ -1180,7 +1178,9 @@
                 ` : `<div class="col-span-3 ref-score-btn rounded-lg bg-slate-900 text-slate-500 text-[11px] font-bold flex items-center justify-center">🔒 Khóa</div>`;
             }
 
-            // SƠ ĐỒ SÂN 2D & MŨI TÊN ĐƯỜNG CHÉO NGẮN GỌN
+            // VỊ TRÍ ĐỨNG CHUẨN PICKLEBALL KHI GIAO BÓNG:
+            // - Bên giao bóng (2 người): Cả 2 đều đứng sát cuối sân (Baseline: x = 44 bên trái, x = 396 bên phải)
+            // - Bên đỡ bóng (2 người): Người đỡ chéo góc đứng cuối sân (x = 396 hoặc 44), đồng đội đứng trên lưới (NVZ: x = 282 hoặc 158)
             const isEvenScore = (servingScore % 2 === 0);
             const leftTeamNum = leftIsT1 ? 1 : 2;
             const rightTeamNum = leftIsT1 ? 2 : 1;
@@ -1198,20 +1198,45 @@
                 const activeYRight = (servingTeam === rightTeamNum) ? rightServerY : (210 - leftServerY);
 
                 dots = [
-                    { team: leftTeamNum, x: 85, y: activeYLeft, name: leftPlayerName, color: leftIsT1 ? '#f43f5e' : '#22c55e', isServer: (servingTeam === leftTeamNum) },
-                    { team: rightTeamNum, x: 355, y: activeYRight, name: rightPlayerName, color: leftIsT1 ? '#22c55e' : '#f43f5e', isServer: (servingTeam === rightTeamNum) }
+                    { team: leftTeamNum, x: 46, y: activeYLeft, name: leftPlayerName, color: leftIsT1 ? '#f43f5e' : '#22c55e', isServer: (servingTeam === leftTeamNum) },
+                    { team: rightTeamNum, x: 394, y: activeYRight, name: rightPlayerName, color: leftIsT1 ? '#22c55e' : '#f43f5e', isServer: (servingTeam === rightTeamNum) }
                 ];
             } else {
-                const leftTopName = String(leftIsT1 ? cs.t1Left : cs.t2Left);
-                const leftBottomName = String(leftIsT1 ? cs.t1Right : cs.t2Right);
-                const rightTopName = String(leftIsT1 ? cs.t2Right : cs.t1Right);
-                const rightBottomName = String(leftIsT1 ? cs.t2Left : cs.t1Left);
+                const leftTopName = String(leftIsT1 ? cs.t1Left : cs.t2Left);     // Ô Trái của đội trái (y = 58)
+                const leftBottomName = String(leftIsT1 ? cs.t1Right : cs.t2Right); // Ô Phải của đội trái (y = 152)
+                const rightTopName = String(leftIsT1 ? cs.t2Right : cs.t1Right);   // Ô Phải của đội phải (y = 58)
+                const rightBottomName = String(leftIsT1 ? cs.t2Left : cs.t1Left);  // Ô Trái của đội phải (y = 152)
+
+                const isLeftServing = (servingTeam === leftTeamNum);
+
+                // Tọa độ X cho đội bên trái:
+                // - Nếu giao bóng: cả 2 đứng cuối sân (x = 44)
+                // - Nếu đỡ bóng: người đỡ chéo góc với người giao đứng cuối sân (x = 44), đồng đội đứng trên lưới (x = 158)
+                let leftTopX = 44;
+                let leftBottomX = 44;
+                if (!isLeftServing) {
+                    // Đội phải đang giao ở ô phải (y=58 khi chẵn -> chéo sang ô y=152 của đội trái; y=152 khi lẻ -> chéo sang ô y=58 của đội trái)
+                    const leftReceiverY = 210 - rightServerY;
+                    leftTopX = (leftReceiverY === 58) ? 44 : 158;
+                    leftBottomX = (leftReceiverY === 152) ? 44 : 158;
+                }
+
+                // Tọa độ X cho đội bên phải:
+                // - Nếu giao bóng: cả 2 đứng cuối sân (x = 396)
+                // - Nếu đỡ bóng: người đỡ chéo góc với người giao đứng cuối sân (x = 396), đồng đội đứng trên lưới (x = 282)
+                let rightTopX = 396;
+                let rightBottomX = 396;
+                if (isLeftServing) {
+                    const rightReceiverY = 210 - leftServerY;
+                    rightTopX = (rightReceiverY === 58) ? 396 : 282;
+                    rightBottomX = (rightReceiverY === 152) ? 396 : 282;
+                }
 
                 dots = [
-                    { team: leftTeamNum, x: 75, y: 58, name: leftTopName, color: leftIsT1 ? '#f43f5e' : '#22c55e', isServer: (servingTeam === leftTeamNum) && !isEvenScore },
-                    { team: leftTeamNum, x: 75, y: 152, name: leftBottomName, color: leftIsT1 ? '#f43f5e' : '#22c55e', isServer: (servingTeam === leftTeamNum) && isEvenScore },
-                    { team: rightTeamNum, x: 365, y: 58, name: rightTopName, color: leftIsT1 ? '#22c55e' : '#f43f5e', isServer: (servingTeam === rightTeamNum) && isEvenScore },
-                    { team: rightTeamNum, x: 365, y: 152, name: rightBottomName, color: leftIsT1 ? '#22c55e' : '#f43f5e', isServer: (servingTeam === rightTeamNum) && !isEvenScore }
+                    { team: leftTeamNum, x: leftTopX, y: 58, name: leftTopName, color: leftIsT1 ? '#f43f5e' : '#22c55e', isServer: isLeftServing && !isEvenScore },
+                    { team: leftTeamNum, x: leftBottomX, y: 152, name: leftBottomName, color: leftIsT1 ? '#f43f5e' : '#22c55e', isServer: isLeftServing && isEvenScore },
+                    { team: rightTeamNum, x: rightTopX, y: 58, name: rightTopName, color: leftIsT1 ? '#22c55e' : '#f43f5e', isServer: !isLeftServing && isEvenScore },
+                    { team: rightTeamNum, x: rightBottomX, y: 152, name: rightBottomName, color: leftIsT1 ? '#22c55e' : '#f43f5e', isServer: !isLeftServing && !isEvenScore }
                 ];
             }
 
@@ -1220,8 +1245,8 @@
             
             const dx = receiverDot.x - serverDot.x, dy = receiverDot.y - serverDot.y;
             const dist = Math.hypot(dx, dy) || 1;
-            const padStart = Math.min(72, dist * 0.30);
-            const padEnd = Math.min(76, dist * 0.32);
+            const padStart = Math.min(82, dist * 0.32);
+            const padEnd = Math.min(86, dist * 0.34);
             const startX = serverDot.x + (dx / dist) * padStart;
             const startY = serverDot.y + (dy / dist) * padStart;
             const endX = receiverDot.x - (dx / dist) * padEnd;
@@ -1232,13 +1257,13 @@
             `;
 
             document.getElementById('courtSvgPlayers').innerHTML = dots.map(d => `
-                <div class="absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-none" style="left: ${(d.x / 440) * 100}%; top: ${(d.y / 210) * 100}%;">
+                <div class="absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-none transition-all duration-300" style="left: ${(d.x / 440) * 100}%; top: ${(d.y / 210) * 100}%;">
                     ${d.isServer ? `<div class="absolute -top-1 w-6 h-6 rounded-full border-2 border-amber-400 bg-amber-400/20 serve-blinking"></div>` : ''}
                     <div class="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold text-white shadow-md border ${d.isServer ? 'border-amber-300' : 'border-white'}" style="background-color: ${d.color};">
                         <i class="fa-solid fa-user text-[7px]"></i>
                     </div>
                     <div class="mt-0.5 px-1.5 py-0.2 rounded bg-slate-950/95 border ${d.isServer ? 'border-amber-400/80 text-amber-300' : 'border-white/20 text-white'} text-[9px] font-bold whitespace-nowrap shadow leading-tight">
-                        ${String(d.name || 'VĐV').slice(0, 14)}
+                        ${String(d.name || 'VĐV').slice(0, 12)}
                     </div>
                 </div>
             `).join('');
