@@ -50,8 +50,8 @@
                 <nav class="hidden lg:flex space-x-1">
                     <button onclick="switchTab('home')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-brand-400 bg-slate-900 border border-brand-500/20" data-tab="home"><i class="fa-solid fa-house mr-1.5"></i> Tổng quan Sân</button>
                     <button onclick="switchTab('matches')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-900/50" data-tab="matches"><i class="fa-solid fa-calendar-days mr-1.5"></i> Lịch thi đấu theo Sân</button>
-                    <button onclick="switchTab('bracket')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-900/50" data-tab="bracket"><i class="fa-solid fa-sitemap mr-1.5"></i> Nhánh Serie A & B</button>
-                    <button onclick="switchTab('standings')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-900/50" data-tab="standings"><i class="fa-solid fa-trophy mr-1.5"></i> Bảng xếp hạng</button>
+                    <button onclick="switchTab('bracket')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-900/50" data-tab="bracket"><i class="fa-solid fa-sitemap mr-1.5"></i> Nhánh A & B (Knock-out)</button>
+                    <button onclick="switchTab('standings')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-900/50" data-tab="standings"><i class="fa-solid fa-trophy mr-1.5"></i> Vòng Bảng</button>
                     <button onclick="switchTab('teams')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-900/50" data-tab="teams"><i class="fa-solid fa-users mr-1.5"></i> Đội tuyển</button>
                     <button onclick="switchTab('admin')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition text-amber-400 hover:bg-slate-900/50" data-tab="admin"><i class="fa-solid fa-gear mr-1.5"></i> Quản trị</button>
                 </nav>
@@ -65,8 +65,8 @@
         <div id="mobile-menu" class="hidden lg:hidden px-4 pt-2 pb-4 space-y-1 bg-slate-950 border-b border-slate-800">
             <button onclick="switchTab('home'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-brand-400 bg-slate-900">Tổng quan Sân</button>
             <button onclick="switchTab('matches'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">Lịch thi đấu theo Sân</button>
-            <button onclick="switchTab('bracket'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">Nhánh Serie A & B</button>
-            <button onclick="switchTab('standings'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">Bảng xếp hạng</button>
+            <button onclick="switchTab('bracket'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">Nhánh A & B (Knock-out)</button>
+            <button onclick="switchTab('standings'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">Vòng Bảng</button>
             <button onclick="switchTab('teams'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-900">Đội tuyển</button>
             <button onclick="switchTab('admin'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-amber-400 hover:bg-slate-900">Quản trị</button>
         </div>
@@ -89,7 +89,7 @@
                         Trạng Thái Thi Đấu <span class="text-brand-400">Tất Cả 8 Sân</span>
                     </h2>
                     <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
-                        Theo dõi diễn biến trực tiếp đồng thời trên cả 8 Sân đấu (Sân 1 đến Sân 8). Bấm vào từng sân để xem danh sách và tỷ số đầy đủ tất cả nội dung đã diễn ra.
+                        Theo dõi diễn biến trực tiếp đồng thời trên cả 8 Sân đấu (Sân 1 đến Sân 8). Bấm vào từng sân để xem chi tiết các nội dung: Đôi nam, Đôi nữ, Đôi nam nữ, Đơn.
                     </p>
                 </div>
             </div>
@@ -149,51 +149,57 @@
             <div id="matches-by-court-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </section>
 
-        <!-- TAB 3: BRACKET SERIE A & B (TỰ ĐỘNG CHIA NHÁNH TỪ VÒNG BẢNG) -->
+        <!-- TAB 3: BRACKET SERIE A & B (VÒNG KNOCK-OUT, TỨ KẾT, CHUNG KẾT 2 NHÁNH) -->
         <section id="tab-bracket" class="tab-content hidden space-y-6">
             <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-800 flex justify-between items-center">
                 <div>
-                    <h2 class="text-xl font-bold text-white flex items-center"><i class="fa-solid fa-sitemap text-brand-400 mr-2"></i> Phân Nhánh Tự Động: Serie A & Serie B</h2>
-                    <p class="text-xs text-slate-400">Top 1-2 vòng bảng tự động nhảy sang <strong>Serie A</strong>, Top 3-4 vòng bảng tự động sang <strong>Serie B</strong>.</p>
+                    <h2 class="text-xl font-bold text-white flex items-center"><i class="fa-solid fa-sitemap text-brand-400 mr-2"></i> Vòng Knock-out: Nhánh Serie A & Serie B</h2>
+                    <p class="text-xs text-slate-400">Top 1-2 vòng bảng tự động vào <strong>Serie A</strong> (Tứ kết/Bán kết/Chung kết), Top 3-4 vào <strong>Serie B</strong>.</p>
                 </div>
                 <button onclick="renderBracket()" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 transition text-xs border border-slate-800"><i class="fa-solid fa-rotate mr-1"></i> Làm mới</button>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- NHÁNH SERIE A (Top 1-2) -->
+                <!-- NHÁNH SERIE A -->
                 <div class="bg-slate-900/40 border border-brand-500/30 p-5 rounded-2xl space-y-4 shadow-xl">
                     <div class="flex items-center justify-between pb-3 border-b border-slate-800">
                         <h3 class="font-black text-brand-400 text-base uppercase flex items-center">
                             <i class="fa-solid fa-trophy mr-2 text-amber-400"></i> Nhánh Serie A (Tranh Vô Địch)
                         </h3>
-                        <span class="text-[10px] bg-brand-500/20 text-brand-300 px-2 py-0.5 rounded font-bold">Top 1 & 2 Bảng</span>
+                        <span class="text-[10px] bg-brand-500/20 text-brand-300 px-2 py-0.5 rounded font-bold">Top 1 & 2 Vòng Bảng</span>
                     </div>
-                    <div id="serie-a-container" class="space-y-3">
-                        <!-- Dynamic generated -->
+                    <div class="space-y-4">
+                        <div class="text-xs font-bold text-amber-400 uppercase tracking-wide">1. Bán Kết Serie A</div>
+                        <div id="serie-a-semifinals" class="space-y-2"></div>
+                        <div class="text-xs font-bold text-amber-400 uppercase tracking-wide pt-2 border-t border-slate-800">2. Chung Kết Serie A (Tranh Vô Địch)</div>
+                        <div id="serie-a-final" class="space-y-2"></div>
                     </div>
                 </div>
 
-                <!-- NHÁNH SERIE B (Top 3-4) -->
+                <!-- NHÁNH SERIE B -->
                 <div class="bg-slate-900/40 border border-blue-500/30 p-5 rounded-2xl space-y-4 shadow-xl">
                     <div class="flex items-center justify-between pb-3 border-b border-slate-800">
                         <h3 class="font-black text-blue-400 text-base uppercase flex items-center">
                             <i class="fa-solid fa-medal mr-2 text-blue-400"></i> Nhánh Serie B (Tranh Hạng Phụ)
                         </h3>
-                        <span class="text-[10px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded font-bold">Top 3 & 4 Bảng</span>
+                        <span class="text-[10px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded font-bold">Top 3 & 4 Vòng Bảng</span>
                     </div>
-                    <div id="serie-b-container" class="space-y-3">
-                        <!-- Dynamic generated -->
+                    <div class="space-y-4">
+                        <div class="text-xs font-bold text-blue-400 uppercase tracking-wide">1. Bán Kết Serie B</div>
+                        <div id="serie-b-semifinals" class="space-y-2"></div>
+                        <div class="text-xs font-bold text-blue-400 uppercase tracking-wide pt-2 border-t border-slate-800">2. Chung Kết Serie B</div>
+                        <div id="serie-b-final" class="space-y-2"></div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- TAB 4: STANDINGS (THẮNG ĐỒNG ĐỘI 3đ, HÒA 2đ, THUA 1đ) -->
+        <!-- TAB 4: STANDINGS (VÒNG BẢNG) -->
         <section id="tab-standings" class="tab-content hidden space-y-6">
             <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-800 flex justify-between items-center">
                 <div>
-                    <h2 class="text-xl font-bold text-white">Bảng xếp hạng vòng bảng đồng đội</h2>
-                    <p class="text-xs text-slate-400">Quy định điểm toàn đoàn: Thắng (3đ), Hòa (2đ), Thua (1đ).</p>
+                    <h2 class="text-xl font-bold text-white">Bảng xếp hạng Vòng bảng (Round Robin)</h2>
+                    <p class="text-xs text-slate-400">Quy định điểm: Thắng (3đ), Hòa (2đ), Thua (1đ). Top 1-2 vào Serie A, Top 3-4 vào Serie B.</p>
                 </div>
                 <button onclick="renderStandings()" class="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 transition text-sm border border-slate-800"><i class="fa-solid fa-rotate mr-1"></i> Làm mới</button>
             </div>
@@ -209,7 +215,7 @@
                                 <th class="py-3.5 px-4 font-semibold text-center">Hòa (2đ)</th>
                                 <th class="py-3.5 px-4 font-semibold text-center">Thua (1đ)</th>
                                 <th class="py-3.5 px-4 font-semibold text-center text-brand-400">Điểm Tổng</th>
-                                <th class="py-3.5 px-4 font-semibold text-center text-amber-400">Phân Nhánh</th>
+                                <th class="py-3.5 px-4 font-semibold text-center text-amber-400">Phân Nhánh Knock-out</th>
                             </tr>
                         </thead>
                         <tbody id="standings-table-body" class="divide-y divide-slate-800/80 text-sm"></tbody>
@@ -685,7 +691,7 @@
             document.getElementById('match-detail-modal').classList.remove('flex'); 
         }
 
-        // TÍNH ĐIỂM VÒNG BẢNG VÀ TỰ ĐỘNG PHÂN NHÁNH SERIE A, B
+        // TÍNH ĐIỂM VÒNG BẢNG & TỰ ĐỘNG CHIA NHÁNH KNOCK-OUT
         function calculateStandingsAndSeries() {
             let statsMap = {};
             teams.forEach(t => { statsMap[t.name] = { name: t.name, played: 0, won: 0, drawn: 0, lost: 0, points: 0 }; });
@@ -704,10 +710,9 @@
 
             let sortedArr = Object.values(statsMap).sort((a, b) => b.points - a.points);
             
-            // Gán phân nhánh: Hạng 1,2 -> Serie A | Hạng 3,4 -> Serie B
             sortedArr.forEach((st, idx) => {
-                if (idx < 2) st.series = 'Serie A (Tranh Vô Địch)';
-                else st.series = 'Serie B (Hạng Phụ)';
+                if (idx < 2) st.series = 'Serie A (Top 1-2)';
+                else st.series = 'Serie B (Top 3-4)';
             });
 
             return sortedArr;
@@ -737,58 +742,52 @@
         function renderBracket() {
             const standings = calculateStandingsAndSeries();
             
-            // Nhánh Serie A (Hạng 1 và 2)
-            const serieAContainer = document.getElementById('serie-a-container');
+            // Nhánh SERIE A (Top 1 và 2)
+            const aSemi = document.getElementById('serie-a-semifinals');
+            const aFinal = document.getElementById('serie-a-final');
             if (standings.length >= 2) {
-                const team1 = standings[0].name;
-                const team2 = standings[1].name;
-                serieAContainer.innerHTML = `
-                    <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-4 shadow-lg space-y-3">
-                        <div class="text-xs text-brand-400 font-bold flex justify-between">
-                            <span>Chung kết Serie A • Sân 1</span>
-                            <span class="text-emerald-400">Tranh Cúp Vô Địch</span>
-                        </div>
-                        <div class="space-y-2 text-xs font-bold">
-                            <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded-lg text-white">
-                                <span>${team1} <span class="text-[10px] text-amber-400 font-normal">(Top 1 Bảng)</span></span>
-                                <span class="font-black text-brand-400 text-sm">-</span>
-                            </div>
-                            <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded-lg text-white">
-                                <span>${team2} <span class="text-[10px] text-amber-400 font-normal">(Top 2 Bảng)</span></span>
-                                <span class="font-black text-slate-400 text-sm">-</span>
-                            </div>
-                        </div>
+                const t1 = standings[0].name, t2 = standings[1].name;
+                aSemi.innerHTML = `
+                    <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-3 text-xs space-y-1.5">
+                        <div class="text-[10px] text-slate-400 flex justify-between"><span>Trận Bán Kết / Sân 1</span><span class="text-brand-400 font-bold">Chính thức</span></div>
+                        <div class="flex justify-between items-center bg-slate-900 p-2 rounded text-white font-semibold"><span>${t1} (Top 1)</span><span>-</span></div>
+                        <div class="flex justify-between items-center bg-slate-900 p-2 rounded text-white font-semibold"><span>${t2} (Top 2)</span><span>-</span></div>
+                    </div>
+                `;
+                aFinal.innerHTML = `
+                    <div class="bg-gradient-to-br from-slate-950 to-amber-950/20 border border-amber-500/40 rounded-xl p-3.5 text-xs space-y-2 shadow-lg">
+                        <div class="text-[10px] text-amber-400 font-bold flex justify-between"><span>🏆 Chung Kết Serie A • Sân Trung Tâm</span><span>Tranh Vô Địch</span></div>
+                        <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded text-white font-bold"><span>Thắng Bán Kết A1</span><span>-</span></div>
+                        <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded text-white font-bold"><span>Thắng Bán Kết A2</span><span>-</span></div>
                     </div>
                 `;
             } else {
-                serieAContainer.innerHTML = `<div class="text-center text-xs text-slate-500 py-6">Cần ít nhất 2 đội để phân nhánh Serie A.</div>`;
+                aSemi.innerHTML = `<div class="text-center text-xs text-slate-500 py-4">Chưa đủ dữ liệu bảng xếp hạng cho nhánh Serie A.</div>`;
+                aFinal.innerHTML = '';
             }
 
-            // Nhánh Serie B (Hạng 3 và 4)
-            const serieBContainer = document.getElementById('serie-b-container');
+            // Nhánh SERIE B (Top 3 và 4)
+            const bSemi = document.getElementById('serie-b-semifinals');
+            const bFinal = document.getElementById('serie-b-final');
             if (standings.length >= 4) {
-                const team3 = standings[2].name;
-                const team4 = standings[3].name;
-                serieBContainer.innerHTML = `
-                    <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-4 shadow-lg space-y-3">
-                        <div class="text-xs text-blue-400 font-bold flex justify-between">
-                            <span>Chung kết Serie B • Sân 2</span>
-                            <span class="text-blue-300">Tranh Hạng Ba / Khuyến Khích</span>
-                        </div>
-                        <div class="space-y-2 text-xs font-bold">
-                            <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded-lg text-white">
-                                <span>${team3} <span class="text-[10px] text-blue-400 font-normal">(Top 3 Bảng)</span></span>
-                                <span class="font-black text-blue-400 text-sm">-</span>
-                            </div>
-                            <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded-lg text-white">
-                                <span>${team4} <span class="text-[10px] text-blue-400 font-normal">(Top 4 Bảng)</span></span>
-                                <span class="font-black text-slate-400 text-sm">-</span>
-                            </div>
-                        </div>
+                const t3 = standings[2].name, t4 = standings[3].name;
+                bSemi.innerHTML = `
+                    <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-3 text-xs space-y-1.5">
+                        <div class="text-[10px] text-slate-400 flex justify-between"><span>Trận Phân Hạng / Sân 2</span><span class="text-blue-400 font-bold">Chính thức</span></div>
+                        <div class="flex justify-between items-center bg-slate-900 p-2 rounded text-white font-semibold"><span>${t3} (Top 3)</span><span>-</span></div>
+                        <div class="flex justify-between items-center bg-slate-900 p-2 rounded text-white font-semibold"><span>${t4} (Top 4)</span><span>-</span></div>
+                    </div>
+                `;
+                bFinal.innerHTML = `
+                    <div class="bg-gradient-to-br from-slate-950 to-blue-950/20 border border-blue-500/40 rounded-xl p-3.5 text-xs space-y-2 shadow-lg">
+                        <div class="text-[10px] text-blue-400 font-bold flex justify-between"><span>🥇 Chung Kết Serie B • Sân Phụ</span><span>Tranh Hạng Ba</span></div>
+                        <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded text-white font-bold"><span>Thắng Bán Kết B1</span><span>-</span></div>
+                        <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded text-white font-bold"><span>Thắng Bán Kết B2</span><span>-</span></div>
                     </div>
                 `;
             } else {
-                serieBContainer.innerHTML = `<div class="text-center text-xs text-slate-500 py-6">Cần ít nhất 4 đội để phân nhánh Serie B.</div>`;
+                bSemi.innerHTML = `<div class="text-center text-xs text-slate-500 py-4">Cần ít nhất 4 đội để kích hoạt nhánh Serie B.</div>`;
+                bFinal.innerHTML = '';
             }
         }
 
