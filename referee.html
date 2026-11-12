@@ -1032,39 +1032,40 @@
             }
         }
 
-        // ĐỔI PHÁT BÓNG: LẬP TỨC ĐỔI NGƯỜI GIAO (LƯỢT 1 -> LƯỢT 2) HOẶC ĐỔI SANG ĐỘI KIA (SIDE-OUT) & XOAY MŨI TÊN
+        // ĐỔI PHÁT BÓNG:
+        // - Lượt 1 -> Lượt 2 (cùng đội): Giữ nguyên chỗ đứng 2 VĐV, chuyển người giao & mũi tên sang ô còn lại!
+        // - Lượt 2 -> Side-Out (đổi đội): Chuyển giao sang đội đối phương, đổi vị trí cuối sân / vạch bếp & xoay mũi tên!
         function triggerSideOutOrNextServer() {
             const { match: m } = findMatchById(state.activeLiveMatchId);
             if (!m) return;
             const isSingles = (m.catKey === 'DON');
             if (!m.courtState) syncMatchCourtStateFromLineup(m, false);
-            const cs = m.courtState;
 
             if (isSingles) {
                 m.servingTeam = (m.servingTeam || 1) === 1 ? 2 : 1;
                 m.serverNum = 1;
-                showToast(`🔄 Đổi quyền giao bóng!`);
+                const newServerClub = getClubById(m.servingTeam === 1 ? m.club1Id : m.club2Id).name;
+                showToast(`🔄 Đổi giao bóng sang ${newServerClub}!`);
             } else {
                 const curServerNum = m.serverNum || 2;
                 const curTeam = m.servingTeam || 1;
 
                 if (curServerNum === 1) {
-                    // Chuyển sang người giao thứ 2 của cùng đội: Hoán đổi 2 VĐV trong đội để người thứ 2 vào đúng ô giao
+                    // Chuyển sang người giao thứ 2: KHÔNG hoán đổi chỗ 2 VĐV, chỉ chuyển người phát sang ô còn lại
                     m.serverNum = 2;
-                    if (curTeam === 1) {
-                        const tmp = cs.t1Left; cs.t1Left = cs.t1Right; cs.t1Right = tmp;
-                    } else {
-                        const tmp = cs.t2Left; cs.t2Left = cs.t2Right; cs.t2Right = tmp;
-                    }
-                    showToast(`2️⃣ Chuyển sang người giao bóng số 2!`);
+                    showToast(`2️⃣ Người giao bóng số 2 (Ô còn lại)!`);
                 } else {
-                    // Mất lượt giao thứ 2 -> Đổi giao sang đội đối phương (Side-Out) với lượt 1
+                    // Mất lượt giao thứ 2 -> Đổi sang đội đối phương với lượt giao số 1
                     m.servingTeam = curTeam === 1 ? 2 : 1;
                     m.serverNum = 1;
                     const newServerClub = getClubById(m.servingTeam === 1 ? m.club1Id : m.club2Id).name;
                     showToast(`🔄 Đổi giao bóng sang ${newServerClub} (Lượt 1)!`);
                 }
             }
+
+            saveState();
+            renderRefereeApp();
+        }
 
             saveState();
             renderRefereeApp();
