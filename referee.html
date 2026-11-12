@@ -62,10 +62,11 @@
         }
         .animate-coin { animation: coin-spin 0.65s ease-out; }
 
-        .fluid-score-num { font-size: clamp(1.75rem, 6.5dvh, 2.75rem); line-height: 1; }
-        .ref-score-btn { height: clamp(40px, 9.5dvh, 56px); }
+        .fluid-score-num { font-size: clamp(1.85rem, 6.5dvh, 2.8rem); line-height: 1; }
+        .ref-score-btn { height: clamp(42px, 9.5dvh, 56px); }
 
-        @media (orientation: landscape) and (max-height: 600px) {
+        /* TỐI ƯU BỐ CỤC KHI XOAY NGANG ĐIỆN THOẠI (LANDSCAPE) - MỞ RỘNG SÂN 2D TO RÕ */
+        @media (orientation: landscape) and (max-height: 620px) {
             body {
                 max-width: 100% !important;
                 flex-direction: row !important;
@@ -73,31 +74,52 @@
                 gap: 8px !important;
             }
             #leftLandscapeCol {
-                width: 49% !important;
+                width: 54% !important;
                 height: 100% !important;
                 display: flex !important;
                 flex-direction: column !important;
                 justify-content: space-between !important;
-                gap: 5px !important;
+                gap: 4px !important;
             }
             #rightLandscapeCol {
-                width: 51% !important;
+                width: 46% !important;
                 height: 100% !important;
                 display: flex !important;
                 flex-direction: column !important;
                 justify-content: space-between !important;
-                gap: 5px !important;
+                gap: 4px !important;
+            }
+            /* Gộp Header và thanh chọn nội dung thành 1 hàng gọn để dành tối đa chiều cao cho Sơ đồ sân */
+            #topHeaderAndMatchRow {
+                flex-direction: row !important;
+                align-items: stretch !important;
+                gap: 4px !important;
+            }
+            #mainHeaderBox {
+                flex: 0 0 46% !important;
+                padding: 4px 8px !important;
+            }
+            #matchSelectorBox {
+                flex: 1 1 54% !important;
+                padding: 4px 8px !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: center !important;
+            }
+            #courtPanelBox {
+                padding: 6px !important;
+                gap: 4px !important;
             }
             #courtSvgWrapper {
                 height: auto !important;
                 flex: 1 1 0% !important;
-                min-height: 82px !important;
+                min-height: 130px !important;
             }
             .fluid-score-num {
-                font-size: clamp(1.6rem, 11dvh, 2.5rem) !important;
+                font-size: clamp(1.8rem, 12.5dvh, 2.7rem) !important;
             }
             .ref-score-btn {
-                height: clamp(36px, 12.5dvh, 52px) !important;
+                height: clamp(38px, 13dvh, 52px) !important;
             }
         }
     </style>
@@ -106,39 +128,42 @@
 
     <!-- CỘT TRÁI -->
     <div id="leftLandscapeCol" class="flex flex-col gap-1.5 shrink-0">
-        <!-- 1. HEADER -->
-        <header class="bg-slate-900/95 border border-brand-500/30 rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-2 shadow-lg shrink-0 backdrop-blur-md">
-            <div class="flex items-center gap-2 min-w-0">
-                <div class="w-7 h-7 rounded-lg overflow-hidden bg-gradient-to-tr from-orange-600 via-amber-500 to-brand-600 flex items-center justify-center shadow shrink-0 border border-amber-400/40">
-                    <img src="logo_tiger_2.jpg" alt="Logo Bính Dần" class="w-full h-full object-cover">
-                </div>
-                <div class="min-w-0">
-                    <div class="text-[9px] text-brand-400 font-extrabold uppercase tracking-wide truncate leading-tight">Trọng Tài Bính Dần 1986</div>
-                    <div class="flex items-center gap-1.5 truncate mt-0.5">
-                        <span id="syncStatusDot" class="w-2 h-2 rounded-full bg-amber-400 live-dot shrink-0"></span>
-                        <span class="text-[11px] font-bold text-white truncate leading-tight" id="refereeCourtTitle">Đang chọn sân...</span>
+        <!-- HÀNG TRÊN: HEADER + CHỌN NỘI DUNG (TỰ XẾP NGANG KHI XOAY ĐIỆN THOẠI) -->
+        <div id="topHeaderAndMatchRow" class="flex flex-col gap-1.5 shrink-0">
+            <!-- 1. HEADER -->
+            <header id="mainHeaderBox" class="bg-slate-900/95 border border-brand-500/30 rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-2 shadow-lg shrink-0 backdrop-blur-md">
+                <div class="flex items-center gap-2 min-w-0">
+                    <div class="w-7 h-7 rounded-lg overflow-hidden bg-gradient-to-tr from-orange-600 via-amber-500 to-brand-600 flex items-center justify-center shadow shrink-0 border border-amber-400/40">
+                        <img src="logo_tiger_2.jpg" alt="Logo Bính Dần" class="w-full h-full object-cover">
+                    </div>
+                    <div class="min-w-0">
+                        <div class="text-[9px] text-brand-400 font-extrabold uppercase tracking-wide truncate leading-tight">Trọng Tài Bính Dần</div>
+                        <div class="flex items-center gap-1 truncate mt-0.5">
+                            <span id="syncStatusDot" class="w-2 h-2 rounded-full bg-amber-400 live-dot shrink-0"></span>
+                            <span class="text-[10px] font-bold text-white truncate leading-tight" id="refereeCourtTitle">Đang chọn sân...</span>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="shrink-0">
-                <select id="refereeCourtSelect" onchange="changeRefereeCourt(this.value)" class="bg-slate-950 border border-brand-500/40 rounded-lg px-2 py-1 text-brand-400 font-extrabold text-xs shadow-inner focus:outline-none">
-                    <option value="Sân 1">Sân 1</option><option value="Sân 2">Sân 2</option><option value="Sân 3">Sân 3</option><option value="Sân 4">Sân 4</option>
-                    <option value="Sân 5">Sân 5</option><option value="Sân 6">Sân 6</option><option value="Sân 7">Sân 7</option><option value="Sân 8">Sân 8</option>
-                </select>
-            </div>
-        </header>
+                <div class="shrink-0">
+                    <select id="refereeCourtSelect" onchange="changeRefereeCourt(this.value)" class="bg-slate-950 border border-brand-500/40 rounded-lg px-2 py-1 text-brand-400 font-extrabold text-xs shadow-inner focus:outline-none">
+                        <option value="Sân 1">Sân 1</option><option value="Sân 2">Sân 2</option><option value="Sân 3">Sân 3</option><option value="Sân 4">Sân 4</option>
+                        <option value="Sân 5">Sân 5</option><option value="Sân 6">Sân 6</option><option value="Sân 7">Sân 7</option><option value="Sân 8">Sân 8</option>
+                    </select>
+                </div>
+            </header>
 
-        <!-- 2. CHỌN NỘI DUNG THI ĐẤU TRÊN SÂN -->
-        <div class="bg-slate-900/70 border border-slate-800 rounded-xl px-2.5 py-1.5 space-y-1 shadow shrink-0 backdrop-blur-sm">
-            <div class="flex justify-between items-center text-[10px] font-bold leading-none">
-                <span class="text-amber-400 uppercase tracking-wide truncate" id="activeTieHeaderLabel"><i class="fa-solid fa-swords mr-1"></i>Đang tải cặp đấu...</span>
-                <span id="liveCurrentCourtBadge" class="text-brand-400 uppercase font-extrabold shrink-0">Sân 1</span>
+            <!-- 2. CHỌN NỘI DUNG THI ĐẤU TRÊN SÂN -->
+            <div id="matchSelectorBox" class="bg-slate-900/70 border border-slate-800 rounded-xl px-2.5 py-1.5 space-y-1 shadow shrink-0 backdrop-blur-sm">
+                <div class="flex justify-between items-center text-[10px] font-bold leading-none gap-1">
+                    <span class="text-amber-400 uppercase tracking-wide truncate" id="activeTieHeaderLabel"><i class="fa-solid fa-swords mr-1"></i>Đang tải...</span>
+                    <span id="liveCurrentCourtBadge" class="text-brand-400 uppercase font-extrabold shrink-0">Sân 1</span>
+                </div>
+                <select id="liveMatchSelector" onchange="selectMatchForScoreboard(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs font-bold text-white focus:outline-none focus:border-brand-500"></select>
             </div>
-            <select id="liveMatchSelector" onchange="selectMatchForScoreboard(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs font-bold text-white focus:outline-none focus:border-brand-500"></select>
         </div>
 
         <!-- 3. SƠ ĐỒ SÂN 2D & CHỌN SÂN / BÓNG / GIAO / ĐỠ -->
-        <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-2 flex flex-col justify-between gap-1.5 shadow-lg flex-1 min-h-0 backdrop-blur-sm">
+        <div id="courtPanelBox" class="bg-slate-900/60 border border-slate-800 rounded-xl p-2 flex flex-col justify-between gap-1.5 shadow-lg flex-1 min-h-0 backdrop-blur-sm">
             <div class="flex justify-between items-center text-[10px] font-extrabold text-amber-400 shrink-0 gap-1">
                 <span class="truncate"><i class="fa-solid fa-earth-asia mr-1"></i>Sơ Đồ Sân 2D</span>
                 <div class="flex items-center gap-1.5 shrink-0">
@@ -151,10 +176,10 @@
                 </div>
             </div>
 
-            <!-- Khung sân: 2 vạch bếp gần lưới hơn (x=156 và x=284, lưới ở x=220) -->
-            <div id="courtSvgWrapper" class="relative w-full h-[126px] sm:h-[142px] bg-emerald-950/90 rounded-lg border-2 border-emerald-500/40 overflow-hidden shadow-inner flex items-center justify-center">
-                <div id="leftCourtSideTag" class="absolute top-1 left-2 text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-black/45 text-slate-300 pointer-events-none z-10">Sân Trái</div>
-                <div id="rightCourtSideTag" class="absolute top-1 right-2 text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-black/45 text-slate-300 pointer-events-none z-10">Sân Phải</div>
+            <!-- Khung sân 2D -->
+            <div id="courtSvgWrapper" class="relative w-full h-[130px] sm:h-[146px] bg-emerald-950/90 rounded-lg border-2 border-emerald-500/40 overflow-hidden shadow-inner flex items-center justify-center">
+                <div id="leftCourtSideTag" class="absolute top-1 left-2 text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-black/50 text-slate-200 pointer-events-none z-10">Sân Trái</div>
+                <div id="rightCourtSideTag" class="absolute top-1 right-2 text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-black/50 text-slate-200 pointer-events-none z-10">Sân Phải</div>
 
                 <svg class="absolute inset-0 w-full h-full" viewBox="0 0 440 210" preserveAspectRatio="none">
                     <defs>
@@ -203,36 +228,37 @@
             <button type="button" onclick="openRefereePlayerSetupModal(1)" class="px-2 py-0.5 rounded bg-amber-500 text-slate-950 font-extrabold text-[9px] shrink-0">Đội hình</button>
         </div>
 
-        <!-- 4. KHUNG TỶ SỐ TRỰC TIẾP & NÚT BẤM ĐIỂM -->
+        <!-- 4. KHUNG TỶ SỐ TRỰC TIẾP & NÚT BẤM ĐIỂM (TỰ ĐỔI BÊN TRÁI/PHẢI KHI ĐỔI SÂN) -->
         <div class="bg-slate-900/85 border-2 border-brand-500/40 rounded-xl p-2.5 flex-1 min-h-0 flex flex-col justify-between shadow-2xl backdrop-blur-md">
             <div class="flex justify-between items-center border-b border-slate-800 pb-1.5 gap-2 shrink-0">
                 <span id="liveMatchStageBadge" class="px-2 py-0.5 rounded bg-brand-600 text-white font-extrabold text-[10px] uppercase shadow truncate">Đang tải...</span>
                 <div class="font-score font-extrabold text-amber-300 text-xs sm:text-sm tracking-widest bg-slate-950 px-2 py-0.5 rounded-lg border border-amber-400/30 shadow-inner shrink-0" id="officialScoreCallout">0 - 0 - 2</div>
             </div>
 
+            <!-- KHU VỰC TỶ SỐ 2 BÊN SÂN (BÊN TRÁI SÂN <-> BÊN PHẢI SÂN) -->
             <div class="grid grid-cols-2 gap-2 my-auto py-1">
-                <!-- ĐỘI 1 -->
-                <div class="bg-slate-950 border border-brand-500/30 rounded-xl p-2 space-y-1 relative flex flex-col justify-between shadow">
-                    <div id="team1ServeBadge" class="hidden absolute -top-2 -left-1 bg-brand-600 text-white px-1.5 py-0.5 rounded font-extrabold text-[8px] shadow uppercase">Phát (<span id="team1ServerNum">2</span>)</div>
-                    <div id="team1SideMiniBadge" class="absolute -top-2 right-1.5 bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded font-bold text-[8px] border border-slate-700">Sân Trái</div>
+                <!-- Ô BÊN TRÁI SÂN -->
+                <div id="leftScorePanelBox" class="bg-slate-950 border border-brand-500/30 rounded-xl p-2 space-y-1 relative flex flex-col justify-between shadow transition-all">
+                    <div id="leftServeBadge" class="hidden absolute -top-2 -left-1 bg-brand-600 text-white px-1.5 py-0.5 rounded font-extrabold text-[8px] shadow uppercase">Phát (<span id="leftServerNum">2</span>)</div>
+                    <div class="absolute -top-2 right-1.5 bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded font-bold text-[8px] border border-slate-700">Sân Trái</div>
                     <div>
-                        <div id="liveTeam1ClubLabel" class="text-[9px] text-brand-400 font-extrabold uppercase truncate leading-tight">Đội 1</div>
-                        <div id="liveTeam1Name" class="text-[11px] font-bold text-white truncate leading-tight mt-0.5">---</div>
+                        <div id="leftPanelClubLabel" class="text-[9px] text-brand-400 font-extrabold uppercase truncate leading-tight">Đội Trái</div>
+                        <div id="leftPanelPlayerName" class="text-[11px] font-bold text-white truncate leading-tight mt-0.5">---</div>
                     </div>
-                    <div class="text-center font-score fluid-score-num font-extrabold text-brand-400 py-0.5" id="liveTeam1Score">0</div>
-                    <div class="grid grid-cols-3 gap-1" id="team1ScoreActionArea"></div>
+                    <div class="text-center font-score fluid-score-num font-extrabold text-brand-400 py-0.5" id="leftPanelScore">0</div>
+                    <div class="grid grid-cols-3 gap-1" id="leftPanelActionArea"></div>
                 </div>
 
-                <!-- ĐỘI 2 -->
-                <div class="bg-slate-950 border border-fengshui-wood/30 rounded-xl p-2 space-y-1 relative flex flex-col justify-between shadow">
-                    <div id="team2ServeBadge" class="hidden absolute -top-2 -left-1 bg-fengshui-wood text-slate-950 px-1.5 py-0.5 rounded font-extrabold text-[8px] shadow uppercase">Phát (<span id="team2ServerNum">2</span>)</div>
-                    <div id="team2SideMiniBadge" class="absolute -top-2 right-1.5 bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded font-bold text-[8px] border border-slate-700">Sân Phải</div>
+                <!-- Ô BÊN PHẢI SÂN -->
+                <div id="rightScorePanelBox" class="bg-slate-950 border border-fengshui-wood/30 rounded-xl p-2 space-y-1 relative flex flex-col justify-between shadow transition-all">
+                    <div id="rightServeBadge" class="hidden absolute -top-2 -left-1 bg-fengshui-wood text-slate-950 px-1.5 py-0.5 rounded font-extrabold text-[8px] shadow uppercase">Phát (<span id="rightServerNum">2</span>)</div>
+                    <div class="absolute -top-2 right-1.5 bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded font-bold text-[8px] border border-slate-700">Sân Phải</div>
                     <div>
-                        <div id="liveTeam2ClubLabel" class="text-[9px] text-fengshui-wood font-extrabold uppercase truncate leading-tight">Đội 2</div>
-                        <div id="liveTeam2Name" class="text-[11px] font-bold text-white truncate leading-tight mt-0.5">---</div>
+                        <div id="rightPanelClubLabel" class="text-[9px] text-fengshui-wood font-extrabold uppercase truncate leading-tight">Đội Phải</div>
+                        <div id="rightPanelPlayerName" class="text-[11px] font-bold text-white truncate leading-tight mt-0.5">---</div>
                     </div>
-                    <div class="text-center font-score fluid-score-num font-extrabold text-fengshui-wood py-0.5" id="liveTeam2Score">0</div>
-                    <div class="grid grid-cols-3 gap-1" id="team2ScoreActionArea"></div>
+                    <div class="text-center font-score fluid-score-num font-extrabold text-fengshui-wood py-0.5" id="rightPanelScore">0</div>
+                    <div class="grid grid-cols-3 gap-1" id="rightPanelActionArea"></div>
                 </div>
             </div>
 
@@ -543,9 +569,6 @@
             showToast(`✅ ${serverClub} giao bóng trước (${tempTossSwapped ? 'Đổi bên sân' : 'Giữ bên sân'})!`);
         }
 
-        // QUY TẮC THẮNG TRẬN:
-        // - Nội dung Đôi: Chạm 15 điểm là thắng ngay (15đ)
-        // - Nội dung Đơn: Chạm 21 điểm là thắng ngay (21đ)
         function evaluateMatchWinCondition(m) {
             const isSingles = (m.catKey === 'DON');
             const target = isSingles ? 21 : 15;
@@ -997,9 +1020,6 @@
             const maxTeamScore = Math.max(s1, s2);
             const currentTotalScore = s1 + s2;
             const target = isSingles ? 21 : 15;
-            // QUY TẮC ĐỔI SÂN:
-            // - Nội dung Đôi (chạm 15): Một đội đạt 8 điểm thì đổi sân
-            // - Nội dung Đơn (chạm 21): Một đội đạt 11 điểm thì đổi sân
             const switchScoreThreshold = isSingles ? 11 : 8;
 
             if (maxTeamScore === switchScoreThreshold && !m.swappedAtMid && delta > 0) {
@@ -1095,6 +1115,7 @@
             m.courtState.swappedEnds = !m.courtState.swappedEnds;
             saveState();
             renderRefereeApp();
+            showToast('🔄 Đã đổi bên sân & đổi vị trí bảng điểm!');
         }
 
         function renderRefereeApp() {
@@ -1120,7 +1141,7 @@
             const cl2 = getClubById(m.club2Id).name;
 
             if (headerLabelEl) {
-                headerLabelEl.innerHTML = `<i class="fa-solid fa-swords mr-1"></i>Đang đấu: <span class="text-white">${cl1}</span> vs <span class="text-white">${cl2}</span>`;
+                headerLabelEl.innerHTML = `<i class="fa-solid fa-swords mr-1"></i><span class="text-white">${cl1}</span> vs <span class="text-white">${cl2}</span>`;
             }
 
             if (selector) {
@@ -1160,12 +1181,6 @@
             const cleanStageLabel = (m.catLabel || '').replace(/^Vòng \d+\s*•\s*/i, '');
             const ruleTag = isSingles ? 'Chạm 21 • 11đ đổi sân' : 'Chạm 15 • 8đ đổi sân';
             document.getElementById('liveMatchStageBadge').textContent = `${cleanStageLabel} (${ruleTag})`;
-            document.getElementById('liveTeam1ClubLabel').textContent = cl1;
-            document.getElementById('liveTeam2ClubLabel').textContent = cl2;
-            document.getElementById('liveTeam1Name').textContent = m.team1Name || cs.t1Right;
-            document.getElementById('liveTeam2Name').textContent = m.team2Name || cs.t2Right;
-            document.getElementById('liveTeam1Score').textContent = m.score1 || 0;
-            document.getElementById('liveTeam2Score').textContent = m.score2 || 0;
 
             const servingTeam = m.servingTeam || 1;
             const serverNum = isSingles ? 1 : (m.serverNum || 2);
@@ -1176,40 +1191,61 @@
                 ? `${servingScore} - ${receivingScore}` 
                 : `${servingScore} - ${receivingScore} - ${serverNum}`;
 
-            const isTeam1Serving = (servingTeam === 1);
-            document.getElementById('team1ServeBadge').classList.toggle('hidden', !isTeam1Serving);
-            document.getElementById('team1ServerNum').textContent = serverNum;
-            const isTeam2Serving = (servingTeam === 2);
-            document.getElementById('team2ServeBadge').classList.toggle('hidden', !isTeam2Serving);
-            document.getElementById('team2ServerNum').textContent = serverNum;
-
+            // ĐỒNG BỘ HAI Ô TÍNH ĐIỂM BÊN TRÁI / BÊN PHẢI THEO ĐÚNG VỊ TRÍ HAI ĐỘI TRÊN SÂN
             const leftIsT1 = !cs.swappedEnds;
-            document.getElementById('team1SideMiniBadge').textContent = leftIsT1 ? 'Sân Trái' : 'Sân Phải';
-            document.getElementById('team2SideMiniBadge').textContent = leftIsT1 ? 'Sân Phải' : 'Sân Trái';
+            const leftTeamNum = leftIsT1 ? 1 : 2;
+            const rightTeamNum = leftIsT1 ? 2 : 1;
+
             document.getElementById('leftCourtSideTag').textContent = leftIsT1 ? cl1 : cl2;
             document.getElementById('rightCourtSideTag').textContent = leftIsT1 ? cl2 : cl1;
 
-            if (isMatchFinished) {
-                document.getElementById('team1ScoreActionArea').innerHTML = `<div class="col-span-3 ref-score-btn rounded-lg bg-emerald-950/60 text-emerald-300 font-extrabold text-xs flex items-center justify-center">🏆 XONG</div>`;
-                document.getElementById('team2ScoreActionArea').innerHTML = `<div class="col-span-3 ref-score-btn rounded-lg bg-emerald-950/60 text-emerald-300 font-extrabold text-xs flex items-center justify-center">🏆 XONG</div>`;
-            } else {
-                document.getElementById('team1ScoreActionArea').innerHTML = isTeam1Serving ? `
-                    <button type="button" onclick="adjustLiveScore(1, -1)" class="col-span-1 ref-score-btn rounded-lg bg-slate-800 text-slate-200 font-bold text-base">-1</button>
-                    <button type="button" onclick="adjustLiveScore(1, 1)" class="col-span-2 ref-score-btn rounded-lg bg-gradient-to-r from-brand-600 to-amber-500 text-white font-extrabold text-xs uppercase shadow-lg">+ ĐIỂM</button>
-                ` : `<div class="col-span-3 ref-score-btn rounded-lg bg-slate-900 text-slate-500 text-[11px] font-bold flex items-center justify-center">🔒 Khóa</div>`;
+            const renderSideScoreBox = (sidePos, teamNum) => {
+                const isT1 = (teamNum === 1);
+                const clubLabel = isT1 ? cl1 : cl2;
+                const playerName = isT1 ? (m.team1Name || cs.t1Right) : (m.team2Name || cs.t2Right);
+                const scoreVal = isT1 ? (m.score1 || 0) : (m.score2 || 0);
+                const isServing = (servingTeam === teamNum);
 
-                document.getElementById('team2ScoreActionArea').innerHTML = isTeam2Serving ? `
-                    <button type="button" onclick="adjustLiveScore(2, -1)" class="col-span-1 ref-score-btn rounded-lg bg-slate-800 text-slate-200 font-bold text-base">-1</button>
-                    <button type="button" onclick="adjustLiveScore(2, 1)" class="col-span-2 ref-score-btn rounded-lg bg-gradient-to-r from-fengshui-wood to-emerald-400 text-slate-950 font-extrabold text-xs uppercase shadow-lg">+ ĐIỂM</button>
-                ` : `<div class="col-span-3 ref-score-btn rounded-lg bg-slate-900 text-slate-500 text-[11px] font-bold flex items-center justify-center">🔒 Khóa</div>`;
-            }
+                const boxEl = document.getElementById(`${sidePos}ScorePanelBox`);
+                const serveBadgeEl = document.getElementById(`${sidePos}ServeBadge`);
+                const serverNumEl = document.getElementById(`${sidePos}ServerNum`);
+                const clubEl = document.getElementById(`${sidePos}PanelClubLabel`);
+                const nameEl = document.getElementById(`${sidePos}PanelPlayerName`);
+                const scoreEl = document.getElementById(`${sidePos}PanelScore`);
+                const actionEl = document.getElementById(`${sidePos}PanelActionArea`);
 
+                // Cập nhật màu sắc nhận diện theo từng đội (Đội 1: Hồng Brand, Đội 2: Xanh Lá Wood)
+                boxEl.className = `bg-slate-950 border ${isT1 ? 'border-brand-500/40' : 'border-fengshui-wood/40'} rounded-xl p-2 space-y-1 relative flex flex-col justify-between shadow transition-all`;
+                serveBadgeEl.className = `${isServing ? '' : 'hidden'} absolute -top-2 -left-1 ${isT1 ? 'bg-brand-600 text-white' : 'bg-fengshui-wood text-slate-950'} px-1.5 py-0.5 rounded font-extrabold text-[8px] shadow uppercase`;
+                serverNumEl.textContent = serverNum;
+
+                clubEl.className = `text-[9px] ${isT1 ? 'text-brand-400' : 'text-fengshui-wood'} font-extrabold uppercase truncate leading-tight`;
+                clubEl.textContent = clubLabel;
+                nameEl.textContent = playerName;
+
+                scoreEl.className = `text-center font-score fluid-score-num font-extrabold ${isT1 ? 'text-brand-400' : 'text-fengshui-wood'} py-0.5`;
+                scoreEl.textContent = scoreVal;
+
+                if (isMatchFinished) {
+                    actionEl.innerHTML = `<div class="col-span-3 ref-score-btn rounded-lg bg-emerald-950/60 text-emerald-300 font-extrabold text-xs flex items-center justify-center">🏆 XONG</div>`;
+                } else if (isServing) {
+                    const btnGradient = isT1 ? 'from-brand-600 to-amber-500 text-white' : 'from-fengshui-wood to-emerald-400 text-slate-950';
+                    actionEl.innerHTML = `
+                        <button type="button" onclick="adjustLiveScore(${teamNum}, -1)" class="col-span-1 ref-score-btn rounded-lg bg-slate-800 text-slate-200 font-bold text-base">-1</button>
+                        <button type="button" onclick="adjustLiveScore(${teamNum}, 1)" class="col-span-2 ref-score-btn rounded-lg bg-gradient-to-r ${btnGradient} font-extrabold text-xs uppercase shadow-lg">+ ĐIỂM</button>
+                    `;
+                } else {
+                    actionEl.innerHTML = `<div class="col-span-3 ref-score-btn rounded-lg bg-slate-900 text-slate-500 text-[11px] font-bold flex items-center justify-center">🔒 Khóa</div>`;
+                }
+            };
+
+            renderSideScoreBox('left', leftTeamNum);
+            renderSideScoreBox('right', rightTeamNum);
+
+            // VỊ TRÍ ĐỨNG & MŨI TÊN CHÉO SÂN
             const isEvenScore = (servingScore % 2 === 0);
             const isFirstServerSlot = isSingles || (serverNum === 1);
             const serveFromRightBox = isFirstServerSlot ? isEvenScore : !isEvenScore;
-
-            const leftTeamNum = leftIsT1 ? 1 : 2;
-            const rightTeamNum = leftIsT1 ? 2 : 1;
 
             const leftServerY = serveFromRightBox ? 152 : 58;
             const rightServerY = serveFromRightBox ? 58 : 152;
