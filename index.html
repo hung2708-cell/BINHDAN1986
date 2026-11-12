@@ -39,7 +39,7 @@
     <header class="bg-slate-950/90 backdrop-blur-md sticky top-0 z-50 border-b border-slate-800/80">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
-                <!-- LOGO BÍNH DẦN PICKLEBALL (Dùng Icon Vector chuẩn, không lo mất ảnh) -->
+                <!-- LOGO BÍNH DẦN PICKLEBALL -->
                 <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('home')">
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-600 via-amber-500 to-brand-600 flex items-center justify-center shadow-lg shadow-brand-500/30 border border-amber-400/50 text-white font-black text-lg">
                         <i class="fa-solid fa-cat" title="Bính Dần Tiger"></i>
@@ -232,16 +232,16 @@
             </div>
         </section>
 
-        <!-- TAB 5: TEAMS & IMPORT EXCEL -->
+        <!-- TAB 5: TEAMS & IMPORT EXCEL / QUẢN LÝ VĐV -->
         <section id="tab-teams" class="tab-content hidden space-y-6">
             <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
                     <h2 class="text-xl font-bold text-white">Danh sách Đội tuyển & VĐV</h2>
-                    <p class="text-xs text-slate-400">Quản lý các đội tuyển và nhập danh sách vận động viên từ file Excel.</p>
+                    <p class="text-xs text-slate-400">Quản lý đội tuyển, thêm/xóa CLB, VĐV hoặc import từ Excel.</p>
                 </div>
                 <div class="flex items-center gap-2">
                     <label class="px-3 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs transition cursor-pointer shadow flex items-center">
-                        <i class="fa-solid fa-file-import mr-1.5"></i> Import danh sách VĐV (Excel)
+                        <i class="fa-solid fa-file-import mr-1.5"></i> Import VĐV (Excel)
                         <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" onchange="importPlayersFromExcel(event)" class="hidden">
                     </label>
                 </div>
@@ -262,7 +262,7 @@
                 </div>
                 <div class="flex flex-wrap gap-2">
                     <a href="referee.html?court=Sân 1" target="_blank" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold transition shadow-lg flex items-center"><i class="fa-solid fa-whistle mr-2"></i> Mở App Trọng Tài (Sân 1)</a>
-                    <button onclick="promptResetDefault()" class="px-4 py-2 rounded-xl bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 text-xs font-semibold transition border border-rose-500/20 flex items-center"><i class="fa-solid fa-rotate-right mr-2"></i> Khôi phục dữ liệu mẫu</button>
+                    <button onclick="promptResetDefault()" class="px-4 py-2 rounded-xl bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 text-xs font-semibold transition border border-rose-500/20 flex items-center"><i class="fa-solid fa-rotate-right mr-2"></i> Làm mới toàn bộ hệ thống</button>
                 </div>
             </div>
 
@@ -277,7 +277,7 @@
                     </form>
                 </div>
 
-                <!-- Add Match Form -->
+                <!-- Add Match Form (Cho phép chọn 11 hoặc 15 cho đôi, 21 cho đơn) -->
                 <div class="bg-slate-900/50 border border-slate-800 p-5 rounded-2xl space-y-4">
                     <h3 class="font-bold text-white flex items-center text-base"><i class="fa-solid fa-calendar-plus text-emerald-400 mr-2"></i> Lên lịch trận đấu mới</h3>
                     <form id="form-add-match" onsubmit="handleAddMatch(event)" class="space-y-3">
@@ -377,40 +377,18 @@
 
         const COURTS_LIST = ['Sân 1', 'Sân 2', 'Sân 3', 'Sân 4', 'Sân 5', 'Sân 6', 'Sân 7', 'Sân 8'];
 
-        const DEFAULT_TEAMS = [
-            { id: 't1', name: 'Bính Dần A', players: [{id: 'p1', name: 'Lâm Anh Hùng', level: 'A'}, {id: 'p2', name: 'Đức Cường', level: 'A'}] },
-            { id: 't2', name: 'Hổ Phách FC', players: [{id: 'p3', name: 'Hoàng Nam', level: 'A'}, {id: 'p4', name: 'Quốc Tuấn', level: 'B'}] },
-            { id: 't3', name: 'Sơn Lâm Team', players: [{id: 'p5', name: 'Đình Trọng', level: 'A'}, {id: 'p6', name: 'Vũ Thắng', level: 'B'}] },
-            { id: 't4', name: '1986 Warriors', players: [{id: 'p7', name: 'Tuấn Anh', level: 'A'}, {id: 'p8', name: 'Đức Huy', level: 'B'}] }
-        ];
-
-        const DEFAULT_TIES = [
-            {
-                id: 'tie1',
-                matches: [
-                    { id: 'm1', club1Id: 't1', club2Id: 't2', catKey: 'DOI', catLabel: 'Đôi Nam 1', court: 'Sân 1', score1: 11, score2: 9, status: 'FINISHED', maxPlayers: 2, team1Name: 'Lâm Anh Hùng / Đức Cường', team2Name: 'Hoàng Nam / Quốc Tuấn', targetPoints: 11 },
-                    { id: 'm2', club1Id: 't3', club2Id: 't4', catKey: 'DOI', catLabel: 'Đôi Nữ 1', court: 'Sân 2', score1: 8, score2: 11, status: 'FINISHED', maxPlayers: 2, team1Name: 'Đình Trọng / Vũ Thắng', team2Name: 'Tuấn Anh / Đức Huy', targetPoints: 11 },
-                    { id: 'm3', club1Id: 't1', club2Id: 't4', catKey: 'DON', catLabel: 'Nội Dung Đơn', court: 'Sân 3', score1: 15, score2: 12, status: 'LIVE', maxPlayers: 1, team1Name: 'Lâm Anh Hùng', team2Name: 'Tuấn Anh', targetPoints: 21 },
-                    { id: 'm4', club1Id: 't2', club2Id: 't3', catKey: 'DOI', catLabel: 'Đôi Nam Nữ 1', court: 'Sân 4', score1: 7, score2: 9, status: 'LIVE', maxPlayers: 2, team1Name: 'Hoàng Nam / Quốc Tuấn', team2Name: 'Đình Trọng / Vũ Thắng', targetPoints: 11 },
-                    { id: 'm5', club1Id: 't1', club2Id: 't3', catKey: 'DOI', catLabel: 'Đôi Nam 2', court: 'Sân 5', score1: 0, score2: 0, status: 'UPCOMING', maxPlayers: 2, team1Name: 'Lâm Anh Hùng / Đức Cường', team2Name: 'Đình Trọng / Vũ Thắng', targetPoints: 11 },
-                    { id: 'm6', club1Id: 't2', club2Id: 't4', catKey: 'DOI', catLabel: 'Đôi Nữ 2', court: 'Sân 6', score1: 0, score2: 0, status: 'UPCOMING', maxPlayers: 2, team1Name: 'Hoàng Nam / Quốc Tuấn', team2Name: 'Tuấn Anh / Đức Huy', targetPoints: 11 },
-                    { id: 'm7', club1Id: 't1', club2Id: 't2', catKey: 'DOI', catLabel: 'Đôi Nam Nữ 2', court: 'Sân 7', score1: 0, score2: 0, status: 'UPCOMING', maxPlayers: 2, team1Name: 'Lâm Anh Hùng / Đức Cường', team2Name: 'Hoàng Nam / Quốc Tuấn', targetPoints: 11 },
-                    { id: 'm8', club1Id: 't3', club2Id: 't4', catKey: 'DON', catLabel: 'Nội Dung Đơn 2', court: 'Sân 8', score1: 0, score2: 0, status: 'UPCOMING', maxPlayers: 1, team1Name: 'Đình Trọng', team2Name: 'Đức Huy', targetPoints: 21 }
-                ]
-            }
-        ];
-
+        // XÓA SẠCH DỮ LIỆU CŨ MẶC ĐỊNH (BẮT ĐẦU TRỐNG HOẶC TỰ IMPORT)
         function loadState() {
             try {
                 let raw = localStorage.getItem(STORAGE_KEY);
                 if (raw) return JSON.parse(raw);
             } catch (e) {}
-            return { ties: DEFAULT_TIES, clubs: DEFAULT_TEAMS, activeLiveMatchId: 'm3' };
+            return { ties: [], clubs: [], activeLiveMatchId: null };
         }
 
         let appState = loadState();
-        if (!appState.clubs) appState.clubs = DEFAULT_TEAMS;
-        if (!appState.ties) appState.ties = DEFAULT_TIES;
+        if (!appState.clubs) appState.clubs = [];
+        if (!appState.ties) appState.ties = [];
 
         let teams = appState.clubs;
         let matches = [];
@@ -479,9 +457,7 @@
             if(pwd === ADMIN_PASSWORD) {
                 const actionToRun = pendingAction;
                 closePasswordModal();
-                if(actionToRun) {
-                    actionToRun();
-                }
+                if(actionToRun) actionToRun();
             } else {
                 errorMsg.classList.remove('hidden');
                 document.getElementById('modal-password-input').focus();
@@ -495,32 +471,63 @@
         });
 
         function promptResetDefault() {
-            openPasswordModal("Khôi phục dữ liệu mẫu ban đầu", () => {
-                appState = { ties: JSON.parse(JSON.stringify(DEFAULT_TIES)), clubs: JSON.parse(JSON.stringify(DEFAULT_TEAMS)), activeLiveMatchId: 'm3' };
+            openPasswordModal("Xóa toàn bộ hệ thống giải đấu", () => {
+                appState = { ties: [], clubs: [], activeLiveMatchId: null };
                 teams = appState.clubs;
                 matches = [];
-                appState.ties.forEach(t => (t.matches || []).forEach(m => matches.push(m)));
                 saveAppState();
-                showToast('✅ Đã khôi phục dữ liệu 8 sân mẫu thành công!');
+                showToast('🗑️ Đã làm sạch toàn bộ dữ liệu hệ thống!');
             });
         }
 
         function promptDeleteMatch(matchId) {
             openPasswordModal("Xác nhận xóa trận đấu", () => {
                 if (appState.ties) {
-                    appState.ties.forEach(t => { 
-                        if (t.matches) { 
-                            t.matches = t.matches.filter(m => m.id !== matchId); 
-                        } 
-                    });
+                    appState.ties.forEach(t => { if (t.matches) t.matches = t.matches.filter(m => m.id !== matchId); });
                 }
                 matches = matches.filter(m => m.id !== matchId);
                 saveAppState();
-                showToast('🗑️ Đã xóa trận đấu khỏi hệ thống!');
+                showToast('🗑️ Đã xóa trận đấu!');
             });
         }
 
-        // HÀM CHUYỂN TAB & GHI NHỚ TRẠNG THÁI KHI REFRESH (F5)
+        // CHỨC NĂNG XÓA CLB & XÓA VĐV
+        function promptDeleteTeam(teamId) {
+            openPasswordModal("Xác nhận xóa Đội tuyển / CLB", () => {
+                appState.clubs = appState.clubs.filter(c => c.id !== teamId);
+                teams = appState.clubs;
+                saveAppState();
+                showToast('🗑️ Đã xóa đội tuyển thành công!');
+            });
+        }
+
+        function promptDeletePlayer(teamId, playerId) {
+            openPasswordModal("Xác nhận xóa vận động viên", () => {
+                const team = appState.clubs.find(c => c.id === teamId);
+                if (team && team.players) {
+                    team.players = team.players.filter(p => p.id !== playerId);
+                    saveAppState();
+                    showToast('🗑️ Đã xóa VĐV thành công!');
+                }
+            });
+        }
+
+        // CHO PHÉP THAY THẾ / SỬA TÊN VĐV TRONG TOÀN GIẢI
+        function promptEditPlayer(teamId, playerId, currentName) {
+            const newName = prompt("Nhập tên mới cho vận động viên:", currentName);
+            if (newName && newName.trim() !== "") {
+                const team = appState.clubs.find(c => c.id === teamId);
+                if (team && team.players) {
+                    const player = team.players.find(p => p.id === playerId);
+                    if (player) {
+                        player.name = newName.trim();
+                        saveAppState();
+                        showToast('✅ Đã cập nhật tên VĐV thành công!');
+                    }
+                }
+            }
+        }
+
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             const targetEl = document.getElementById(`tab-${tabId}`);
@@ -572,22 +579,19 @@
             document.getElementById('stat-finished-count').innerText = finishedCount;
         }
 
-        // TỔNG QUAN HIỂN THỊ ĐỦ CẢ 8 SÂN THI ĐẤU (SÂN 1 -> SÂN 8)
         function renderHomeOverview() {
             const container = document.getElementById('overview-courts-grid');
             if(!container) return;
 
+            if (matches.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-12 text-slate-500 bg-slate-900/30 rounded-2xl border border-slate-800">Chưa có lịch thi đấu nào. Hãy vào mục <strong>Quản trị</strong> để lên lịch các sân từ Sân 1 đến Sân 8.</div>`;
+                return;
+            }
+
             let html = '';
             COURTS_LIST.forEach(courtName => {
                 const courtMatches = matches.filter(m => (m.court || 'Sân 1') === courtName);
-                
-                let activeMatch = courtMatches.find(m => m.status === 'LIVE');
-                if(!activeMatch) {
-                    activeMatch = courtMatches.find(m => m.status === 'UPCOMING');
-                }
-                if(!activeMatch) {
-                    activeMatch = courtMatches[courtMatches.length - 1];
-                }
+                let activeMatch = courtMatches.find(m => m.status === 'LIVE') || courtMatches.find(m => m.status === 'UPCOMING') || courtMatches[courtMatches.length - 1];
 
                 if (!activeMatch) {
                     html += `
@@ -604,20 +608,11 @@
                         </div>
                     `;
                 } else {
-                    let statusBadge = '';
-                    if (activeMatch.status === 'LIVE') {
-                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-500/20 text-brand-400 border border-brand-500/30 animate-pulse"><i class="fa-solid fa-circle text-[8px] mr-1"></i>LIVE</span>`;
-                    } else if (activeMatch.status === 'FINISHED') {
-                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"><i class="fa-solid fa-check text-[8px] mr-1"></i>Đã xong</span>`;
-                    } else {
-                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">Sắp đấu</span>`;
-                    }
-
-                    const cName1 = getClubName(activeMatch.club1Id);
-                    const cName2 = getClubName(activeMatch.club2Id);
+                    let statusBadge = activeMatch.status === 'LIVE' ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-500/20 text-brand-400 border border-brand-500/30 animate-pulse">LIVE</span>` : (activeMatch.status === 'FINISHED' ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Đã xong</span>` : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">Sắp đấu</span>`);
+                    const cName1 = getClubName(activeMatch.club1Id), cName2 = getClubName(activeMatch.club2Id);
 
                     html += `
-                        <div class="bg-slate-900/70 border ${activeMatch.status === 'LIVE' ? 'border-brand-500/50 shadow-lg shadow-brand-500/10' : 'border-slate-800'} rounded-2xl p-4 flex flex-col justify-between space-y-3 backdrop-blur-sm hover:border-slate-700 transition">
+                        <div class="bg-slate-900/70 border ${activeMatch.status === 'LIVE' ? 'border-brand-500/50 shadow-lg' : 'border-slate-800'} rounded-2xl p-4 flex flex-col justify-between space-y-3 backdrop-blur-sm">
                             <div class="flex items-center justify-between pb-2 border-b border-slate-800">
                                 <span class="text-xs font-black text-amber-400 uppercase tracking-wide"><i class="fa-solid fa-location-dot mr-1"></i> ${courtName}</span>
                                 ${statusBadge}
@@ -625,26 +620,19 @@
                             <div>
                                 <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">${activeMatch.catLabel || 'Nội dung'}</div>
                                 <div class="grid grid-cols-7 items-center gap-1">
-                                    <div class="col-span-3 text-right"><div class="font-bold text-white text-xs truncate" title="${activeMatch.team1Name || cName1}">${activeMatch.team1Name || cName1}</div></div>
-                                    <div class="col-span-1 flex justify-center items-center bg-slate-950 py-1 rounded-lg border border-slate-800 font-score font-black text-brand-400 text-xs">
-                                        ${activeMatch.score1 || 0}-${activeMatch.score2 || 0}
-                                    </div>
-                                    <div class="col-span-3 text-left"><div class="font-bold text-white text-xs truncate" title="${activeMatch.team2Name || cName2}">${activeMatch.team2Name || cName2}</div></div>
+                                    <div class="col-span-3 text-right"><div class="font-bold text-white text-xs truncate">${activeMatch.team1Name || cName1}</div></div>
+                                    <div class="col-span-1 flex justify-center items-center bg-slate-950 py-1 rounded-lg border border-slate-800 font-score font-black text-brand-400 text-xs">${activeMatch.score1 || 0}-${activeMatch.score2 || 0}</div>
+                                    <div class="col-span-3 text-left"><div class="font-bold text-white text-xs truncate">${activeMatch.team2Name || cName2}</div></div>
                                 </div>
                             </div>
                             <div class="flex justify-between items-center pt-2 border-t border-slate-800/80 text-[11px]">
-                                <button onclick="openCourtDetailModal('${courtName}')" class="font-bold text-emerald-400 hover:text-emerald-300 flex items-center">
-                                    <i class="fa-solid fa-list-check mr-1"></i> Xem tất cả (${courtMatches.length})
-                                </button>
-                                <a href="referee.html?court=${encodeURIComponent(courtName)}" target="_blank" class="font-bold text-brand-400 hover:text-brand-300 flex items-center">
-                                    Mở Trọng Tài <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-[9px]"></i>
-                                </a>
+                                <button onclick="openCourtDetailModal('${courtName}')" class="font-bold text-emerald-400 hover:text-emerald-300"><i class="fa-solid fa-list-check mr-1"></i> Xem tất cả (${courtMatches.length})</button>
+                                <a href="referee.html?court=${encodeURIComponent(courtName)}" target="_blank" class="font-bold text-brand-400 hover:text-brand-300">Mở Trọng Tài <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i></a>
                             </div>
                         </div>
                     `;
                 }
             });
-
             container.innerHTML = html;
         }
 
@@ -661,7 +649,7 @@
             });
             const container = document.getElementById('matches-by-court-container');
             const filtered = matches.filter(m => (m.court || 'Sân 1') === courtName);
-            container.innerHTML = filtered.length ? filtered.map(m => createMatchCardHTML(m)).join('') : `<div class="col-span-full text-center py-12 text-slate-500 bg-slate-900/30 rounded-2xl border border-slate-800">Chưa có trận đấu nào được sắp xếp trên ${courtName}.</div>`;
+            container.innerHTML = filtered.length ? filtered.map(m => createMatchCardHTML(m)).join('') : `<div class="col-span-full text-center py-12 text-slate-500 bg-slate-900/30 rounded-2xl border border-slate-800">Chưa có trận đấu nào trên ${courtName}.</div>`;
         }
 
         function getClubName(id) { const found = teams.find(c => c.id === id); return found ? found.name : 'CLB'; }
@@ -702,7 +690,6 @@
                     </div>
                 </div>
             `).join('') : '<div class="text-center text-slate-500 py-6">Chưa có trận đấu nào trên sân này.</div>';
-            
             document.getElementById('match-detail-modal').classList.remove('hidden');
             document.getElementById('match-detail-modal').classList.add('flex');
         }
@@ -712,7 +699,7 @@
             document.getElementById('match-detail-modal').classList.remove('flex'); 
         }
 
-        // TÍNH ĐIỂM VÒNG BẢNG & TỰ ĐỘNG TIẾN VÒNG KNOCK-OUT
+        // TÍNH ĐIỂM VÒNG BẢNG & TỰ ĐỘNG CHIA NHÁNH
         function calculateStandingsAndSeries() {
             let statsMap = {};
             teams.forEach(t => { statsMap[t.name] = { name: t.name, played: 0, won: 0, drawn: 0, lost: 0, points: 0 }; });
@@ -755,7 +742,7 @@
                         <td class="py-3 px-4 text-center"><span class="px-2.5 py-1 rounded-full text-[11px] font-extrabold border ${badgeColor}">${st.series}</span></td>
                     </tr>
                 `;
-            }).join('') : `<tr><td colspan="8" class="text-center py-6 text-slate-500">Chưa có dữ liệu bảng xếp hạng.</td></tr>`;
+            }).join('') : `<tr><td colspan="8" class="text-center py-6 text-slate-500">Chưa có dữ liệu bảng xếp hạng vòng bảng.</td></tr>`;
         }
 
         function renderBracket() {
@@ -815,7 +802,7 @@
             }
         }
 
-        // TÍNH NĂNG IMPORT DANH SÁCH VĐV TỪ EXCEL
+        // IMPORT VÀ XUẤT EXCEL
         function importPlayersFromExcel(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -830,7 +817,7 @@
                     const json = XLSX.utils.sheet_to_json(worksheet);
 
                     if (json.length === 0) {
-                        showToast('File Excel trống hoặc không đúng định dạng!', true);
+                        showToast('File Excel trống!', true);
                         return;
                     }
 
@@ -840,14 +827,8 @@
                         const playerName = row['Họ và Tên VĐV'] || row['VĐV'] || row['Tên'] || row['Player'] || `VĐV ${idx+1}`;
                         const level = row['Cấp độ/Trình độ'] || row['Trình độ'] || row['Level'] || 'A';
 
-                        if (!teamsMap[teamName]) {
-                            teamsMap[teamName] = [];
-                        }
-                        teamsMap[teamName].push({
-                            id: 'p_' + Date.now() + '_' + idx,
-                            name: String(playerName).trim(),
-                            level: String(level).trim()
-                        });
+                        if (!teamsMap[teamName]) teamsMap[teamName] = [];
+                        teamsMap[teamName].push({ id: 'p_' + Date.now() + '_' + idx, name: String(playerName).trim(), level: String(level).trim() });
                     });
 
                     appState.clubs = Object.keys(teamsMap).map((tName, i) => ({
@@ -858,45 +839,60 @@
 
                     teams = appState.clubs;
                     saveAppState();
-                    showToast(`✅ Đã import thành công ${teams.length} đội tuyển từ file Excel!`);
+                    showToast(`✅ Đã import thành công ${teams.length} đội tuyển!`);
                 } catch (err) {
-                    console.error(err);
-                    showToast('Lỗi đọc file Excel. Vui lòng kiểm tra lại cấu trúc file!', true);
+                    showToast('Lỗi đọc file Excel!', true);
                 }
             };
             reader.readAsArrayBuffer(file);
         }
 
-        // TÍNH NĂNG XUẤT KẾT QUẢ RA FILE EXCEL
         function exportResultToExcel() {
             const standings = calculateStandingsAndSeries();
             let exportData = standings.map((st, i) => ({
                 "Hạng": i + 1,
                 "Tên Đội / CLB": st.name,
-                "Số Trận Đấu": st.played,
+                "Số Trận": st.played,
                 "Thắng (3đ)": st.won,
                 "Hòa (2đ)": st.drawn,
                 "Thua (1đ)": st.lost,
                 "Điểm Tổng": st.points,
-                "Phân Nhánh Knock-out": st.series
+                "Phân Nhánh": st.series
             }));
 
             const worksheet = XLSX.utils.json_to_sheet(exportData);
             const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "BangXepHang_BinhDan1986");
+            XLSX.utils.book_append_sheet(workbook, worksheet, "BangXepHang");
             XLSX.writeFile(workbook, "KetQua_Pickleball_BinhDan1986.xlsx");
-            showToast('📥 Đã xuất kết quả ra file Excel thành công!');
+            showToast('📥 Đã xuất kết quả ra Excel!');
         }
 
         function renderTeams() {
-            document.getElementById('teams-grid-container').innerHTML = teams.map(t => `
-                <div class="bg-slate-900/50 border border-slate-800 p-5 rounded-2xl space-y-3">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 rounded-xl bg-brand-500/10 text-brand-400 flex items-center justify-center font-bold">${t.name.charAt(0)}</div>
-                        <div><h3 class="font-bold text-white text-base">${t.name}</h3><p class="text-xs text-slate-400">${(t.players || []).length} thành viên</p></div>
+            const container = document.getElementById('teams-grid-container');
+            if (teams.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-12 text-slate-500 bg-slate-900/30 rounded-2xl border border-slate-800">Chưa có đội tuyển nào. Hãy bấm <strong>Import VĐV (Excel)</strong> hoặc vào mục <strong>Quản trị</strong> để thêm đội.</div>`;
+                return;
+            }
+
+            container.innerHTML = teams.map(t => `
+                <div class="bg-slate-900/50 border border-slate-800 p-5 rounded-2xl space-y-3 relative">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-xl bg-brand-500/10 text-brand-400 flex items-center justify-center font-bold">${t.name.charAt(0)}</div>
+                            <div><h3 class="font-bold text-white text-base">${t.name}</h3><p class="text-xs text-slate-400">${(t.players || []).length} VĐV</p></div>
+                        </div>
+                        <button onclick="promptDeleteTeam('${t.id}')" class="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-lg text-xs transition" title="Xóa toàn bộ CLB"><i class="fa-solid fa-trash"></i></button>
                     </div>
-                    <div class="pt-2 border-t border-slate-800 flex flex-wrap gap-1.5">
-                        ${(t.players || []).map(p => `<span class="px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-[11px] text-slate-300">${p.name} (${p.level})</span>`).join('')}
+                    <div class="pt-2 border-t border-slate-800 space-y-1.5">
+                        <span class="text-[11px] text-slate-500 block">Danh sách vận động viên (cho phép sửa/xóa):</span>
+                        <div class="flex flex-wrap gap-1.5">
+                            ${(t.players || []).map(p => `
+                                <div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-300">
+                                    <span onclick="promptEditPlayer('${t.id}', '${p.id}', '${p.name}')" class="cursor-pointer hover:text-brand-400" title="Bấm để sửa tên VĐV">${p.name} (${p.level})</span>
+                                    <button onclick="promptDeletePlayer('${t.id}', '${p.id}')" class="text-rose-500 hover:text-rose-400 ml-1" title="Xóa VĐV này"><i class="fa-solid fa-xmark text-[10px]"></i></button>
+                                </div>
+                            `).join('')}
+                        </div>
                     </div>
                 </div>
             `).join('');
@@ -912,14 +908,14 @@
         function renderAdminMatchesList() {
             const listEl = document.getElementById('admin-matches-list');
             if(!matches.length) {
-                listEl.innerHTML = `<div class="text-center py-6 text-slate-500 text-xs">Chưa có trận đấu nào.</div>`;
+                listEl.innerHTML = `<div class="text-center py-6 text-slate-500 text-xs">Chưa có trận đấu nào được tạo.</div>`;
                 return;
             }
             listEl.innerHTML = matches.map(m => `
                 <div class="bg-slate-950/80 border border-slate-800 p-4 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div class="text-xs text-white">
                         <span class="font-bold text-amber-400">[${m.court || 'Sân 1'}]</span> 
-                        <span class="font-semibold text-slate-300">(${m.catLabel || 'Trận'})</span>: 
+                        <span class="font-semibold text-slate-300">(${m.catLabel || 'Trận'}) • ${m.targetPoints || 11} điểm</span>: 
                         <span class="font-bold">${m.team1Name || getClubName(m.club1Id)}</span> vs <span class="font-bold">${m.team2Name || getClubName(m.club2Id)}</span>
                     </div>
                     <div class="flex items-center space-x-2 self-end sm:self-auto">
