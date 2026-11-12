@@ -75,7 +75,7 @@
     <!-- CHỌN NỘI DUNG THI ĐẤU -->
     <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-2.5 space-y-1 shadow-lg backdrop-blur-sm">
         <div class="flex justify-between items-center text-[10px] text-slate-400 font-bold">
-            <span>Chọn trận đấu / nội dung đồng đội:</span>
+            <span>Chọn trận đấu trên sân:</span>
             <span id="liveCurrentCourtBadge" class="text-brand-400 uppercase font-extrabold">Sân 1</span>
         </div>
         <select id="liveMatchSelector" onchange="selectMatchForScoreboard(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-brand-500"></select>
@@ -401,9 +401,10 @@
             const { match: m } = findMatchById(state.activeLiveMatchId);
             if (!m || m.status === 'FINISHED' || teamNum !== (m.servingTeam || 1)) return;
             
+            // KIỂM TRA BẮT BUỘC ĐÃ CHỌN ĐỦ VĐV MỚI CHO PHÉP TÍNH ĐIỂM
             const req = m.catKey === 'DON' ? 1 : 2;
             if ((m.team1PlayerIds || []).length < req || (m.team2PlayerIds || []).length < req) {
-                showToast('⚠️ Vui lòng bấm "Đăng Ký VĐV" trước khi tính điểm!');
+                showToast('⚠️ Bạn chưa đăng ký đủ VĐV thi đấu cho trận này!');
                 openRefereePlayerSetupModal();
                 return;
             }
@@ -511,7 +512,6 @@
             if (!m.courtState) syncMatchCourtStateFromLineup(m);
             const cs = m.courtState;
 
-            // MẶC ĐỊNH BẮT ĐẦU TRẬN ĐẤU THEO LUẬT LÀ 0-0-2 (ĐỘI GIAO - ĐỘI NHẬN - NGƯỜI PHÁT SỐ 2)
             if (m.servingTeam === undefined) m.servingTeam = 1;
             if (m.serverNum === undefined) m.serverNum = 2;
 
@@ -533,7 +533,6 @@
             const servingScore = servingTeam === 1 ? (parseInt(m.score1) || 0) : (parseInt(m.score2) || 0);
             const receivingScore = servingTeam === 1 ? (parseInt(m.score2) || 0) : (parseInt(m.score1) || 0);
             
-            // XƯỚNG ĐIỂM CHUẨN 0 - 0 - 2
             document.getElementById('officialScoreCallout').textContent = isSingles ? `${servingScore} - ${receivingScore}` : `${servingScore} - ${receivingScore} - ${serverNum}`;
 
             const isTeam1Serving = (servingTeam === 1);
@@ -555,29 +554,38 @@
                 document.getElementById('team2ScoreActionArea').innerHTML = isTeam2Serving ? `
                     <button type="button" onclick="adjustLiveScore(2, -1)" class="col-span-1 ref-score-btn h-12 rounded-lg bg-slate-800 text-slate-200 font-bold text-base">-1</button>
                     <button type="button" onclick="adjustLiveScore(2, 1)" class="col-span-2 ref-score-btn h-12 rounded-lg bg-gradient-to-r from-fengshui-wood to-emerald-400 text-slate-950 font-extrabold text-xs uppercase shadow-lg">+ ĐIỂM</button>
-                ` : `<div class="col-span-3 h-12 rounded-lg bg-slate-900 text-slate-500 text-[11px] font-bold flex items-center justify-center">🔒 Khóa</div>`;
+                ` : `<div class="col-span-3 h-12 rounded-lg bg-slate-900 text-slate-500 text-[11px] font-bold flex items-center justify-center">🔒 Khòa</div>`;
             }
 
+            // ĐỊNH TỌA ĐỘ VÀ ĐƯỜNG CHÉO CHUẨN XÁC THEO LUẬT PICKLEBALL (GIAO BÓNG CHÉO SÂN)
             const isEvenScore = (servingScore % 2 === 0);
             const leftIsT1 = !cs.swappedEnds;
             let dots = [];
 
             if (isSingles) {
+                // Đơn: Điểm chẵn đứng ô phải (y: 155), điểm lẻ đứng ô trái (y: 55)
+                const y1 = isEvenScore ? 155 : 55;
+                const y2 = isEvenScore ? 55 : 155;
                 dots = [
-                    { team: leftIsT1 ? 1 : 2, x: 100, y: 105, name: String(leftIsT1 ? cs.t1Right : cs.t2Right), color: '#f43f5e', isServer: (servingTeam === (leftIsT1 ? 1 : 2)) },
-                    { team: leftIsT1 ? 2 : 1, x: 340, y: 105, name: String(leftIsT1 ? cs.t2Right : cs.t1Right), color: '#22c55e', isServer: (servingTeam === (leftIsT1 ? 2 : 1)) }
+                    { team: leftIsT1 ? 1 : 2, x: 100, y: leftIsT1 ? y1 : y2, name: String(leftIsT1 ? cs.t1Right : cs.t2Right), color: '#f43f5e', isServer: (servingTeam === (leftIsT1 ? 1 : 2)) },
+                    { team: leftIsT1 ? 2 : 1, x: 340, y: leftIsT1 ? y2 : y1, name: String(leftIsT1 ? cs.t2Right : cs.t1Right), color: '#22c55e', isServer: (servingTeam === (leftIsT1 ? 2 : 1)) }
                 ];
             } else {
+                // Đôi: Điểm chẵn đứng ô phải (y: 155), điểm lẻ đứng ô trái (y: 55)
+                const t1Y = isEvenScore ? 155 : 55;
+                const t2Y = isEvenScore ? 55 : 155;
+
                 dots = [
                     { team: leftIsT1 ? 1 : 2, x: 75, y: 55, name: String(leftIsT1 ? cs.t1Left : cs.t2Left), color: '#f43f5e', isServer: (servingTeam === (leftIsT1 ? 1 : 2)) && !isEvenScore },
                     { team: leftIsT1 ? 1 : 2, x: 75, y: 155, name: String(leftIsT1 ? cs.t1Right : cs.t2Right), color: '#f43f5e', isServer: (servingTeam === (leftIsT1 ? 1 : 2)) && isEvenScore },
-                    { team: leftIsT1 ? 2 : 1, x: 365, y: 55, name: String(leftIsT1 ? cs.t2Right : cs.t1Right), color: '#22c55e', isServer: (servingTeam === (leftIsT1 ? 2 : 1)) && isEvenScore },
-                    { team: leftIsT1 ? 2 : 1, x: 365, y: 155, name: String(leftIsT1 ? cs.t2Left : cs.t2Left), color: '#22c55e', isServer: (servingTeam === (leftIsT1 ? 2 : 1)) && !isEvenScore }
+                    { team: leftIsT1 ? 2 : 1, x: 365, y: 55, name: String(leftIsT1 ? cs.t2Right : cs.t1Right), color: '#22c55e', isServer: (servingTeam === (leftIsT1 ? 2 : 1)) && !isEvenScore },
+                    { team: leftIsT1 ? 2 : 1, x: 365, y: 155, name: String(leftIsT1 ? cs.t2Left : cs.t2Left), color: '#22c55e', isServer: (servingTeam === (leftIsT1 ? 2 : 1)) && isEvenScore }
                 ];
             }
 
             const serverDot = dots.find(d => d.isServer) || dots[0];
-            const receiverDot = dots.find(d => d.team !== serverDot.team) || dots[dots.length - 1];
+            // Ô nhận bóng luôn nằm ở nửa sân đối phương và góc chéo tương ứng với người phát
+            const receiverDot = dots.find(d => d.team !== serverDot.team && Math.abs(d.y - (210 - serverDot.y)) < 40) || dots[dots.length - 1];
             
             const dx = receiverDot.x - serverDot.x, dy = receiverDot.y - serverDot.y;
             const dist = Math.hypot(dx, dy) || 1;
