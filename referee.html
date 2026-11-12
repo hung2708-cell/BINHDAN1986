@@ -43,8 +43,8 @@
             50% { opacity: 0.35; filter: drop-shadow(0 0 3px #ffffff); transform: scale(0.9); }
         }
         .serve-blinking { animation: serve-blink 0.6s ease-in-out infinite; }
-        @keyframes dash-flow { to { stroke-dashoffset: -24; } }
-        .serve-trajectory-line { stroke-dasharray: 8 4; animation: dash-flow 0.5s linear infinite; }
+        @keyframes dash-flow { to { stroke-dashoffset: -18; } }
+        .serve-trajectory-line { stroke-dasharray: 6 3; animation: dash-flow 0.55s linear infinite; }
         @media (max-width: 768px) { body { padding: 4px; } .ref-score-btn { height: 68px !important; font-size: 1.35rem !important; } }
     </style>
 </head>
@@ -90,17 +90,18 @@
         <button type="button" onclick="openRefereePlayerSetupModal(1)" class="px-2 py-1 rounded-lg bg-amber-500 text-slate-950 font-extrabold text-[10px] shrink-0 shadow">Đội hình</button>
     </div>
 
-    <!-- 1. SƠ ĐỒ SÂN 2D & MŨI TÊN ĐƯỜNG CHÉO -->
-    <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-2.5 space-y-1.5 shadow-xl backdrop-blur-sm">
+    <!-- 1. SƠ ĐỒ SÂN 2D, MŨI TÊN NGẮN & CHỌN NGƯỜI GIAO / ĐỠ BÓNG -->
+    <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-2.5 space-y-2 shadow-xl backdrop-blur-sm">
         <div class="flex justify-between items-center text-[11px] font-extrabold text-amber-400">
-            <span><i class="fa-solid fa-earth-asia mr-1"></i>Sơ Đồ Sân 2D & Giao Bóng Chéo</span>
+            <span><i class="fa-solid fa-earth-asia mr-1"></i>Sơ Đồ Sân 2D & Vị Trí Đứng</span>
             <button type="button" onclick="openRefereePlayerSetupModal(1)" class="px-2.5 py-1 rounded bg-brand-600 text-white font-extrabold text-[10px] shadow hover:bg-brand-500"><i class="fa-solid fa-users-gear mr-1"></i>Đăng Ký VĐV (5 Trận)</button>
         </div>
+
         <div class="relative w-full aspect-[2/1] bg-emerald-950/90 rounded-lg border-2 border-emerald-500/40 overflow-hidden shadow-inner flex items-center justify-center">
             <svg class="absolute inset-0 w-full h-full" viewBox="0 0 440 210" preserveAspectRatio="none">
                 <defs>
-                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="7" refY="3.5" orient="auto">
-                        <polygon points="0 0, 10 3.5, 0 7" fill="#f59e0b"/>
+                    <marker id="arrowhead" markerWidth="7" markerHeight="5" refX="5" refY="2.5" orient="auto">
+                        <polygon points="0 0, 7 2.5, 0 5" fill="#f59e0b"/>
                     </marker>
                 </defs>
                 <rect x="15" y="15" width="410" height="180" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.85"/>
@@ -112,6 +113,22 @@
                 <g id="courtDynamicVectors"></g>
             </svg>
             <div id="courtSvgPlayers" class="absolute inset-0 pointer-events-none"></div>
+        </div>
+
+        <!-- CHỌN TRỰC TIẾP NGƯỜI GIAO BÓNG & NGƯỜI ĐỠ BÓNG -->
+        <div class="grid grid-cols-2 gap-2 pt-0.5">
+            <div class="bg-slate-950/90 border border-amber-500/30 rounded-lg p-1.5 space-y-1">
+                <label class="block text-[9px] font-extrabold text-amber-400 uppercase tracking-wider">
+                    <i class="fa-solid fa-table-tennis-paddle-ball mr-1"></i>Người giao bóng:
+                </label>
+                <select id="selectCurrentServerPlayer" onchange="handleManualServerSelect(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-[11px] font-bold text-white focus:outline-none focus:border-amber-400"></select>
+            </div>
+            <div class="bg-slate-950/90 border border-emerald-500/30 rounded-lg p-1.5 space-y-1">
+                <label class="block text-[9px] font-extrabold text-emerald-400 uppercase tracking-wider">
+                    <i class="fa-solid fa-shield-halved mr-1"></i>Người đỡ bóng:
+                </label>
+                <select id="selectCurrentReceiverPlayer" onchange="handleManualReceiverSelect(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-[11px] font-bold text-white focus:outline-none focus:border-emerald-400"></select>
+            </div>
         </div>
     </div>
 
@@ -267,7 +284,6 @@
             return g === 'nữ' || g === 'nu' || g === 'f' || g === 'female';
         }
 
-        // Quy định giới tính từng nội dung: 'NAM' | 'NU' | 'NAM_NU' | 'ANY'
         function getMatchGenderRule(matchObj) {
             const label = String(matchObj?.catLabel || '').toLowerCase();
             if (label.includes('đôi nam nữ') || label.includes('nam nữ')) return 'NAM_NU';
@@ -276,7 +292,6 @@
             return 'ANY';
         }
 
-        // Quy định số lượng VĐV yêu cầu: Đơn = 4 VĐV (luân phiên mỗi 4 điểm tổng), Đôi = 2 VĐV
         function getRequiredPlayerCount(matchObj) {
             return matchObj?.catKey === 'DON' ? 4 : 2;
         }
@@ -325,14 +340,13 @@
             return { isWon: false };
         }
 
-        function syncMatchCourtStateFromLineup(m) {
+        function syncMatchCourtStateFromLineup(m, preservePositions = false) {
             const c1 = getClubById(m.club1Id), c2 = getClubById(m.club2Id);
             const p1List = (m.team1PlayerIds || []).map(pid => getPlayerById(m.club1Id, pid)?.name).filter(Boolean);
             const p2List = (m.team2PlayerIds || []).map(pid => getPlayerById(m.club2Id, pid)?.name).filter(Boolean);
             const prevSwapped = m.courtState ? Boolean(m.courtState.swappedEnds) : false;
             
             if (m.catKey === 'DON') {
-                // Trận đơn gồm 4 VĐV luân phiên nhau mỗi 4 điểm tổng
                 const totalScore = (parseInt(m.score1) || 0) + (parseInt(m.score2) || 0);
                 const rotIdx = Math.floor(totalScore / 4);
                 const activeP1 = p1List.length ? p1List[rotIdx % p1List.length] : c1.name;
@@ -346,6 +360,11 @@
 
             m.team1Name = p1List.length ? p1List.join(' / ') : c1.name;
             m.team2Name = p2List.length ? p2List.join(' / ') : c2.name;
+
+            if (preservePositions && m.courtState && p1List.includes(m.courtState.t1Right) && p2List.includes(m.courtState.t2Right)) {
+                return;
+            }
+
             m.courtState = { 
                 swappedEnds: prevSwapped, 
                 t1Right: p1List[0] || c1.name, 
@@ -353,6 +372,75 @@
                 t2Right: p2List[0] || c2.name, 
                 t2Left: p2List[1] || p2List[0] || c2.name 
             };
+        }
+
+        // CHỌN TRỰC TIẾP NGƯỜI GIAO BÓNG (ĐẶT VÀO Ô GIAO BÓNG CHẴN/LẺ HIỆN TẠI)
+        function handleManualServerSelect(selectedName) {
+            const { match: m } = findMatchById(state.activeLiveMatchId);
+            if (!m) return;
+            const isSingles = (m.catKey === 'DON');
+            if (!m.courtState) syncMatchCourtStateFromLineup(m);
+            const cs = m.courtState;
+
+            const servingTeam = m.servingTeam || 1;
+            const servingScore = servingTeam === 1 ? (parseInt(m.score1) || 0) : (parseInt(m.score2) || 0);
+            const isEvenScore = (servingScore % 2 === 0);
+
+            if (isSingles) {
+                if (servingTeam === 1) cs.t1Right = selectedName;
+                else cs.t2Right = selectedName;
+            } else {
+                const c1 = getClubById(m.club1Id), c2 = getClubById(m.club2Id);
+                if (servingTeam === 1) {
+                    const p1List = (m.team1PlayerIds || []).map(pid => getPlayerById(m.club1Id, pid)?.name).filter(Boolean);
+                    const partner = p1List.find(n => n !== selectedName) || selectedName;
+                    if (isEvenScore) { cs.t1Right = selectedName; cs.t1Left = partner; }
+                    else { cs.t1Left = selectedName; cs.t1Right = partner; }
+                } else {
+                    const p2List = (m.team2PlayerIds || []).map(pid => getPlayerById(m.club2Id, pid)?.name).filter(Boolean);
+                    const partner = p2List.find(n => n !== selectedName) || selectedName;
+                    if (isEvenScore) { cs.t2Right = selectedName; cs.t2Left = partner; }
+                    else { cs.t2Left = selectedName; cs.t2Right = partner; }
+                }
+            }
+            saveState();
+            renderRefereeApp();
+            showToast(`🎾 Người giao bóng: ${selectedName}`);
+        }
+
+        // CHỌN TRỰC TIẾP NGƯỜI ĐỠ BÓNG (ĐẶT VÀO Ô CHÉO GÓC ĐỐI DIỆN)
+        function handleManualReceiverSelect(selectedName) {
+            const { match: m } = findMatchById(state.activeLiveMatchId);
+            if (!m) return;
+            const isSingles = (m.catKey === 'DON');
+            if (!m.courtState) syncMatchCourtStateFromLineup(m);
+            const cs = m.courtState;
+
+            const servingTeam = m.servingTeam || 1;
+            const receivingTeam = servingTeam === 1 ? 2 : 1;
+            const servingScore = servingTeam === 1 ? (parseInt(m.score1) || 0) : (parseInt(m.score2) || 0);
+            const isEvenScore = (servingScore % 2 === 0);
+
+            if (isSingles) {
+                if (receivingTeam === 1) cs.t1Right = selectedName;
+                else cs.t2Right = selectedName;
+            } else {
+                // Người đỡ bóng luôn đứng cùng phía ô Chẵn (Phải) nếu điểm giao chẵn, hoặc ô Lẻ (Trái) nếu điểm giao lẻ
+                if (receivingTeam === 1) {
+                    const p1List = (m.team1PlayerIds || []).map(pid => getPlayerById(m.club1Id, pid)?.name).filter(Boolean);
+                    const partner = p1List.find(n => n !== selectedName) || selectedName;
+                    if (isEvenScore) { cs.t1Right = selectedName; cs.t1Left = partner; }
+                    else { cs.t1Left = selectedName; cs.t1Right = partner; }
+                } else {
+                    const p2List = (m.team2PlayerIds || []).map(pid => getPlayerById(m.club2Id, pid)?.name).filter(Boolean);
+                    const partner = p2List.find(n => n !== selectedName) || selectedName;
+                    if (isEvenScore) { cs.t2Right = selectedName; cs.t2Left = partner; }
+                    else { cs.t2Left = selectedName; cs.t2Right = partner; }
+                }
+            }
+            saveState();
+            renderRefereeApp();
+            showToast(`🛡️ Người đỡ bóng: ${selectedName}`);
         }
 
         function selectMatchForScoreboard(matchId) {
@@ -381,7 +469,6 @@
             return count;
         }
 
-        // MODAL ĐĂNG KÝ VĐV CHO TOÀN BỘ 5 NỘI DUNG (4 ĐÔI x 2 VĐV + 1 ĐƠN x 4 VĐV)
         function openRefereePlayerSetupModal(step = 1) {
             const activeTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
             if (!activeTieMatches.length) return;
@@ -566,7 +653,7 @@
                 cur.push(playerId);
                 m[arrKey] = cur;
             }
-            syncMatchCourtStateFromLineup(m);
+            syncMatchCourtStateFromLineup(m, false);
             saveState();
             openRefereePlayerSetupModal(side);
             renderRefereeApp();
@@ -610,13 +697,12 @@
                     const men = getAvailable('Nam');
                     men.slice(0, 2).forEach(p => picked.push(p.id));
                 } else {
-                    // Nội dung Đơn Quyết Định: lấy đủ 4 VĐV
                     const anyPlayers = getAvailable(null);
                     anyPlayers.slice(0, req).forEach(p => picked.push(p.id));
                 }
 
                 m[arrKey] = picked;
-                syncMatchCourtStateFromLineup(m);
+                syncMatchCourtStateFromLineup(m, false);
             });
 
             saveState();
@@ -677,7 +763,7 @@
             }
 
             m.status = 'LIVE';
-            if (!m.courtState) syncMatchCourtStateFromLineup(m);
+            if (!m.courtState) syncMatchCourtStateFromLineup(m, false);
             const cs = m.courtState;
 
             if (teamNum === 1) {
@@ -690,7 +776,6 @@
 
             const currentTotalScore = (parseInt(m.score1) || 0) + (parseInt(m.score2) || 0);
             const target = parseInt(m.targetPoints) || (isSingles ? 21 : 15);
-            // Quy tắc đổi sân: 8 điểm đổi sân đối với nội dung Đôi (15đ), 11 điểm đổi sân đối với nội dung Đơn (21đ)
             const midPoint = (isSingles || target === 21) ? 11 : 8;
 
             if (currentTotalScore === midPoint && !m.swappedAtMid && delta > 0) {
@@ -699,9 +784,8 @@
                 showToast(`🔄 Tổng ${midPoint} điểm: Hai đội đổi sân!`);
             }
 
-            // Nội dung đơn: Tự động đổi sang VĐV tiếp theo trong danh sách 4 VĐV sau mỗi 4 điểm tổng
             if (isSingles) {
-                syncMatchCourtStateFromLineup(m);
+                syncMatchCourtStateFromLineup(m, false);
                 if (delta > 0 && currentTotalScore > 0 && currentTotalScore % 4 === 0 && currentTotalScore < target) {
                     const nextSlot = (Math.floor(currentTotalScore / 4) % 4) + 1;
                     showToast(`🔁 Tổng điểm ${currentTotalScore}: Đổi sang VĐV số #${nextSlot}/4!`);
@@ -819,7 +903,7 @@
             const isSingles = (m.catKey === 'DON');
             if (isSingles) m.targetPoints = 21;
 
-            syncMatchCourtStateFromLineup(m);
+            syncMatchCourtStateFromLineup(m, true);
             const cs = m.courtState;
 
             if (m.servingTeam === undefined) m.servingTeam = 1;
@@ -828,7 +912,6 @@
             const isMatchFinished = (m.status === 'FINISHED');
             document.getElementById('matchFinishedCelebrationBanner').classList.toggle('hidden', !isMatchFinished);
 
-            // Hiển thị trạng thái luân phiên 4 VĐV ở trận đơn (đổi mỗi 4 điểm tổng, 11 điểm đổi sân)
             const totalScore = (parseInt(m.score1) || 0) + (parseInt(m.score2) || 0);
             const rotBanner = document.getElementById('singlesRotationBanner');
             if (isSingles && !isMatchFinished) {
@@ -880,7 +963,7 @@
                 ` : `<div class="col-span-3 h-12 rounded-lg bg-slate-900 text-slate-500 text-[11px] font-bold flex items-center justify-center">🔒 Khóa</div>`;
             }
 
-            // SƠ ĐỒ SÂN 2D & ĐƯỜNG CHÉO GIAO BÓNG CHUẨN LUẬT PICKLEBALL
+            // SƠ ĐỒ SÂN 2D & ĐƯỜNG CHÉO GIAO BÓNG NGẮN GỌN
             const isEvenScore = (servingScore % 2 === 0);
             const leftIsT1 = !cs.swappedEnds;
             const leftTeamNum = leftIsT1 ? 1 : 2;
@@ -919,13 +1002,18 @@
             const serverDot = dots.find(d => d.isServer) || dots[0];
             const receiverDot = dots.find(d => d.team !== serverDot.team && Math.abs(d.y - (210 - serverDot.y)) < 20) || dots[dots.length - 1];
             
+            // Rút ngắn chiều dài mũi tên đường chéo (thu vào khoảng giữa sân, tránh đè lên tên VĐV)
             const dx = receiverDot.x - serverDot.x, dy = receiverDot.y - serverDot.y;
             const dist = Math.hypot(dx, dy) || 1;
-            const startX = serverDot.x + (dx / dist) * 20, startY = serverDot.y + (dy / dist) * 20;
-            const endX = receiverDot.x - (dx / dist) * 24, endY = receiverDot.y - (dy / dist) * 24;
+            const padStart = Math.min(48, dist * 0.22);
+            const padEnd = Math.min(52, dist * 0.24);
+            const startX = serverDot.x + (dx / dist) * padStart;
+            const startY = serverDot.y + (dy / dist) * padStart;
+            const endX = receiverDot.x - (dx / dist) * padEnd;
+            const endY = receiverDot.y - (dy / dist) * padEnd;
 
             document.getElementById('courtDynamicVectors').innerHTML = `
-                <line x1="${startX}" y1="${startY}" x2="${endX}" y2="${endY}" stroke="#f59e0b" stroke-width="3.5" marker-end="url(#arrowhead)" class="serve-trajectory-line" />
+                <line x1="${startX}" y1="${startY}" x2="${endX}" y2="${endY}" stroke="#f59e0b" stroke-width="2.5" marker-end="url(#arrowhead)" class="serve-trajectory-line" />
             `;
 
             document.getElementById('courtSvgPlayers').innerHTML = dots.map(d => `
@@ -939,6 +1027,23 @@
                     </div>
                 </div>
             `).join('');
+
+            // CẬP NHẬT DANH SÁCH CHỌN NGƯỜI GIAO BÓNG & NGƯỜI ĐỠ BÓNG
+            const serverSel = document.getElementById('selectCurrentServerPlayer');
+            const receiverSel = document.getElementById('selectCurrentReceiverPlayer');
+            if (serverSel && receiverSel) {
+                const p1Names = (m.team1PlayerIds || []).map(pid => getPlayerById(m.club1Id, pid)?.name).filter(Boolean);
+                const p2Names = (m.team2PlayerIds || []).map(pid => getPlayerById(m.club2Id, pid)?.name).filter(Boolean);
+
+                const servingRoster = servingTeam === 1 ? (p1Names.length ? p1Names : [cl1]) : (p2Names.length ? p2Names : [cl2]);
+                const receivingRoster = servingTeam === 1 ? (p2Names.length ? p2Names : [cl2]) : (p1Names.length ? p1Names : [cl1]);
+
+                serverSel.innerHTML = servingRoster.map(name => `<option value="${name}">${name}</option>`).join('');
+                serverSel.value = serverDot.name;
+
+                receiverSel.innerHTML = receivingRoster.map(name => `<option value="${name}">${name}</option>`).join('');
+                receiverSel.value = receiverDot.name;
+            }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
