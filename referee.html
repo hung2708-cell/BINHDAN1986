@@ -81,13 +81,13 @@
         <select id="liveMatchSelector" onchange="selectMatchForScoreboard(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-brand-500"></select>
     </div>
 
-    <!-- BANNER NHẮC ĐỔI VĐV TRẬN ĐƠN (TỔNG ĐIỂM CHIA HẾT CHO 4) -->
-    <div id="singlesSwapAlertBanner" class="hidden p-2.5 rounded-xl bg-amber-950/90 border border-amber-500 text-amber-200 text-xs font-bold flex items-center justify-between gap-2 shadow-lg">
-        <div class="flex items-center gap-2">
-            <i class="fa-solid fa-people-arrows text-amber-400 text-base animate-bounce"></i>
-            <span>Tổng điểm chia hết cho 4! Thay VĐV đơn kế tiếp:</span>
+    <!-- BANNER HIỂN THỊ LƯỢT ĐÁNH XOAY VÒNG 4 VĐV TRẬN ĐƠN (ĐỔI MỖI 4 ĐIỂM TỔNG) -->
+    <div id="singlesRotationBanner" class="hidden p-2.5 rounded-xl bg-amber-950/90 border border-amber-500/70 text-amber-200 text-xs font-bold flex items-center justify-between gap-2 shadow-lg">
+        <div class="flex items-center gap-2 min-w-0">
+            <i class="fa-solid fa-people-arrows text-amber-400 text-sm shrink-0"></i>
+            <span id="singlesRotationText" class="truncate">Lượt #1/4 (Đổi VĐV sau mỗi 4 điểm tổng)</span>
         </div>
-        <button type="button" onclick="openRefereePlayerSetupModal(1)" class="px-2.5 py-1 rounded-lg bg-amber-500 text-slate-950 font-extrabold text-[11px] shrink-0 shadow">Đổi VĐV</button>
+        <button type="button" onclick="openRefereePlayerSetupModal(1)" class="px-2 py-1 rounded-lg bg-amber-500 text-slate-950 font-extrabold text-[10px] shrink-0 shadow">Đội hình</button>
     </div>
 
     <!-- 1. SƠ ĐỒ SÂN 2D & MŨI TÊN ĐƯỜNG CHÉO -->
@@ -166,7 +166,7 @@
         <button type="button" onclick="reopenFinishedMatch()" class="px-2.5 py-0.5 rounded bg-emerald-500 text-slate-950">Mở lại</button>
     </div>
 
-    <!-- MODAL ĐĂNG KÝ VĐV CHO TOÀN BỘ 5 NỘI DUNG THEO TỪNG ĐỘI (LỌC GIỚI TÍNH CHẶT CHẼ) -->
+    <!-- MODAL ĐĂNG KÝ VĐV CHO TOÀN BỘ 5 NỘI DUNG THEO TỪNG ĐỘI (4 ĐÔI x 2 VĐV + 1 ĐƠN x 4 VĐV) -->
     <div id="refereePlayerSetupModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/95 p-3 backdrop-blur-md">
         <div class="bg-slate-900 border-2 border-brand-500/60 rounded-2xl max-w-md w-full p-4 space-y-3 shadow-2xl max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-start border-b border-slate-800 pb-2.5 shrink-0">
@@ -228,7 +228,7 @@
             el.className = 'px-3.5 py-2.5 rounded-xl bg-slate-900 border border-brand-500 text-brand-400 text-xs font-extrabold shadow-xl';
             el.textContent = msg;
             c.appendChild(el);
-            setTimeout(() => el.remove(), 2300);
+            setTimeout(() => el.remove(), 2400);
         }
 
         let mqttClient = null;
@@ -267,13 +267,18 @@
             return g === 'nữ' || g === 'nu' || g === 'f' || g === 'female';
         }
 
-        // Xác định quy định giới tính của từng nội dung: 'NAM' | 'NU' | 'NAM_NU' | 'ANY'
+        // Quy định giới tính từng nội dung: 'NAM' | 'NU' | 'NAM_NU' | 'ANY'
         function getMatchGenderRule(matchObj) {
             const label = String(matchObj?.catLabel || '').toLowerCase();
             if (label.includes('đôi nam nữ') || label.includes('nam nữ')) return 'NAM_NU';
             if (label.includes('đôi nữ')) return 'NU';
             if (label.includes('đôi nam')) return 'NAM';
             return 'ANY';
+        }
+
+        // Quy định số lượng VĐV yêu cầu: Đơn = 4 VĐV (luân phiên mỗi 4 điểm tổng), Đôi = 2 VĐV
+        function getRequiredPlayerCount(matchObj) {
+            return matchObj?.catKey === 'DON' ? 4 : 2;
         }
 
         function getClubById(clubId) { return (state.clubs || []).find(c => c.id === clubId) || { id: clubId, name: 'CLB', players: [] }; }
@@ -327,9 +332,14 @@
             const prevSwapped = m.courtState ? Boolean(m.courtState.swappedEnds) : false;
             
             if (m.catKey === 'DON') {
-                const activeP1 = p1List[0] || c1.name;
-                const activeP2 = p2List[0] || c2.name;
-                m.team1Name = activeP1; m.team2Name = activeP2;
+                // Trận đơn gồm 4 VĐV luân phiên nhau mỗi 4 điểm tổng
+                const totalScore = (parseInt(m.score1) || 0) + (parseInt(m.score2) || 0);
+                const rotIdx = Math.floor(totalScore / 4);
+                const activeP1 = p1List.length ? p1List[rotIdx % p1List.length] : c1.name;
+                const activeP2 = p2List.length ? p2List[rotIdx % p2List.length] : c2.name;
+
+                m.team1Name = p1List.length ? `${activeP1} (#${(rotIdx % p1List.length) + 1}/${p1List.length})` : c1.name;
+                m.team2Name = p2List.length ? `${activeP2} (#${(rotIdx % p2List.length) + 1}/${p2List.length})` : c2.name;
                 m.courtState = { swappedEnds: prevSwapped, t1Right: activeP1, t2Right: activeP2 };
                 return;
             }
@@ -351,7 +361,7 @@
             renderRefereeApp();
             const { match: m } = findMatchById(matchId);
             if (m) {
-                const req = m.catKey === 'DON' ? 1 : 2;
+                const req = getRequiredPlayerCount(m);
                 if ((m.team1PlayerIds || []).length < req) {
                     openRefereePlayerSetupModal(1);
                 } else if ((m.team2PlayerIds || []).length < req) {
@@ -371,7 +381,7 @@
             return count;
         }
 
-        // MỞ MODAL CHỌN ĐỦ VĐV CHO TOÀN BỘ 5 NỘI DUNG - LỌC CHẶT CHẼ NAM / NỮ THEO TỪNG NỘI DUNG
+        // MODAL ĐĂNG KÝ VĐV CHO TOÀN BỘ 5 NỘI DUNG (4 ĐÔI x 2 VĐV + 1 ĐƠN x 4 VĐV)
         function openRefereePlayerSetupModal(step = 1) {
             const activeTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
             if (!activeTieMatches.length) return;
@@ -389,7 +399,7 @@
                 : `Bước 2/2: Chọn đủ 5 nội dung - ${c2.name}`;
             document.getElementById('setupModalStepTitle').className = `text-xs font-extrabold uppercase truncate ${isStep1 ? 'text-brand-400' : 'text-fengshui-wood'}`;
             document.getElementById('setupModalStepSubtitle').textContent = isStep1 
-                ? `Chọn đủ VĐV cho cả 5 trận rồi xác nhận khóa trước khi sang ${c2.name}` 
+                ? `Chọn đủ VĐV (Đôi 2 người, Đơn 4 người) rồi xác nhận khóa trước khi sang ${c2.name}` 
                 : `${c1.name} đã chốt kín đội hình. Chọn đủ VĐV cả 5 trận cho ${c2.name}`;
 
             const players = activeClub.players || [];
@@ -409,10 +419,10 @@
                 html += `<div class="text-center py-6 text-slate-400 bg-slate-950/60 rounded-xl border border-slate-800">CLB ${activeClub.name} chưa có danh sách VĐV. Hãy thêm VĐV ở trang chủ.</div>`;
             } else {
                 activeTieMatches.forEach((m, idx) => {
-                    const req = m.catKey === 'DON' ? 1 : 2;
+                    const isSingles = (m.catKey === 'DON');
+                    const req = getRequiredPlayerCount(m);
                     const genderRule = getMatchGenderRule(m);
                     
-                    // Dọn dẹp nếu có ID không hợp lệ giới tính lưu từ trước
                     let selIds = (m[arrKey] || []).filter(pid => {
                         const pObj = players.find(x => x.id === pid);
                         if (!pObj) return false;
@@ -422,17 +432,12 @@
                     });
                     m[arrKey] = selIds;
 
-                    // Lọc danh sách VĐV hiển thị đúng với nội dung:
-                    // - Đôi Nam: Chỉ hiện VĐV Nam
-                    // - Đôi Nữ: Chỉ hiện VĐV Nữ
-                    // - Đôi Nam Nữ / Đơn: Hiện cả Nam & Nữ
                     const eligiblePlayers = players.filter(p => {
                         if (genderRule === 'NAM') return !isPlayerFemale(p);
                         if (genderRule === 'NU') return isPlayerFemale(p);
                         return true;
                     });
 
-                    // Kiểm tra nếu là Đôi Nam Nữ thì đã chọn Nam hay Nữ chưa để khóa giới tính đã đủ 1 người
                     const selectedObjs = selIds.map(pid => players.find(x => x.id === pid)).filter(Boolean);
                     const hasSelectedMale = selectedObjs.some(x => !isPlayerFemale(x));
                     const hasSelectedFemale = selectedObjs.some(x => isPlayerFemale(x));
@@ -441,7 +446,9 @@
                     const cleanCat = (m.catLabel || `Trận ${idx + 1}`).replace(/^Vòng \d+\s*•\s*/i, '');
 
                     let filterHintBadge = '';
-                    if (genderRule === 'NAM') {
+                    if (isSingles) {
+                        filterHintBadge = `<span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 font-bold">4 VĐV luân phiên</span>`;
+                    } else if (genderRule === 'NAM') {
                         filterHintBadge = `<span class="text-[9px] px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-400 border border-sky-500/30 font-bold">Chỉ Nam</span>`;
                     } else if (genderRule === 'NU') {
                         filterHintBadge = `<span class="text-[9px] px-1.5 py-0.5 rounded bg-pink-500/15 text-pink-400 border border-pink-500/30 font-bold">Chỉ Nữ</span>`;
@@ -450,21 +457,23 @@
                     }
 
                     const playerButtonsHtml = eligiblePlayers.length > 0 ? eligiblePlayers.map(p => {
-                        const isSelected = selIds.includes(p.id);
+                        const selIndex = selIds.indexOf(p.id);
+                        const isSelected = selIndex !== -1;
                         const isFem = isPlayerFemale(p);
-                        const doublesCount = m.catKey === 'DOI' ? getPlayerDoublesCountInTie(activeTieMatches, step, p.id, m.id) : 0;
+                        const doublesCount = !isSingles ? getPlayerDoublesCountInTie(activeTieMatches, step, p.id, m.id) : 0;
                         
-                        const isExceededDoubles = (m.catKey === 'DOI' && doublesCount >= 2 && !isSelected);
+                        const isExceededDoubles = (!isSingles && doublesCount >= 2 && !isSelected);
                         const isGenderSlotFull = (genderRule === 'NAM_NU' && !isSelected && ((isFem && hasSelectedFemale) || (!isFem && hasSelectedMale)));
                         const isDisabled = isExceededDoubles || isGenderSlotFull;
 
                         const genderColor = isFem ? 'text-pink-400' : 'text-sky-400';
                         const genderSymbol = isFem ? '♀' : '♂';
+                        const orderTag = (isSingles && isSelected) ? `<span class="px-1 rounded bg-amber-400 text-slate-950 font-black text-[9px] mr-1">#${selIndex + 1}</span>` : '';
 
                         return `
                             <button type="button" ${isDisabled ? 'disabled' : ''} onclick="togglePlayerInTieMatch('${m.id}', ${step}, '${p.id}', ${req})" class="px-2 py-1.5 rounded-lg border text-[11px] font-bold transition flex items-center justify-between gap-1 ${isDisabled ? 'opacity-30 bg-slate-950 border-slate-800 cursor-not-allowed' : (isSelected ? (isStep1 ? 'bg-brand-600 text-white border-brand-400 shadow' : 'bg-emerald-600 text-white border-emerald-400 shadow') : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-600')}">
-                                <span class="truncate"><span class="${isSelected ? 'text-white' : genderColor} mr-0.5">${genderSymbol}</span>${p.name}</span>
-                                <span class="text-[9px] px-1 rounded ${isSelected ? 'bg-black/25 text-white' : 'bg-slate-800 text-amber-300'} shrink-0">${p.level || 'A'}${m.catKey === 'DOI' ? ` (${doublesCount}/2)` : ''}</span>
+                                <span class="truncate flex items-center">${orderTag}<span class="${isSelected ? 'text-white' : genderColor} mr-0.5">${genderSymbol}</span>${p.name}</span>
+                                <span class="text-[9px] px-1 rounded ${isSelected ? 'bg-black/25 text-white' : 'bg-slate-800 text-amber-300'} shrink-0">${p.level || 'A'}${!isSingles ? ` (${doublesCount}/2)` : ''}</span>
                             </button>
                         `;
                     }).join('') : `<div class="col-span-2 text-center py-2 text-[11px] text-rose-400 italic">CLB ${activeClub.name} chưa có VĐV ${genderRule === 'NU' ? 'Nữ' : 'Nam'}!</div>`;
@@ -523,7 +532,6 @@
             const genderRule = getMatchGenderRule(m);
             const isFem = isPlayerFemale(playerObj);
 
-            // Chặn cứng sai giới tính theo từng nội dung
             if (genderRule === 'NAM' && isFem) {
                 showToast('⚠️ Nội dung Đôi Nam không thể chọn VĐV Nữ!');
                 return;
@@ -552,16 +560,11 @@
                 }
 
                 if (cur.length >= maxReq) {
-                    if (maxReq === 1) {
-                        m[arrKey] = [playerId];
-                    } else {
-                        showToast(`Nội dung này chỉ chọn tối đa ${maxReq} VĐV!`);
-                        return;
-                    }
-                } else {
-                    cur.push(playerId);
-                    m[arrKey] = cur;
+                    showToast(`Nội dung này chọn tối đa ${maxReq} VĐV!`);
+                    return;
                 }
+                cur.push(playerId);
+                m[arrKey] = cur;
             }
             syncMatchCourtStateFromLineup(m);
             saveState();
@@ -581,7 +584,7 @@
             activeTieMatches.forEach(m => { m[arrKey] = []; });
 
             activeTieMatches.forEach(m => {
-                const req = m.catKey === 'DON' ? 1 : 2;
+                const req = getRequiredPlayerCount(m);
                 const genderRule = getMatchGenderRule(m);
                 let picked = [];
 
@@ -607,6 +610,7 @@
                     const men = getAvailable('Nam');
                     men.slice(0, 2).forEach(p => picked.push(p.id));
                 } else {
+                    // Nội dung Đơn Quyết Định: lấy đủ 4 VĐV
                     const anyPlayers = getAvailable(null);
                     anyPlayers.slice(0, req).forEach(p => picked.push(p.id));
                 }
@@ -618,14 +622,14 @@
             saveState();
             openRefereePlayerSetupModal(side);
             renderRefereeApp();
-            showToast(`🪄 Đã lọc đúng giới tính & tự động điền VĐV cho ${club.name}!`);
+            showToast(`🪄 Đã lọc đúng giới tính & điền đủ VĐV (Đơn 4 VĐV) cho ${club.name}!`);
         }
 
         function proceedToTeam2Setup() {
             const activeTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
             for (let i = 0; i < activeTieMatches.length; i++) {
                 const m = activeTieMatches[i];
-                const req = m.catKey === 'DON' ? 1 : 2;
+                const req = getRequiredPlayerCount(m);
                 if ((m.team1PlayerIds || []).length < req) {
                     const cleanCat = (m.catLabel || `Trận ${i + 1}`).replace(/^Vòng \d+\s*•\s*/i, '');
                     showToast(`⚠️ ${cleanCat} của Đội 1 chưa chọn đủ ${req} VĐV!`);
@@ -642,7 +646,7 @@
             const activeTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
             for (let i = 0; i < activeTieMatches.length; i++) {
                 const m = activeTieMatches[i];
-                const req = m.catKey === 'DON' ? 1 : 2;
+                const req = getRequiredPlayerCount(m);
                 if ((m.team2PlayerIds || []).length < req) {
                     const cleanCat = (m.catLabel || `Trận ${i + 1}`).replace(/^Vòng \d+\s*•\s*/i, '');
                     showToast(`⚠️ ${cleanCat} của Đội 2 chưa chọn đủ ${req} VĐV!`);
@@ -665,9 +669,9 @@
             if (!m || m.status === 'FINISHED' || teamNum !== (m.servingTeam || 1)) return;
             
             const isSingles = (m.catKey === 'DON');
-            const req = isSingles ? 1 : 2;
+            const req = getRequiredPlayerCount(m);
             if ((m.team1PlayerIds || []).length < req || (m.team2PlayerIds || []).length < req) {
-                showToast('⚠️ Bạn chưa đăng ký đủ VĐV thi đấu cho các nội dung!');
+                showToast(`⚠️ Nội dung này cần chọn đủ ${req} VĐV cho mỗi đội!`);
                 openRefereePlayerSetupModal((m.team1PlayerIds || []).length < req ? 1 : 2);
                 return;
             }
@@ -686,17 +690,22 @@
 
             const currentTotalScore = (parseInt(m.score1) || 0) + (parseInt(m.score2) || 0);
             const target = parseInt(m.targetPoints) || (isSingles ? 21 : 15);
+            // Quy tắc đổi sân: 8 điểm đổi sân đối với nội dung Đôi (15đ), 11 điểm đổi sân đối với nội dung Đơn (21đ)
             const midPoint = (isSingles || target === 21) ? 11 : 8;
 
             if (currentTotalScore === midPoint && !m.swappedAtMid && delta > 0) {
                 cs.swappedEnds = !cs.swappedEnds;
                 m.swappedAtMid = true;
-                showToast(`🔄 Đổi sân giữa trận (Điểm ${midPoint})!`);
+                showToast(`🔄 Tổng ${midPoint} điểm: Hai đội đổi sân!`);
             }
 
-            if (isSingles && delta > 0 && currentTotalScore > 0 && currentTotalScore % 4 === 0 && currentTotalScore < target) {
-                m.lastSinglesSwapScore = currentTotalScore;
-                showToast(`🔁 Tổng điểm ${currentTotalScore}: Đổi VĐV đơn kế tiếp!`);
+            // Nội dung đơn: Tự động đổi sang VĐV tiếp theo trong danh sách 4 VĐV sau mỗi 4 điểm tổng
+            if (isSingles) {
+                syncMatchCourtStateFromLineup(m);
+                if (delta > 0 && currentTotalScore > 0 && currentTotalScore % 4 === 0 && currentTotalScore < target) {
+                    const nextSlot = (Math.floor(currentTotalScore / 4) % 4) + 1;
+                    showToast(`🔁 Tổng điểm ${currentTotalScore}: Đổi sang VĐV số #${nextSlot}/4!`);
+                }
             }
 
             const res = evaluateMatchWinCondition(m);
@@ -799,7 +808,7 @@
             if (selector) {
                 selector.innerHTML = activeTieMatches.map(x => {
                     const cleanCat = (x.catLabel || '').replace(/^Vòng \d+\s*•\s*/i, '');
-                    const req = x.catKey === 'DON' ? 1 : 2;
+                    const req = getRequiredPlayerCount(x);
                     const hasFullLineup = (x.team1PlayerIds || []).length >= req && (x.team2PlayerIds || []).length >= req;
                     const statusIcon = x.status === 'FINISHED' ? '✅' : (x.status === 'LIVE' ? '🔴' : (hasFullLineup ? '🟢' : '⏳'));
                     return `<option value="${x.id}">${statusIcon} ${cleanCat} (${x.score1 || 0}-${x.score2 || 0})</option>`;
@@ -808,9 +817,9 @@
             }
 
             const isSingles = (m.catKey === 'DON');
-            if (isSingles && !m.targetPoints) m.targetPoints = 21;
+            if (isSingles) m.targetPoints = 21;
 
-            if (!m.courtState) syncMatchCourtStateFromLineup(m);
+            syncMatchCourtStateFromLineup(m);
             const cs = m.courtState;
 
             if (m.servingTeam === undefined) m.servingTeam = 1;
@@ -819,9 +828,17 @@
             const isMatchFinished = (m.status === 'FINISHED');
             document.getElementById('matchFinishedCelebrationBanner').classList.toggle('hidden', !isMatchFinished);
 
+            // Hiển thị trạng thái luân phiên 4 VĐV ở trận đơn (đổi mỗi 4 điểm tổng, 11 điểm đổi sân)
             const totalScore = (parseInt(m.score1) || 0) + (parseInt(m.score2) || 0);
-            const showSinglesSwap = isSingles && !isMatchFinished && totalScore > 0 && totalScore % 4 === 0;
-            document.getElementById('singlesSwapAlertBanner').classList.toggle('hidden', !showSinglesSwap);
+            const rotBanner = document.getElementById('singlesRotationBanner');
+            if (isSingles && !isMatchFinished) {
+                const rotIdx = (Math.floor(totalScore / 4) % 4) + 1;
+                const nextSwapAt = (Math.floor(totalScore / 4) + 1) * 4;
+                document.getElementById('singlesRotationText').textContent = `VĐV #${rotIdx}/4 đang đánh • Đổi VĐV ở tổng ${nextSwapAt}đ (11đ đổi sân)`;
+                rotBanner.classList.remove('hidden');
+            } else {
+                rotBanner.classList.add('hidden');
+            }
 
             const cleanStageLabel = (m.catLabel || '').replace(/^Vòng \d+\s*•\s*/i, '');
             document.getElementById('liveMatchStageBadge').textContent = `${cleanStageLabel} • ${cl1} vs ${cl2}`;
