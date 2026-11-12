@@ -26,14 +26,23 @@
         }
     </script>
     <style>
-        body {
+        html, body {
+            height: 100dvh;
+            max-height: 100dvh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
             background-color: #0f0202;
             background-image: radial-gradient(circle at 50% 0%, rgba(225, 29, 72, 0.22) 0%, transparent 55%), linear-gradient(180deg, #160403 0%, #0f0202 100%);
-            background-attachment: fixed;
             color: #f8fafc;
-            overflow-x: hidden;
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
+        }
+        body {
+            padding-top: max(6px, env(safe-area-inset-top));
+            padding-bottom: max(6px, env(safe-area-inset-bottom));
+            padding-left: max(8px, env(safe-area-inset-left));
+            padding-right: max(8px, env(safe-area-inset-right));
         }
         button, input, select, label { touch-action: manipulation; cursor: pointer; }
         @keyframes pulse-live { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.9); } }
@@ -45,59 +54,61 @@
         .serve-blinking { animation: serve-blink 0.6s ease-in-out infinite; }
         @keyframes dash-flow { to { stroke-dashoffset: -18; } }
         .serve-trajectory-line { stroke-dasharray: 6 3; animation: dash-flow 0.55s linear infinite; }
-        @media (max-width: 768px) { body { padding: 4px; } .ref-score-btn { height: 68px !important; font-size: 1.35rem !important; } }
+        .fluid-score-num { font-size: clamp(1.75rem, 4.8dvh, 2.65rem); line-height: 1; }
+        .ref-score-btn { height: clamp(42px, 6.2dvh, 56px); }
     </style>
 </head>
-<body class="min-h-screen flex flex-col p-2.5 max-w-md mx-auto space-y-2.5 selection:bg-brand-500 selection:text-white">
+<body class="w-full max-w-md mx-auto flex flex-col justify-between gap-1.5 select-none selection:bg-brand-500 selection:text-white">
 
-    <!-- HEADER -->
-    <header class="bg-slate-900/95 border border-brand-500/30 rounded-xl p-2.5 flex items-center justify-between gap-2 shadow-xl shrink-0 backdrop-blur-md">
+    <!-- 1. HEADER -->
+    <header class="bg-slate-900/95 border border-brand-500/30 rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-2 shadow-lg shrink-0 backdrop-blur-md">
         <div class="flex items-center gap-2 min-w-0">
-            <div class="w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-tr from-orange-600 via-amber-500 to-brand-600 flex items-center justify-center shadow shrink-0 border border-amber-400/40">
+            <div class="w-7 h-7 rounded-lg overflow-hidden bg-gradient-to-tr from-orange-600 via-amber-500 to-brand-600 flex items-center justify-center shadow shrink-0 border border-amber-400/40">
                 <img src="logo_tiger_2.jpg" alt="Logo Bính Dần" class="w-full h-full object-cover">
             </div>
             <div class="min-w-0">
-                <div class="text-[9px] text-brand-400 font-extrabold uppercase tracking-wide truncate">Trọng Tài Bính Dần 1986</div>
+                <div class="text-[9px] text-brand-400 font-extrabold uppercase tracking-wide truncate leading-tight">Trọng Tài Bính Dần 1986</div>
                 <div class="flex items-center gap-1.5 truncate mt-0.5">
                     <span id="syncStatusDot" class="w-2 h-2 rounded-full bg-amber-400 live-dot shrink-0"></span>
-                    <span class="text-[11px] font-bold text-white truncate" id="refereeCourtTitle">Đang chọn sân...</span>
+                    <span class="text-[11px] font-bold text-white truncate leading-tight" id="refereeCourtTitle">Đang chọn sân...</span>
                 </div>
             </div>
         </div>
         <div class="shrink-0">
-            <select id="refereeCourtSelect" onchange="changeRefereeCourt(this.value)" class="bg-slate-950 border border-brand-500/40 rounded-lg px-2.5 py-1.5 text-brand-400 font-extrabold text-xs shadow-inner focus:outline-none">
+            <select id="refereeCourtSelect" onchange="changeRefereeCourt(this.value)" class="bg-slate-950 border border-brand-500/40 rounded-lg px-2 py-1 text-brand-400 font-extrabold text-xs shadow-inner focus:outline-none">
                 <option value="Sân 1">Sân 1</option><option value="Sân 2">Sân 2</option><option value="Sân 3">Sân 3</option><option value="Sân 4">Sân 4</option>
                 <option value="Sân 5">Sân 5</option><option value="Sân 6">Sân 6</option><option value="Sân 7">Sân 7</option><option value="Sân 8">Sân 8</option>
             </select>
         </div>
     </header>
 
-    <!-- CHỈ HIỂN THỊ CẶP CLB ĐANG THI ĐẤU & 5 NỘI DUNG CỦA CẶP ĐẤU ĐÓ -->
-    <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-2.5 space-y-1.5 shadow-lg backdrop-blur-sm">
-        <div class="flex justify-between items-center text-[10px] font-bold">
+    <!-- 2. CHỌN NỘI DUNG THI ĐẤU TRÊN SÂN -->
+    <div class="bg-slate-900/70 border border-slate-800 rounded-xl px-2.5 py-1.5 space-y-1 shadow shrink-0 backdrop-blur-sm">
+        <div class="flex justify-between items-center text-[10px] font-bold leading-none">
             <span class="text-amber-400 uppercase tracking-wide truncate" id="activeTieHeaderLabel"><i class="fa-solid fa-swords mr-1"></i>Đang tải cặp đấu...</span>
             <span id="liveCurrentCourtBadge" class="text-brand-400 uppercase font-extrabold shrink-0">Sân 1</span>
         </div>
-        <select id="liveMatchSelector" onchange="selectMatchForScoreboard(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-brand-500"></select>
+        <select id="liveMatchSelector" onchange="selectMatchForScoreboard(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-brand-500"></select>
     </div>
 
-    <!-- BANNER HIỂN THỊ LƯỢT ĐÁNH XOAY VÒNG 4 VĐV TRẬN ĐƠN (ĐỔI MỖI 4 ĐIỂM TỔNG) -->
-    <div id="singlesRotationBanner" class="hidden p-2.5 rounded-xl bg-amber-950/90 border border-amber-500/70 text-amber-200 text-xs font-bold flex items-center justify-between gap-2 shadow-lg">
-        <div class="flex items-center gap-2 min-w-0">
-            <i class="fa-solid fa-people-arrows text-amber-400 text-sm shrink-0"></i>
-            <span id="singlesRotationText" class="truncate">Lượt #1/4 (Đổi VĐV sau mỗi 4 điểm tổng)</span>
+    <!-- BANNER LUÂN PHIÊN 4 VĐV TRẬN ĐƠN -->
+    <div id="singlesRotationBanner" class="hidden px-2.5 py-1.5 rounded-xl bg-amber-950/90 border border-amber-500/70 text-amber-200 text-[11px] font-bold flex items-center justify-between gap-2 shadow shrink-0">
+        <div class="flex items-center gap-1.5 min-w-0">
+            <i class="fa-solid fa-people-arrows text-amber-400 text-xs shrink-0"></i>
+            <span id="singlesRotationText" class="truncate">VĐV #1/4 đang đánh (Đổi sau 4 điểm tổng)</span>
         </div>
-        <button type="button" onclick="openRefereePlayerSetupModal(1)" class="px-2 py-1 rounded-lg bg-amber-500 text-slate-950 font-extrabold text-[10px] shrink-0 shadow">Đội hình</button>
+        <button type="button" onclick="openRefereePlayerSetupModal(1)" class="px-2 py-0.5 rounded bg-amber-500 text-slate-950 font-extrabold text-[10px] shrink-0">Đội hình</button>
     </div>
 
-    <!-- 1. SƠ ĐỒ SÂN 2D, MŨI TÊN NGẮN & CHỌN NGƯỜI GIAO / ĐỠ BÓNG -->
-    <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-2.5 space-y-2 shadow-xl backdrop-blur-sm">
-        <div class="flex justify-between items-center text-[11px] font-extrabold text-amber-400">
-            <span><i class="fa-solid fa-earth-asia mr-1"></i>Sơ Đồ Sân 2D & Vị Trí Đứng</span>
-            <button type="button" onclick="openRefereePlayerSetupModal(1)" class="px-2.5 py-1 rounded bg-brand-600 text-white font-extrabold text-[10px] shadow hover:bg-brand-500"><i class="fa-solid fa-users-gear mr-1"></i>Đăng Ký VĐV (5 Trận)</button>
+    <!-- 3. SƠ ĐỒ SÂN 2D TỰ CO GIÃN LINH HOẠT THEO CHIỀU CAO ĐIỆN THOẠI -->
+    <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-2 flex flex-col justify-between gap-1.5 shadow-lg flex-1 min-h-0 backdrop-blur-sm">
+        <div class="flex justify-between items-center text-[10px] font-extrabold text-amber-400 shrink-0">
+            <span><i class="fa-solid fa-earth-asia mr-1"></i>Sơ Đồ Sân 2D & Vị Trí</span>
+            <button type="button" onclick="openRefereePlayerSetupModal(1)" class="px-2 py-0.5 rounded bg-brand-600 text-white font-extrabold text-[10px] shadow hover:bg-brand-500"><i class="fa-solid fa-users-gear mr-1"></i>Đăng Ký VĐV (5 Trận)</button>
         </div>
 
-        <div class="relative w-full aspect-[2/1] bg-emerald-950/90 rounded-lg border-2 border-emerald-500/40 overflow-hidden shadow-inner flex items-center justify-center">
+        <!-- Khung sân tự co giãn chiếm phần không gian còn dư trên màn hình -->
+        <div class="relative w-full flex-1 min-h-[105px] bg-emerald-950/90 rounded-lg border-2 border-emerald-500/40 overflow-hidden shadow-inner flex items-center justify-center">
             <svg class="absolute inset-0 w-full h-full" viewBox="0 0 440 210" preserveAspectRatio="none">
                 <defs>
                     <marker id="arrowhead" markerWidth="7" markerHeight="5" refX="5" refY="2.5" orient="auto">
@@ -116,55 +127,55 @@
         </div>
 
         <!-- CHỌN TRỰC TIẾP NGƯỜI GIAO BÓNG & NGƯỜI ĐỠ BÓNG -->
-        <div class="grid grid-cols-2 gap-2 pt-0.5">
-            <div class="bg-slate-950/90 border border-amber-500/30 rounded-lg p-1.5 space-y-1">
-                <label class="block text-[9px] font-extrabold text-amber-400 uppercase tracking-wider">
-                    <i class="fa-solid fa-table-tennis-paddle-ball mr-1"></i>Người giao bóng:
+        <div class="grid grid-cols-2 gap-1.5 shrink-0">
+            <div class="bg-slate-950/90 border border-amber-500/30 rounded-lg px-2 py-1 flex flex-col justify-center">
+                <label class="block text-[9px] font-extrabold text-amber-400 uppercase tracking-wider leading-tight mb-0.5">
+                    <i class="fa-solid fa-table-tennis-paddle-ball mr-1"></i>Giao bóng:
                 </label>
-                <select id="selectCurrentServerPlayer" onchange="handleManualServerSelect(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-[11px] font-bold text-white focus:outline-none focus:border-amber-400"></select>
+                <select id="selectCurrentServerPlayer" onchange="handleManualServerSelect(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-[11px] font-bold text-white focus:outline-none focus:border-amber-400"></select>
             </div>
-            <div class="bg-slate-950/90 border border-emerald-500/30 rounded-lg p-1.5 space-y-1">
-                <label class="block text-[9px] font-extrabold text-emerald-400 uppercase tracking-wider">
-                    <i class="fa-solid fa-shield-halved mr-1"></i>Người đỡ bóng:
+            <div class="bg-slate-950/90 border border-emerald-500/30 rounded-lg px-2 py-1 flex flex-col justify-center">
+                <label class="block text-[9px] font-extrabold text-emerald-400 uppercase tracking-wider leading-tight mb-0.5">
+                    <i class="fa-solid fa-shield-halved mr-1"></i>Đỡ bóng:
                 </label>
-                <select id="selectCurrentReceiverPlayer" onchange="handleManualReceiverSelect(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-[11px] font-bold text-white focus:outline-none focus:border-emerald-400"></select>
+                <select id="selectCurrentReceiverPlayer" onchange="handleManualReceiverSelect(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-[11px] font-bold text-white focus:outline-none focus:border-emerald-400"></select>
             </div>
         </div>
     </div>
 
-    <!-- 2. KHUNG TỶ SỐ TRỰC TIẾP & NÚT BẤM -->
-    <div class="bg-slate-900/80 border-2 border-brand-500/40 rounded-xl p-3 space-y-2.5 shadow-2xl backdrop-blur-md">
-        <div class="flex justify-between items-center border-b border-slate-800 pb-2 gap-2">
+    <!-- 4. KHUNG TỶ SỐ TRỰC TIẾP & NÚT BẤM ĐIỂM -->
+    <div class="bg-slate-900/85 border-2 border-brand-500/40 rounded-xl p-2.5 space-y-2 shadow-2xl shrink-0 backdrop-blur-md">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-1.5 gap-2">
             <span id="liveMatchStageBadge" class="px-2 py-0.5 rounded bg-brand-600 text-white font-extrabold text-[10px] uppercase shadow truncate">Đang tải...</span>
-            <div class="font-score font-extrabold text-amber-300 text-sm tracking-widest bg-slate-950 px-2.5 py-0.5 rounded-lg border border-amber-400/30 shadow-inner shrink-0" id="officialScoreCallout">0 - 0 - 2</div>
+            <div class="font-score font-extrabold text-amber-300 text-xs sm:text-sm tracking-widest bg-slate-950 px-2 py-0.5 rounded-lg border border-amber-400/30 shadow-inner shrink-0" id="officialScoreCallout">0 - 0 - 2</div>
         </div>
 
-        <div class="grid grid-cols-2 gap-2.5">
+        <div class="grid grid-cols-2 gap-2">
             <!-- ĐỘI 1 -->
-            <div class="bg-slate-950 border border-brand-500/30 rounded-xl p-2.5 space-y-2 relative flex flex-col justify-between shadow-md">
-                <div id="team1ServeBadge" class="hidden absolute -top-2 -left-1.5 bg-brand-600 text-white px-1.5 py-0.5 rounded font-extrabold text-[8px] shadow uppercase">Phát bóng (<span id="team1ServerNum">2</span>)</div>
+            <div class="bg-slate-950 border border-brand-500/30 rounded-xl p-2 space-y-1 relative flex flex-col justify-between shadow">
+                <div id="team1ServeBadge" class="hidden absolute -top-2 -left-1 bg-brand-600 text-white px-1.5 py-0.5 rounded font-extrabold text-[8px] shadow uppercase">Phát (<span id="team1ServerNum">2</span>)</div>
                 <div>
-                    <div id="liveTeam1ClubLabel" class="text-[9px] text-brand-400 font-extrabold uppercase truncate">Đội 1</div>
-                    <div id="liveTeam1Name" class="text-[11px] font-bold text-white truncate mt-0.5">---</div>
+                    <div id="liveTeam1ClubLabel" class="text-[9px] text-brand-400 font-extrabold uppercase truncate leading-tight">Đội 1</div>
+                    <div id="liveTeam1Name" class="text-[11px] font-bold text-white truncate leading-tight mt-0.5">---</div>
                 </div>
-                <div class="text-center font-score text-4xl font-extrabold text-brand-400 py-0.5" id="liveTeam1Score">0</div>
-                <div class="grid grid-cols-3 gap-1 pt-0.5" id="team1ScoreActionArea"></div>
+                <div class="text-center font-score fluid-score-num font-extrabold text-brand-400 py-0.5" id="liveTeam1Score">0</div>
+                <div class="grid grid-cols-3 gap-1" id="team1ScoreActionArea"></div>
             </div>
 
             <!-- ĐỘI 2 -->
-            <div class="bg-slate-950 border border-fengshui-wood/30 rounded-xl p-2.5 space-y-2 relative flex flex-col justify-between shadow-md">
-                <div id="team2ServeBadge" class="hidden absolute -top-2 -left-1.5 bg-fengshui-wood text-slate-950 px-1.5 py-0.5 rounded font-extrabold text-[8px] shadow uppercase">Phát bóng (<span id="team2ServerNum">2</span>)</div>
+            <div class="bg-slate-950 border border-fengshui-wood/30 rounded-xl p-2 space-y-1 relative flex flex-col justify-between shadow">
+                <div id="team2ServeBadge" class="hidden absolute -top-2 -left-1 bg-fengshui-wood text-slate-950 px-1.5 py-0.5 rounded font-extrabold text-[8px] shadow uppercase">Phát (<span id="team2ServerNum">2</span>)</div>
                 <div>
-                    <div id="liveTeam2ClubLabel" class="text-[9px] text-fengshui-wood font-extrabold uppercase truncate">Đội 2</div>
-                    <div id="liveTeam2Name" class="text-[11px] font-bold text-white truncate mt-0.5">---</div>
+                    <div id="liveTeam2ClubLabel" class="text-[9px] text-fengshui-wood font-extrabold uppercase truncate leading-tight">Đội 2</div>
+                    <div id="liveTeam2Name" class="text-[11px] font-bold text-white truncate leading-tight mt-0.5">---</div>
                 </div>
-                <div class="text-center font-score text-4xl font-extrabold text-fengshui-wood py-0.5" id="liveTeam2Score">0</div>
-                <div class="grid grid-cols-3 gap-1 pt-0.5" id="team2ScoreActionArea"></div>
+                <div class="text-center font-score fluid-score-num font-extrabold text-fengshui-wood py-0.5" id="liveTeam2Score">0</div>
+                <div class="grid grid-cols-3 gap-1" id="team2ScoreActionArea"></div>
             </div>
         </div>
 
-        <!-- ĐIỀU KHIỂN -->
-        <div class="grid grid-cols-3 gap-1.5 pt-0.5">
+        <!-- HÀNG NÚT ĐIỀU KHIỂN -->
+        <div class="grid grid-cols-3 gap-1.5">
             <button type="button" onclick="triggerSideOutOrNextServer()" class="py-2 rounded-lg bg-slate-950 border border-slate-700 text-amber-300 font-extrabold text-[11px] shadow hover:bg-slate-800 transition">
                 <i class="fa-solid fa-arrows-rotate mr-1"></i>Đổi Phát
             </button>
@@ -178,14 +189,14 @@
     </div>
 
     <!-- BANNER HOÀN TẤT -->
-    <div id="matchFinishedCelebrationBanner" class="hidden p-2.5 rounded-xl bg-emerald-950 border border-emerald-500 text-emerald-300 text-xs font-extrabold text-center flex items-center justify-between shadow-lg">
+    <div id="matchFinishedCelebrationBanner" class="hidden px-2.5 py-1.5 rounded-xl bg-emerald-950 border border-emerald-500 text-emerald-300 text-[11px] font-extrabold text-center flex items-center justify-between shadow shrink-0">
         <span>🏆 Nội dung đã hoàn tất!</span>
-        <button type="button" onclick="reopenFinishedMatch()" class="px-2.5 py-0.5 rounded bg-emerald-500 text-slate-950">Mở lại</button>
+        <button type="button" onclick="reopenFinishedMatch()" class="px-2 py-0.5 rounded bg-emerald-500 text-slate-950">Mở lại</button>
     </div>
 
-    <!-- MODAL ĐĂNG KÝ VĐV CHO TOÀN BỘ 5 NỘI DUNG THEO TỪNG ĐỘI (4 ĐÔI x 2 VĐV + 1 ĐƠN x 4 VĐV) -->
+    <!-- MODAL ĐĂNG KÝ VĐV CHO TOÀN BỘ 5 NỘI DUNG THEO TỪNG ĐỘI -->
     <div id="refereePlayerSetupModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/95 p-3 backdrop-blur-md">
-        <div class="bg-slate-900 border-2 border-brand-500/60 rounded-2xl max-w-md w-full p-4 space-y-3 shadow-2xl max-h-[90vh] flex flex-col">
+        <div class="bg-slate-900 border-2 border-brand-500/60 rounded-2xl max-w-md w-full p-4 space-y-3 shadow-2xl max-h-[90dvh] flex flex-col">
             <div class="flex justify-between items-start border-b border-slate-800 pb-2.5 shrink-0">
                 <div class="min-w-0 pr-2">
                     <h3 id="setupModalStepTitle" class="text-xs font-extrabold text-brand-400 uppercase truncate">Bước 1/2: Chọn Đủ VĐV 5 Nội Dung</h3>
@@ -200,13 +211,13 @@
         </div>
     </div>
 
-    <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+    <div id="toastContainer" class="fixed top-12 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-1.5 pointer-events-none w-[90%] max-w-sm items-center"></div>
 
     <script>
         const STORAGE_KEY = 'CAY_COI_TEAM_LINEUP_V28_PERMANENT';
         window.__deviceClientId = 'REF_' + Math.random().toString(36).slice(2, 9);
         window.__currentSyncRoomCode = 'BINHDAN';
-        let currentSetupStep = 1; // 1 = Đội 1, 2 = Đội 2
+        let currentSetupStep = 1;
 
         function loadState() {
             try {
@@ -242,10 +253,10 @@
             const c = document.getElementById('toastContainer');
             if (!c) return;
             const el = document.createElement('div');
-            el.className = 'px-3.5 py-2.5 rounded-xl bg-slate-900 border border-brand-500 text-brand-400 text-xs font-extrabold shadow-xl';
+            el.className = 'px-3.5 py-2 rounded-xl bg-slate-900/95 border border-brand-500 text-brand-300 text-xs font-extrabold shadow-2xl text-center';
             el.textContent = msg;
             c.appendChild(el);
-            setTimeout(() => el.remove(), 2400);
+            setTimeout(() => el.remove(), 2200);
         }
 
         let mqttClient = null;
@@ -374,7 +385,6 @@
             };
         }
 
-        // CHỌN TRỰC TIẾP NGƯỜI GIAO BÓNG (ĐẶT VÀO Ô GIAO BÓNG CHẴN/LẺ HIỆN TẠI)
         function handleManualServerSelect(selectedName) {
             const { match: m } = findMatchById(state.activeLiveMatchId);
             if (!m) return;
@@ -390,7 +400,6 @@
                 if (servingTeam === 1) cs.t1Right = selectedName;
                 else cs.t2Right = selectedName;
             } else {
-                const c1 = getClubById(m.club1Id), c2 = getClubById(m.club2Id);
                 if (servingTeam === 1) {
                     const p1List = (m.team1PlayerIds || []).map(pid => getPlayerById(m.club1Id, pid)?.name).filter(Boolean);
                     const partner = p1List.find(n => n !== selectedName) || selectedName;
@@ -408,7 +417,6 @@
             showToast(`🎾 Người giao bóng: ${selectedName}`);
         }
 
-        // CHỌN TRỰC TIẾP NGƯỜI ĐỠ BÓNG (ĐẶT VÀO Ô CHÉO GÓC ĐỐI DIỆN)
         function handleManualReceiverSelect(selectedName) {
             const { match: m } = findMatchById(state.activeLiveMatchId);
             if (!m) return;
@@ -425,7 +433,6 @@
                 if (receivingTeam === 1) cs.t1Right = selectedName;
                 else cs.t2Right = selectedName;
             } else {
-                // Người đỡ bóng luôn đứng cùng phía ô Chẵn (Phải) nếu điểm giao chẵn, hoặc ô Lẻ (Trái) nếu điểm giao lẻ
                 if (receivingTeam === 1) {
                     const p1List = (m.team1PlayerIds || []).map(pid => getPlayerById(m.club1Id, pid)?.name).filter(Boolean);
                     const partner = p1List.find(n => n !== selectedName) || selectedName;
@@ -949,21 +956,21 @@
             document.getElementById('team2ServerNum').textContent = serverNum;
 
             if (isMatchFinished) {
-                document.getElementById('team1ScoreActionArea').innerHTML = `<div class="col-span-3 h-12 rounded-lg bg-emerald-950/60 text-emerald-300 font-extrabold text-xs flex items-center justify-center">🏆 XONG</div>`;
-                document.getElementById('team2ScoreActionArea').innerHTML = `<div class="col-span-3 h-12 rounded-lg bg-emerald-950/60 text-emerald-300 font-extrabold text-xs flex items-center justify-center">🏆 XONG</div>`;
+                document.getElementById('team1ScoreActionArea').innerHTML = `<div class="col-span-3 ref-score-btn rounded-lg bg-emerald-950/60 text-emerald-300 font-extrabold text-xs flex items-center justify-center">🏆 XONG</div>`;
+                document.getElementById('team2ScoreActionArea').innerHTML = `<div class="col-span-3 ref-score-btn rounded-lg bg-emerald-950/60 text-emerald-300 font-extrabold text-xs flex items-center justify-center">🏆 XONG</div>`;
             } else {
                 document.getElementById('team1ScoreActionArea').innerHTML = isTeam1Serving ? `
-                    <button type="button" onclick="adjustLiveScore(1, -1)" class="col-span-1 ref-score-btn h-12 rounded-lg bg-slate-800 text-slate-200 font-bold text-base">-1</button>
-                    <button type="button" onclick="adjustLiveScore(1, 1)" class="col-span-2 ref-score-btn h-12 rounded-lg bg-gradient-to-r from-brand-600 to-amber-500 text-white font-extrabold text-xs uppercase shadow-lg">+ ĐIỂM</button>
-                ` : `<div class="col-span-3 h-12 rounded-lg bg-slate-900 text-slate-500 text-[11px] font-bold flex items-center justify-center">🔒 Khóa</div>`;
+                    <button type="button" onclick="adjustLiveScore(1, -1)" class="col-span-1 ref-score-btn rounded-lg bg-slate-800 text-slate-200 font-bold text-base">-1</button>
+                    <button type="button" onclick="adjustLiveScore(1, 1)" class="col-span-2 ref-score-btn rounded-lg bg-gradient-to-r from-brand-600 to-amber-500 text-white font-extrabold text-xs uppercase shadow-lg">+ ĐIỂM</button>
+                ` : `<div class="col-span-3 ref-score-btn rounded-lg bg-slate-900 text-slate-500 text-[11px] font-bold flex items-center justify-center">🔒 Khóa</div>`;
 
                 document.getElementById('team2ScoreActionArea').innerHTML = isTeam2Serving ? `
-                    <button type="button" onclick="adjustLiveScore(2, -1)" class="col-span-1 ref-score-btn h-12 rounded-lg bg-slate-800 text-slate-200 font-bold text-base">-1</button>
-                    <button type="button" onclick="adjustLiveScore(2, 1)" class="col-span-2 ref-score-btn h-12 rounded-lg bg-gradient-to-r from-fengshui-wood to-emerald-400 text-slate-950 font-extrabold text-xs uppercase shadow-lg">+ ĐIỂM</button>
-                ` : `<div class="col-span-3 h-12 rounded-lg bg-slate-900 text-slate-500 text-[11px] font-bold flex items-center justify-center">🔒 Khóa</div>`;
+                    <button type="button" onclick="adjustLiveScore(2, -1)" class="col-span-1 ref-score-btn rounded-lg bg-slate-800 text-slate-200 font-bold text-base">-1</button>
+                    <button type="button" onclick="adjustLiveScore(2, 1)" class="col-span-2 ref-score-btn rounded-lg bg-gradient-to-r from-fengshui-wood to-emerald-400 text-slate-950 font-extrabold text-xs uppercase shadow-lg">+ ĐIỂM</button>
+                ` : `<div class="col-span-3 ref-score-btn rounded-lg bg-slate-900 text-slate-500 text-[11px] font-bold flex items-center justify-center">🔒 Khóa</div>`;
             }
 
-            // SƠ ĐỒ SÂN 2D & ĐƯỜNG CHÉO GIAO BÓNG NGẮN GỌN
+            // SƠ ĐỒ SÂN 2D & MŨI TÊN ĐƯỜNG CHÉO NGẮN GỌN
             const isEvenScore = (servingScore % 2 === 0);
             const leftIsT1 = !cs.swappedEnds;
             const leftTeamNum = leftIsT1 ? 1 : 2;
@@ -1002,11 +1009,11 @@
             const serverDot = dots.find(d => d.isServer) || dots[0];
             const receiverDot = dots.find(d => d.team !== serverDot.team && Math.abs(d.y - (210 - serverDot.y)) < 20) || dots[dots.length - 1];
             
-            // Rút ngắn chiều dài mũi tên đường chéo (thu vào khoảng giữa sân, tránh đè lên tên VĐV)
+            // Mũi tên đường chéo ngắn gọn nằm gọn khoảng giữa sân
             const dx = receiverDot.x - serverDot.x, dy = receiverDot.y - serverDot.y;
             const dist = Math.hypot(dx, dy) || 1;
-            const padStart = Math.min(48, dist * 0.22);
-            const padEnd = Math.min(52, dist * 0.24);
+            const padStart = Math.min(72, dist * 0.30);
+            const padEnd = Math.min(76, dist * 0.32);
             const startX = serverDot.x + (dx / dist) * padStart;
             const startY = serverDot.y + (dy / dist) * padStart;
             const endX = receiverDot.x - (dx / dist) * padEnd;
@@ -1018,11 +1025,11 @@
 
             document.getElementById('courtSvgPlayers').innerHTML = dots.map(d => `
                 <div class="absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-none" style="left: ${(d.x / 440) * 100}%; top: ${(d.y / 210) * 100}%;">
-                    ${d.isServer ? `<div class="absolute -top-1 w-8 h-8 rounded-full border-2 border-amber-400 bg-amber-400/20 serve-blinking"></div>` : ''}
-                    <div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-md border-2 ${d.isServer ? 'border-amber-300' : 'border-white'}" style="background-color: ${d.color};">
-                        <i class="fa-solid fa-user text-[9px]"></i>
+                    ${d.isServer ? `<div class="absolute -top-1 w-7 h-7 rounded-full border-2 border-amber-400 bg-amber-400/20 serve-blinking"></div>` : ''}
+                    <div class="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white shadow-md border ${d.isServer ? 'border-amber-300' : 'border-white'}" style="background-color: ${d.color};">
+                        <i class="fa-solid fa-user text-[8px]"></i>
                     </div>
-                    <div class="mt-0.5 px-1.5 py-0.5 rounded bg-slate-950/95 border ${d.isServer ? 'border-amber-400/80 text-amber-300' : 'border-white/20 text-white'} text-[9px] font-bold whitespace-nowrap shadow">
+                    <div class="mt-0.5 px-1.5 py-0.2 rounded bg-slate-950/95 border ${d.isServer ? 'border-amber-400/80 text-amber-300' : 'border-white/20 text-white'} text-[9px] font-bold whitespace-nowrap shadow">
                         ${String(d.name || 'VĐV').slice(0, 14)}
                     </div>
                 </div>
