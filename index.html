@@ -23,13 +23,15 @@
         }
     </script>
     <style>
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-6px); }
-            40%, 80% { transform: translateX(6px); }
-        }
-        .animate-shake { animation: shake 0.4s ease-in-out; }
-    </style>
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        20%, 60% { transform: translateX(-6px); }
+        40%, 80% { transform: translateX(6px); }
+    }
+    .animate-shake {
+        animation: shake 0.4s ease-in-out;
+    }
+</style>
 </head>
 <body class="h-full font-sans text-slate-100 flex flex-col justify-between selection:bg-brand-500 selection:text-white">
 
@@ -323,26 +325,32 @@
     </div>
 
     <!-- CUSTOM PASSWORD MODAL -->
-    <div id="password-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
-        <div id="modal-box" class="bg-slate-950 border border-slate-800 w-full max-w-md p-6 rounded-2xl shadow-2xl space-y-4 relative transition-all">
-            <div class="flex items-center space-x-3 text-brand-400">
-                <div class="w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center text-lg shrink-0"><i class="fa-solid fa-lock"></i></div>
-                <div>
-                    <h3 id="modal-title" class="font-bold text-white text-base">Xác nhận mật khẩu Quản trị</h3>
-                    <p class="text-xs text-slate-400">Mật khẩu mặc định: <span class="text-amber-400 font-mono font-bold">1986</span></p>
-                </div>
+<div id="password-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
+    <div id="modal-box" class="bg-slate-950 border border-slate-800 w-full max-w-md p-6 rounded-2xl shadow-2xl space-y-4 relative transition-all">
+        <div class="flex items-center space-x-3 text-brand-400">
+            <div class="w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center text-lg shrink-0">
+                <i class="fa-solid fa-lock"></i>
             </div>
-            <div class="space-y-2">
-                <label class="block text-xs font-medium text-slate-400">Nhập mật khẩu xác nhận</label>
-                <input type="password" id="modal-password-input" placeholder="Mật khẩu là 1986..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500 font-mono tracking-widest">
-                <div class="min-h-[20px] flex items-center"><p id="modal-error-msg" class="text-xs text-rose-500 font-semibold hidden">Sai mật khẩu! Vui lòng thử lại với: 1986</p></div>
-            </div>
-            <div class="flex items-center justify-end space-x-3 pt-2 border-t border-slate-800">
-                <button onclick="closePasswordModal()" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold transition">Hủy bỏ</button>
-                <button onclick="confirmPasswordAction()" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold transition shadow-lg">Xác nhận</button>
+            <div>
+                <h3 id="modal-title" class="font-bold text-white text-base">Xác nhận mật khẩu Quản trị</h3>
+                <p class="text-xs text-slate-400">Vui lòng nhập mật khẩu để tiếp tục thao tác.</p>
             </div>
         </div>
+        
+        <div class="space-y-2">
+            <label class="block text-xs font-medium text-slate-400">Nhập mật khẩu xác nhận</label>
+            <input type="password" id="modal-password-input" placeholder="Nhập mật khẩu..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500 font-mono tracking-widest">
+            <div class="min-h-[20px] flex items-center">
+                <p id="modal-error-msg" class="text-xs text-rose-500 font-semibold hidden">Sai mật khẩu!</p>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-end space-x-3 pt-2 border-t border-slate-800">
+            <button onclick="closePasswordModal()" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold transition">Hủy bỏ</button>
+            <button onclick="confirmPasswordAction()" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold transition shadow-lg">Xác nhận</button>
+        </div>
     </div>
+</div>
 
     <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
@@ -453,23 +461,26 @@
         }
 
         function confirmPasswordAction() {
-            const pwd = document.getElementById('modal-password-input').value.trim();
-            const modalBox = document.getElementById('modal-box');
-            const errorMsg = document.getElementById('modal-error-msg');
-            
-            if(pwd === ADMIN_PASSWORD) {
-                const actionToRun = pendingAction;
-                closePasswordModal();
-                if(actionToRun) {
-                    actionToRun();
-                }
-            } else {
-                errorMsg.classList.remove('hidden');
-                document.getElementById('modal-password-input').focus();
-                modalBox.classList.add('animate-shake', 'border-rose-500');
-                setTimeout(() => { modalBox.classList.remove('animate-shake', 'border-rose-500'); }, 400);
-            }
+    const pwd = document.getElementById('modal-password-input').value.trim();
+    const modalBox = document.getElementById('modal-box');
+    const errorMsg = document.getElementById('modal-error-msg');
+    
+    if(pwd === ADMIN_PASSWORD) {
+        const actionToRun = pendingAction;
+        closePasswordModal();
+        if(actionToRun) {
+            actionToRun();
         }
+    } else {
+        errorMsg.classList.remove('hidden');
+        document.getElementById('modal-password-input').focus();
+        // Kích hoạt hiệu ứng rung khung và đổi viền đỏ khi nhập sai
+        modalBox.classList.add('animate-shake', 'border-rose-500');
+        setTimeout(() => { 
+            modalBox.classList.remove('animate-shake', 'border-rose-500'); 
+        }, 400);
+    }
+}
 
         document.getElementById('modal-password-input').addEventListener('keypress', function(e) { 
             if(e.key === 'Enter') confirmPasswordAction(); 
