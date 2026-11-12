@@ -241,7 +241,7 @@
             <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
                     <h2 class="text-xl font-bold text-white">Danh sách Đội tuyển & VĐV</h2>
-                    <p class="text-xs text-slate-400">Quản lý đội tuyển và import danh sách từ Excel.</p>
+                    <p class="text-xs text-slate-400">Quản lý đội tuyển, thêm/xóa trực tiếp VĐV trong CLB hoặc import từ Excel.</p>
                 </div>
                 <div class="flex items-center gap-2">
                     <label class="px-3 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs transition cursor-pointer shadow flex items-center">
@@ -568,7 +568,7 @@
         }
 
         function renderStats() {
-            const liveCount = matches.filter(m => m.status === 'LIVE').length;
+            const liveCount = matches.filter(m => m.status === 'LIVE' || (m.status !== 'FINISHED' && ((parseInt(m.score1) || 0) > 0 || (parseInt(m.score2) || 0) > 0))).length;
             const finishedCount = matches.filter(m => m.status === 'FINISHED').length;
             document.getElementById('stat-teams-count').innerText = teams.length;
             document.getElementById('stat-matches-count').innerText = matches.length;
@@ -603,7 +603,7 @@
                         </div>
                     `;
                 } else {
-                    let liveMatch = courtMatches.find(m => m.status === 'LIVE');
+                    let liveMatch = courtMatches.find(m => m.status === 'LIVE' || (m.status !== 'FINISHED' && ((parseInt(m.score1) || 0) > 0 || (parseInt(m.score2) || 0) > 0)));
                     let upcomingMatch = courtMatches.find(m => m.status === 'UPCOMING');
                     let activeMatch = liveMatch || upcomingMatch || courtMatches[courtMatches.length - 1];
 
@@ -612,18 +612,19 @@
 
                     let finishedCount = courtMatches.filter(x => x.status === 'FINISHED').length;
                     let isAllDone = finishedCount === courtMatches.length;
+                    let isInProgress = Boolean(liveMatch) || (finishedCount > 0 && !isAllDone);
 
                     let statusBadge = '';
-                    if (liveMatch) {
-                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-500/20 text-brand-400 border border-brand-500/30 animate-pulse">ĐANG THI ĐẤU (LIVE)</span>`;
-                    } else if (isAllDone) {
+                    if (isAllDone) {
                         statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">ĐÃ KẾT THÚC</span>`;
+                    } else if (isInProgress) {
+                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-500/20 text-brand-400 border border-brand-500/30 animate-pulse">ĐANG THI ĐẤU (LIVE)</span>`;
                     } else {
                         statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">CHUẨN BỊ ĐẤU</span>`;
                     }
 
                     html += `
-                        <div class="bg-slate-900/70 border ${liveMatch ? 'border-brand-500/50 shadow-lg' : 'border-slate-800'} rounded-2xl p-4 flex flex-col justify-between space-y-3 backdrop-blur-sm">
+                        <div class="bg-slate-900/70 border ${isInProgress ? 'border-brand-500/60 shadow-lg shadow-brand-500/10' : 'border-slate-800'} rounded-2xl p-4 flex flex-col justify-between space-y-3 backdrop-blur-sm">
                             <div class="flex items-center justify-between pb-2 border-b border-slate-800">
                                 <span class="text-xs font-black text-amber-400 uppercase tracking-wide"><i class="fa-solid fa-location-dot mr-1"></i> ${courtName}</span>
                                 ${statusBadge}
@@ -678,9 +679,8 @@
                         </div>
                     `;
                 } else {
-                    let activeMatch = courtMatches.find(m => m.status === 'LIVE') 
-                                   || courtMatches.find(m => m.status === 'UPCOMING') 
-                                   || courtMatches[courtMatches.length - 1];
+                    let liveMatch = courtMatches.find(m => m.status === 'LIVE' || (m.status !== 'FINISHED' && ((parseInt(m.score1) || 0) > 0 || (parseInt(m.score2) || 0) > 0)));
+                    let activeMatch = liveMatch || courtMatches.find(m => m.status === 'UPCOMING') || courtMatches[courtMatches.length - 1];
 
                     const c1Id = activeMatch.club1Id;
                     const c2Id = activeMatch.club2Id;
@@ -690,13 +690,18 @@
                     const currentTieMatches = courtMatches.filter(m => m.club1Id === c1Id && m.club2Id === c2Id);
                     
                     let c1Wins = 0, c2Wins = 0;
+                    let tieFinishedCount = 0;
                     currentTieMatches.filter(x => x.status === 'FINISHED').forEach(x => {
+                        tieFinishedCount++;
                         if ((parseInt(x.score1) || 0) > (parseInt(x.score2) || 0)) c1Wins++;
                         else if ((parseInt(x.score2) || 0) > (parseInt(x.score1) || 0)) c2Wins++;
                     });
 
-                    const allTieDone = currentTieMatches.every(x => x.status === 'FINISHED');
-                    const isTieLive = currentTieMatches.some(x => x.status === 'LIVE');
+                    const allTieDone = tieFinishedCount === currentTieMatches.length;
+                    const isTieLive = !allTieDone && (
+                        currentTieMatches.some(x => x.status === 'LIVE' || (parseInt(x.score1) || 0) > 0 || (parseInt(x.score2) || 0) > 0) ||
+                        tieFinishedCount > 0
+                    );
 
                     let statusBadge = allTieDone 
                         ? `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Đã xong</span>` 
@@ -790,14 +795,16 @@
                     : `<div class="text-xs font-bold text-slate-300 truncate">${c2Name}</div>
                        <div class="text-[10px] text-amber-400/80 italic">Chưa chọn VĐV</div>`;
 
+                const isMatchLive = m.status === 'LIVE' || (m.status !== 'FINISHED' && ((parseInt(m.score1) || 0) > 0 || (parseInt(m.score2) || 0) > 0));
+
                 let statusBadge = m.status === 'FINISHED' 
                     ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 shrink-0">Xong</span>` 
-                    : (m.status === 'LIVE' 
+                    : (isMatchLive 
                         ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-brand-500/20 text-brand-400 animate-pulse shrink-0">LIVE</span>` 
                         : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 shrink-0">Chờ</span>`);
 
                 return `
-                    <div class="bg-slate-900/90 px-3 py-2 rounded-xl border ${m.status === 'LIVE' ? 'border-brand-500/60' : 'border-slate-800'} space-y-1.5">
+                    <div class="bg-slate-900/90 px-3 py-2 rounded-xl border ${isMatchLive ? 'border-brand-500/60' : 'border-slate-800'} space-y-1.5">
                         <div class="flex items-center justify-between gap-2 border-b border-slate-800/70 pb-1">
                             <div class="flex items-center gap-1.5 min-w-0">
                                 <span class="text-[11px] text-amber-400 font-bold truncate">${cleanLabel}</span>
@@ -1015,27 +1022,64 @@
                 return;
             }
             container.innerHTML = teams.map(t => `
-                <div class="bg-slate-900/50 border border-slate-800 p-5 rounded-2xl space-y-3 relative">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 rounded-xl bg-brand-500/10 text-brand-400 flex items-center justify-center font-bold">${t.name.charAt(0)}</div>
-                            <div><h3 class="font-bold text-white text-base">${t.name}</h3><p class="text-xs text-slate-400">${(t.players || []).length} VĐV</p></div>
+                <div class="bg-slate-900/50 border border-slate-800 p-5 rounded-2xl space-y-3 relative flex flex-col justify-between">
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-xl bg-brand-500/10 text-brand-400 flex items-center justify-center font-bold">${t.name.charAt(0)}</div>
+                                <div><h3 class="font-bold text-white text-base">${t.name}</h3><p class="text-xs text-slate-400">${(t.players || []).length} VĐV</p></div>
+                            </div>
+                            <button onclick="promptDeleteTeam('${t.id}')" class="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-xs transition" title="Xóa CLB"><i class="fa-solid fa-trash"></i></button>
                         </div>
-                        <button onclick="promptDeleteTeam('${t.id}')" class="px-2.5 py-1 bg-rose-500/10 text-rose-400 rounded-lg text-xs"><i class="fa-solid fa-trash"></i></button>
-                    </div>
-                    <div class="pt-2 border-t border-slate-800 space-y-1.5">
-                        <span class="text-[11px] text-slate-500 block">Vận động viên:</span>
-                        <div class="flex flex-wrap gap-1.5">
-                            ${(t.players || []).map(p => `
-                                <div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-300">
-                                    <span onclick="promptEditPlayer('${t.id}', '${p.id}', '${p.name}')" class="cursor-pointer hover:text-brand-400">${p.name}</span>
-                                    <button onclick="promptDeletePlayer('${t.id}', '${p.id}')" class="text-rose-500 hover:text-rose-400 ml-1"><i class="fa-solid fa-xmark text-[10px]"></i></button>
-                                </div>
-                            `).join('')}
+                        <div class="pt-2 border-t border-slate-800 space-y-2">
+                            <span class="text-[11px] text-slate-500 block">Danh sách Vận động viên (bấm tên để sửa, bấm × để xóa):</span>
+                            <div class="flex flex-wrap gap-1.5">
+                                ${(t.players || []).map(p => `
+                                    <div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-300">
+                                        <span onclick="promptEditPlayer('${t.id}', '${p.id}', '${p.name}')" class="cursor-pointer hover:text-brand-400 font-medium">${p.name}</span>
+                                        <button onclick="promptDeletePlayer('${t.id}', '${p.id}')" class="text-rose-500 hover:text-rose-400 ml-1" title="Xóa VĐV"><i class="fa-solid fa-xmark text-[10px]"></i></button>
+                                    </div>
+                                `).join('') || '<span class="text-xs text-slate-500 italic">Chưa có VĐV</span>'}
+                            </div>
                         </div>
                     </div>
+
+                    <!-- FORM THÊM NHANH VĐV TRONG CLB -->
+                    <form onsubmit="handleQuickAddPlayer(event, '${t.id}')" class="pt-3 border-t border-slate-800/80 flex items-center gap-2">
+                        <input type="text" id="new-player-input-${t.id}" placeholder="+ Thêm VĐV mới..." required class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500">
+                        <button type="submit" class="px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold transition shadow shrink-0">
+                            <i class="fa-solid fa-plus mr-1"></i> Thêm
+                        </button>
+                    </form>
                 </div>
             `).join('');
+        }
+
+        function handleQuickAddPlayer(event, teamId) {
+            event.preventDefault();
+            const inputEl = document.getElementById(`new-player-input-${teamId}`);
+            if (!inputEl) return;
+            const rawNames = inputEl.value.trim();
+            if (!rawNames) return;
+
+            openPasswordModal("Xác nhận thêm VĐV vào CLB", () => {
+                const team = teams.find(c => c.id === teamId);
+                if (!team) return;
+                if (!team.players) team.players = [];
+
+                const namesList = rawNames.split(',').map(s => s.trim()).filter(Boolean);
+                namesList.forEach((name, idx) => {
+                    team.players.push({
+                        id: 'p_' + Date.now() + '_' + idx,
+                        name: name,
+                        level: 'A'
+                    });
+                });
+
+                appState.clubs = teams;
+                saveAppState();
+                showToast(`✅ Đã thêm ${namesList.length} VĐV vào ${team.name}!`);
+            });
         }
 
         function promptDeleteTeam(teamId) {
