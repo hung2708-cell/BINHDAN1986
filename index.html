@@ -556,49 +556,61 @@
             document.getElementById('stat-finished-count').innerText = finishedCount;
         }
 
-        function renderHomeOverview() {
+                function renderHomeOverview() {
             const container = document.getElementById('overview-courts-grid');
             if(!container) return;
 
             let html = '';
             COURTS_LIST.forEach(courtName => {
                 const courtMatches = matches.filter(m => (m.court || 'Sân 1') === courtName);
-                let activeMatch = courtMatches.find(m => m.status === 'LIVE') || courtMatches.find(m => m.status === 'UPCOMING') || courtMatches[0];
-
-                if (!activeMatch) {
+                
+                if (courtMatches.length === 0) {
                     html += `
-                        <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between space-y-3 opacity-70">
+                        <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between space-y-3 opacity-60">
                             <div class="flex items-center justify-between pb-2 border-b border-slate-800/80">
                                 <span class="text-xs font-black text-amber-400 uppercase tracking-wide"><i class="fa-solid fa-location-dot mr-1"></i> ${courtName}</span>
                                 <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400">Trống</span>
                             </div>
-                            <div class="py-4 text-center text-xs text-slate-500 italic">Chưa có lịch thi đấu</div>
-                            <div class="pt-2 border-t border-slate-800/60 flex justify-between items-center text-[11px]">
-                                <span class="text-slate-500">0 trận</span>
-                                <a href="referee.html?court=${encodeURIComponent(courtName)}" target="_blank" class="text-brand-400 hover:text-brand-300 font-bold">Mở App Trọng Tài <i class="fa-solid fa-arrow-up-right-from-square text-[9px] ml-0.5"></i></a>
+                            <div class="py-3 text-center text-xs text-slate-500 italic">Chưa có lịch thi đấu</div>
+                            <div class="pt-2 border-t border-slate-800/60 flex justify-end text-[11px]">
+                                <a href="referee.html?court=${encodeURIComponent(courtName)}" target="_blank" class="text-brand-400 hover:text-brand-300 font-bold">Mở Trọng Tài <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i></a>
                             </div>
                         </div>
                     `;
                 } else {
-                    let cName1 = getClubName(activeMatch.club1Id), cName2 = getClubName(activeMatch.club2Id);
+                    // Kiểm tra trạng thái các trận trên sân này
+                    let liveMatch = courtMatches.find(m => m.status === 'LIVE');
+                    let upcomingMatch = courtMatches.find(m => m.status === 'UPCOMING');
+                    let activeMatch = liveMatch || upcomingMatch || courtMatches[courtMatches.length - 1];
+
+                    let cName1 = getClubName(activeMatch.club1Id);
+                    let cName2 = getClubName(activeMatch.club2Id);
+
                     let finishedCount = courtMatches.filter(x => x.status === 'FINISHED').length;
                     let isAllDone = finishedCount === courtMatches.length;
-                    let hasLive = courtMatches.some(x => x.status === 'LIVE');
 
-                    let statusBadge = hasLive ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-500/20 text-brand-400 border border-brand-500/30 animate-pulse">LIVE</span>` : (isAllDone ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Hoàn thành</span>` : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">Sắp đấu</span>`);
+                    let statusBadge = '';
+                    if (liveMatch) {
+                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-500/20 text-brand-400 border border-brand-500/30 animate-pulse">ĐANG THI ĐẤU (LIVE)</span>`;
+                    } else if (isAllDone) {
+                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">ĐÃ KẾT THÚC</span>`;
+                    } else {
+                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">CHUẨN BỊ ĐẤU</span>`;
+                    }
 
                     html += `
-                        <div class="bg-slate-900/70 border ${hasLive ? 'border-brand-500/50 shadow-lg' : 'border-slate-800'} rounded-2xl p-4 flex flex-col justify-between space-y-3 backdrop-blur-sm">
+                        <div class="bg-slate-900/70 border ${liveMatch ? 'border-brand-500/50 shadow-lg' : 'border-slate-800'} rounded-2xl p-4 flex flex-col justify-between space-y-3 backdrop-blur-sm">
                             <div class="flex items-center justify-between pb-2 border-b border-slate-800">
                                 <span class="text-xs font-black text-amber-400 uppercase tracking-wide"><i class="fa-solid fa-location-dot mr-1"></i> ${courtName}</span>
                                 ${statusBadge}
                             </div>
                             <div>
                                 <div class="text-[10px] text-brand-400 font-extrabold uppercase tracking-wider mb-1">${cName1} vs ${cName2}</div>
-                                <div class="text-xs text-slate-300 font-semibold">Đã đấu: <span class="text-white font-bold">${finishedCount}/${courtMatches.length}</span> trận</div>
+                                <div class="text-xs text-slate-300 font-semibold truncate">Đang đánh: <span class="text-white font-bold">${activeMatch.catLabel}</span></div>
+                                <div class="text-[11px] text-slate-400 mt-1">Tiến độ: <span class="text-emerald-400 font-bold">${finishedCount}/${courtMatches.length}</span> trận hoàn thành</div>
                             </div>
                             <div class="flex justify-between items-center pt-2 border-t border-slate-800/80 text-[11px]">
-                                <button onclick="switchTab('matches'); filterCourt('${courtName}')" class="font-bold text-emerald-400 hover:text-emerald-300"><i class="fa-solid fa-list-check mr-1"></i> Xem chi tiết</button>
+                                <button onclick="switchTab('matches'); filterCourt('${courtName}')" class="font-bold text-emerald-400 hover:text-emerald-300"><i class="fa-solid fa-list-check mr-1"></i> Chi tiết sân</button>
                                 <a href="referee.html?court=${encodeURIComponent(courtName)}" target="_blank" class="font-bold text-brand-400 hover:text-brand-300">Trọng Tài <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i></a>
                             </div>
                         </div>
