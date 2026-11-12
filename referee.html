@@ -72,11 +72,11 @@
         </div>
     </header>
 
-    <!-- CHỌN NỘI DUNG THI ĐẤU TRÊN SÂN -->
-    <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-2.5 space-y-1 shadow-lg backdrop-blur-sm">
-        <div class="flex justify-between items-center text-[10px] text-slate-400 font-bold">
-            <span>Nội dung thi đấu trên sân:</span>
-            <span id="liveCurrentCourtBadge" class="text-brand-400 uppercase font-extrabold">Sân 1</span>
+    <!-- CHỈ HIỂN THỊ CẶP CLB ĐANG THI ĐẤU & 5 NỘI DUNG CỦA CẶP ĐẤU ĐÓ -->
+    <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-2.5 space-y-1.5 shadow-lg backdrop-blur-sm">
+        <div class="flex justify-between items-center text-[10px] font-bold">
+            <span class="text-amber-400 uppercase tracking-wide truncate" id="activeTieHeaderLabel"><i class="fa-solid fa-swords mr-1"></i>Đang tải cặp đấu...</span>
+            <span id="liveCurrentCourtBadge" class="text-brand-400 uppercase font-extrabold shrink-0">Sân 1</span>
         </div>
         <select id="liveMatchSelector" onchange="selectMatchForScoreboard(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-brand-500"></select>
     </div>
@@ -85,7 +85,7 @@
     <div id="singlesSwapAlertBanner" class="hidden p-2.5 rounded-xl bg-amber-950/90 border border-amber-500 text-amber-200 text-xs font-bold flex items-center justify-between gap-2 shadow-lg">
         <div class="flex items-center gap-2">
             <i class="fa-solid fa-people-arrows text-amber-400 text-base animate-bounce"></i>
-            <span>Tổng điểm đạt bội số của 4! Thay VĐV đơn kế tiếp:</span>
+            <span>Tổng điểm chia hết cho 4! Thay VĐV đơn kế tiếp:</span>
         </div>
         <button type="button" onclick="openRefereePlayerSetupModal(1)" class="px-2.5 py-1 rounded-lg bg-amber-500 text-slate-950 font-extrabold text-[11px] shrink-0 shadow">Đổi VĐV</button>
     </div>
@@ -103,17 +103,12 @@
                         <polygon points="0 0, 10 3.5, 0 7" fill="#f59e0b"/>
                     </marker>
                 </defs>
-                <!-- Biên sân -->
                 <rect x="15" y="15" width="410" height="180" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.85"/>
-                <!-- Lưới giữa -->
                 <line x1="220" y1="15" x2="220" y2="195" stroke="#ffffff" stroke-width="2" stroke-dasharray="6 4" opacity="0.8"/>
-                <!-- Vạch Kitchen (NVZ) -->
                 <line x1="135" y1="15" x2="135" y2="195" stroke="#ffffff" stroke-width="1.8" opacity="0.7"/>
                 <line x1="305" y1="15" x2="305" y2="195" stroke="#ffffff" stroke-width="1.8" opacity="0.7"/>
-                <!-- Vạch chia ô trái/phải -->
                 <line x1="15" y1="105" x2="135" y2="105" stroke="#ffffff" stroke-width="1.5" opacity="0.65"/>
                 <line x1="305" y1="105" x2="425" y2="105" stroke="#ffffff" stroke-width="1.5" opacity="0.65"/>
-                <!-- Mũi tên đường chéo giao bóng -->
                 <g id="courtDynamicVectors"></g>
             </svg>
             <div id="courtSvgPlayers" class="absolute inset-0 pointer-events-none"></div>
@@ -171,13 +166,13 @@
         <button type="button" onclick="reopenFinishedMatch()" class="px-2.5 py-0.5 rounded bg-emerald-500 text-slate-950">Mở lại</button>
     </div>
 
-    <!-- MODAL ĐĂNG KÝ VĐV TÁCH RIÊNG TỪNG ĐỘI (BƯỚC 1: ĐỘI 1 -> BƯỚC 2: ĐỘI 2) -->
+    <!-- MODAL ĐĂNG KÝ VĐV TÁCH RIÊNG TỪNG ĐỘI (BƯỚC 1: ĐỘI 1 -> XÁC NHẬN KHÓA -> BƯỚC 2: ĐỘI 2) -->
     <div id="refereePlayerSetupModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/95 p-4 backdrop-blur-md">
         <div class="bg-slate-900 border-2 border-brand-500/60 rounded-2xl max-w-sm w-full p-4 space-y-3 shadow-2xl max-h-[88vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-800 pb-2">
                 <div>
                     <h3 id="setupModalStepTitle" class="text-xs font-extrabold text-brand-400 uppercase">Bước 1/2: Chọn VĐV Đội 1</h3>
-                    <p id="setupModalStepSubtitle" class="text-[10px] text-slate-400">Giữ bí mật đội hình trước khi sang đội tiếp theo</p>
+                    <p id="setupModalStepSubtitle" class="text-[10px] text-slate-400">Xác nhận xong Đội 1 mới mở danh sách Đội 2</p>
                 </div>
                 <button type="button" onclick="forceCloseSetupModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-base"></i></button>
             </div>
@@ -192,7 +187,7 @@
         const STORAGE_KEY = 'CAY_COI_TEAM_LINEUP_V28_PERMANENT';
         window.__deviceClientId = 'REF_' + Math.random().toString(36).slice(2, 9);
         window.__currentSyncRoomCode = 'BINHDAN';
-        let currentSetupStep = 1; // 1 = Đang chọn cho Đội 1, 2 = Đang chọn cho Đội 2
+        let currentSetupStep = 1; // 1 = Chọn Đội 1, 2 = Chọn Đội 2
 
         function loadState() {
             try {
@@ -218,8 +213,8 @@
             document.getElementById('refereeCourtTitle').textContent = `Đang bắt chính: ${courtName}`;
             document.getElementById('liveCurrentCourtBadge').textContent = courtName;
             
-            const courtMatches = getAllMatchesFlat().filter(x => x.court === courtName);
-            const active = courtMatches.find(x => x.status !== 'FINISHED') || courtMatches[0];
+            const activeTieMatches = getActiveTieMatchesForCourt(courtName);
+            const active = activeTieMatches.find(x => x.status !== 'FINISHED') || activeTieMatches[0];
             if (active) state.activeLiveMatchId = active.id;
             renderRefereeApp();
         }
@@ -274,6 +269,25 @@
             return list;
         }
 
+        // CHỈ LẤY ĐÚNG 5 TRẬN CỦA CẶP 2 CLB ĐANG THI ĐẤU HIỆN TẠI TRÊN SÂN NÀY
+        function getActiveTieMatchesForCourt(courtName) {
+            const courtMatches = getAllMatchesFlat().filter(x => (x.court || 'Sân 1') === courtName);
+            if (courtMatches.length === 0) return [];
+
+            // 1. Ưu tiên cặp CLB có trận đang LIVE
+            let anchorMatch = courtMatches.find(m => m.status === 'LIVE' || (m.status !== 'FINISHED' && ((parseInt(m.score1) || 0) > 0 || (parseInt(m.score2) || 0) > 0)));
+            // 2. Nếu chưa có trận LIVE, tìm cặp CLB đầu tiên còn nội dung chưa đánh xong (UPCOMING)
+            if (!anchorMatch) {
+                anchorMatch = courtMatches.find(m => m.status !== 'FINISHED');
+            }
+            // 3. Nếu cả sân đã đánh xong hết thì lấy cặp CLB cuối cùng
+            if (!anchorMatch) {
+                anchorMatch = courtMatches[courtMatches.length - 1];
+            }
+
+            return courtMatches.filter(m => m.club1Id === anchorMatch.club1Id && m.club2Id === anchorMatch.club2Id);
+        }
+
         function findMatchById(matchId) {
             for (const tie of (state.ties || [])) {
                 const found = (tie.matches || []).find(m => m.id === matchId);
@@ -323,11 +337,23 @@
             state.activeLiveMatchId = matchId;
             saveState();
             renderRefereeApp();
+            // Tự động mở bước 1 chọn VĐV nếu nội dung vừa chọn chưa đăng ký đủ VĐV
+            const { match: m } = findMatchById(matchId);
+            if (m) {
+                const req = m.catKey === 'DON' ? 1 : 2;
+                if ((m.team1PlayerIds || []).length < req) {
+                    openRefereePlayerSetupModal(1);
+                } else if ((m.team2PlayerIds || []).length < req) {
+                    openRefereePlayerSetupModal(2);
+                }
+            }
         }
 
         function getPlayerMatchCountInDoubles(clubId, playerId, currentMatchId) {
             let count = 0;
-            getAllMatchesFlat().forEach(m => {
+            // Đếm số trận đôi VĐV này đã đánh trong cùng cặp CLB (Tie) hiện tại
+            const activeTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
+            activeTieMatches.forEach(m => {
                 if (m.id !== currentMatchId && m.catKey === 'DOI') {
                     if (m.club1Id === clubId && (m.team1PlayerIds || []).includes(playerId)) count++;
                     if (m.club2Id === clubId && (m.team2PlayerIds || []).includes(playerId)) count++;
@@ -336,7 +362,7 @@
             return count;
         }
 
-        // CHỌN VĐV TÁCH BIỆT TỪNG ĐỘI (BƯỚC 1: ĐỘI 1 -> BƯỚC 2: ĐỘI 2) ĐỂ GIỮ BÍ MẬT ĐỘI HÌNH
+        // CHỌN VĐV TÁCH BIỆT TỪNG ĐỘI: BƯỚC 1 CHỌN ĐỘI 1 -> XÁC NHẬN KHÓA -> BƯỚC 2 CHỌN ĐỘI 2
         function openRefereePlayerSetupModal(step = 1) {
             const { match: m } = findMatchById(state.activeLiveMatchId);
             if (!m) return;
@@ -348,14 +374,15 @@
             const activeClub = step === 1 ? c1 : c2;
             const selectedIds = step === 1 ? (m.team1PlayerIds || []) : (m.team2PlayerIds || []);
             const isStep1 = (step === 1);
+            const cleanCatName = (m.catLabel || '').replace(/^Vòng \d+\s*•\s*/i, '');
 
             document.getElementById('setupModalStepTitle').textContent = isStep1 
-                ? `Bước 1/2: Chọn VĐV cho ${c1.name}` 
-                : `Bước 2/2: Chọn VĐV cho ${c2.name}`;
+                ? `Bước 1/2 (${cleanCatName}): ${c1.name}` 
+                : `Bước 2/2 (${cleanCatName}): ${c2.name}`;
             document.getElementById('setupModalStepTitle').className = `text-xs font-extrabold uppercase ${isStep1 ? 'text-brand-400' : 'text-fengshui-wood'}`;
             document.getElementById('setupModalStepSubtitle').textContent = isStep1 
-                ? `Chọn đủ ${req} VĐV rồi chuyển sang đội đối thủ (ẩn danh sách đã chọn)` 
-                : `Đội 1 đã chốt đội hình bí mật. Chọn đủ ${req} VĐV cho Đội 2`;
+                ? `Chọn ${req} VĐV cho ${c1.name} và bấm Xác nhận trước khi sang ${c2.name}` 
+                : `${c1.name} đã chốt kín đội hình. Chọn ${req} VĐV cho ${c2.name}`;
 
             const renderTeamPlayerSelectors = (club, side, selIds) => {
                 const players = club.players || [];
@@ -402,16 +429,18 @@
 
             document.getElementById('refereePlayerSetupFooter').innerHTML = isStep1 ? `
                 <button type="button" onclick="proceedToTeam2Setup()" class="w-full py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-extrabold text-xs uppercase shadow-lg flex items-center justify-center gap-2">
-                    <span>Xác nhận ${c1.name} & Chuyển sang ${c2.name}</span>
+                    <i class="fa-solid fa-lock"></i>
+                    <span>Xác nhận ${c1.name} & Sang ${c2.name}</span>
                     <i class="fa-solid fa-arrow-right"></i>
                 </button>
             ` : `
-                <div class="grid grid-cols-3 gap-2">
-                    <button type="button" onclick="openRefereePlayerSetupModal(1)" class="col-span-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs">
-                        <i class="fa-solid fa-arrow-left mr-1"></i> Đội 1
-                    </button>
-                    <button type="button" onclick="finishBothTeamsSetup()" class="col-span-2 py-2.5 rounded-xl bg-fengshui-wood hover:opacity-90 text-slate-950 font-extrabold text-xs uppercase shadow-lg">
-                        <i class="fa-solid fa-check mr-1"></i> Hoàn tất Đội hình
+                <div class="space-y-2">
+                    <div class="p-2 rounded-lg bg-slate-950 border border-slate-800 text-[11px] text-emerald-400 font-semibold flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-shield-halved"></i> Đội hình ${c1.name} đã được xác nhận & ẩn
+                    </div>
+                    <button type="button" onclick="finishBothTeamsSetup()" class="w-full py-2.5 rounded-xl bg-fengshui-wood hover:opacity-90 text-slate-950 font-extrabold text-xs uppercase shadow-lg flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-check-double"></i>
+                        <span>Xác nhận ${c2.name} & Bắt đầu trận</span>
                     </button>
                 </div>
             `;
@@ -428,6 +457,9 @@
                 showToast(`⚠️ Vui lòng chọn đủ ${req} VĐV cho Đội 1 trước!`);
                 return;
             }
+            m.team1Confirmed = true;
+            saveState();
+            showToast(`🔒 Đã khóa đội hình Đội 1! Mời Đội 2 chọn VĐV.`);
             openRefereePlayerSetupModal(2);
         }
 
@@ -439,6 +471,8 @@
                 showToast(`⚠️ Vui lòng chọn đủ ${req} VĐV cho Đội 2!`);
                 return;
             }
+            m.team2Confirmed = true;
+            saveState();
             forceCloseSetupModal();
             showToast('✅ Đã chốt đội hình thi đấu cho cả 2 CLB!');
         }
@@ -459,7 +493,6 @@
             } else {
                 if (cur.length >= maxReq) {
                     if (maxReq === 1) {
-                        // Nếu nội dung đơn: tự động thay thế người mới chọn
                         m[arrKey] = [playerId];
                     } else {
                         showToast(`Nội dung này tối đa ${maxReq} VĐV!`);
@@ -483,8 +516,8 @@
             const isSingles = (m.catKey === 'DON');
             const req = isSingles ? 1 : 2;
             if ((m.team1PlayerIds || []).length < req || (m.team2PlayerIds || []).length < req) {
-                showToast('⚠️ Bạn chưa đăng ký đủ VĐV thi đấu cho trận này!');
-                openRefereePlayerSetupModal(1);
+                showToast('⚠️ Bạn chưa đăng ký đủ VĐV thi đấu cho nội dung này!');
+                openRefereePlayerSetupModal((m.team1PlayerIds || []).length < req ? 1 : 2);
                 return;
             }
 
@@ -504,14 +537,12 @@
             const target = parseInt(m.targetPoints) || (isSingles ? 21 : 15);
             const midPoint = (isSingles || target === 21) ? 11 : 8;
 
-            // Đổi sân ở điểm 8 (trận 15 điểm) hoặc điểm 11 (trận đơn 21 điểm)
             if (currentTotalScore === midPoint && !m.swappedAtMid && delta > 0) {
                 cs.swappedEnds = !cs.swappedEnds;
                 m.swappedAtMid = true;
                 showToast(`🔄 Đổi sân giữa trận (Điểm ${midPoint})!`);
             }
 
-            // Nội dung đơn: Tổng điểm chia hết cho 4 đổi VĐV
             if (isSingles && delta > 0 && currentTotalScore > 0 && currentTotalScore % 4 === 0 && currentTotalScore < target) {
                 m.lastSinglesSwapScore = currentTotalScore;
                 showToast(`🔁 Tổng điểm ${currentTotalScore}: Đổi VĐV đơn kế tiếp!`);
@@ -528,15 +559,21 @@
         }
 
         function autoAdvanceToNextMatchOrTie(finishedMatch) {
-            const courtMatches = getAllMatchesFlat().filter(x => x.court === currentAssignedCourt);
-            const idx = courtMatches.findIndex(x => x.id === finishedMatch.id);
-            if (idx >= 0 && idx + 1 < courtMatches.length) {
-                state.activeLiveMatchId = courtMatches[idx + 1].id;
-                showToast('Chuyển sang nội dung tiếp theo trên sân!');
+            const activeTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
+            const nextUnfinished = activeTieMatches.find(x => x.id !== finishedMatch.id && x.status !== 'FINISHED');
+            if (nextUnfinished) {
+                state.activeLiveMatchId = nextUnfinished.id;
+                showToast('Chuyển sang nội dung tiếp theo!');
+            } else {
+                // Đã xong cả 5 trận của cặp đấu hiện tại -> tự động nạp cặp đấu tiếp theo trên sân
+                const nextTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
+                if (nextTieMatches.length > 0) {
+                    state.activeLiveMatchId = nextTieMatches[0].id;
+                    showToast('🎉 Cặp đấu hoàn tất! Đã chuyển sang cặp CLB kế tiếp.');
+                }
             }
         }
 
-        // LUẬT GIAO BÓNG PICKLEBALL HIỆN HÀNH: BẮT ĐẦU 0-0-2 -> MẤT GIAO CHUYỂN ĐỘI KIA 0-0-1 -> 0-0-2
         function triggerSideOutOrNextServer() {
             const { match: m } = findMatchById(state.activeLiveMatchId);
             if (!m) return;
@@ -564,7 +601,7 @@
             autoAdvanceToNextMatchOrTie(m);
             saveState();
             renderRefereeApp();
-            showToast('Đã chốt kết quả trận!');
+            showToast('Đã chốt kết quả nội dung!');
         }
 
         function reopenFinishedMatch() {
@@ -584,23 +621,39 @@
         }
 
         function renderRefereeApp() {
-            const courtMatches = getAllMatchesFlat().filter(x => x.court === currentAssignedCourt);
+            // Chỉ lấy 5 trận thuộc cặp 2 CLB đang thi đấu trên sân này
+            const activeTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
             let { match: m } = findMatchById(state.activeLiveMatchId);
             
-            if (!m || m.court !== currentAssignedCourt) {
-                m = courtMatches.find(x => x.status !== 'FINISHED') || courtMatches[0];
+            if (!m || !activeTieMatches.some(x => x.id === m.id)) {
+                m = activeTieMatches.find(x => x.status !== 'FINISHED') || activeTieMatches[0];
                 if (m) state.activeLiveMatchId = m.id;
             }
 
+            const headerLabelEl = document.getElementById('activeTieHeaderLabel');
             const selector = document.getElementById('liveMatchSelector');
-            if (selector) {
-                selector.innerHTML = courtMatches.map(x => `<option value="${x.id}">[${x.court}] ${x.catLabel}: (${x.score1 || 0}-${x.score2 || 0})</option>`).join('') || '<option>Chưa có trận đấu trên sân này</option>';
-                if (m) selector.value = m.id;
-            }
 
-            if (!m) {
+            if (!m || activeTieMatches.length === 0) {
+                if (headerLabelEl) headerLabelEl.innerHTML = `<i class="fa-solid fa-circle-info mr-1"></i>Chưa có cặp đấu trên ${currentAssignedCourt}`;
+                if (selector) selector.innerHTML = '<option>Trống lịch thi đấu</option>';
                 document.getElementById('officialScoreCallout').textContent = "Chưa có trận";
                 return;
+            }
+
+            const cl1 = getClubById(m.club1Id).name;
+            const cl2 = getClubById(m.club2Id).name;
+
+            if (headerLabelEl) {
+                headerLabelEl.innerHTML = `<i class="fa-solid fa-swords mr-1"></i>Đang đấu: <span class="text-white">${cl1}</span> vs <span class="text-white">${cl2}</span>`;
+            }
+
+            if (selector) {
+                selector.innerHTML = activeTieMatches.map(x => {
+                    const cleanCat = (x.catLabel || '').replace(/^Vòng \d+\s*•\s*/i, '');
+                    const statusIcon = x.status === 'FINISHED' ? '✅' : (x.status === 'LIVE' ? '🔴' : '⏳');
+                    return `<option value="${x.id}">${statusIcon} ${cleanCat} (${x.score1 || 0}-${x.score2 || 0})</option>`;
+                }).join('');
+                selector.value = m.id;
             }
 
             const isSingles = (m.catKey === 'DON');
@@ -610,7 +663,6 @@
             const cs = m.courtState;
 
             if (m.servingTeam === undefined) m.servingTeam = 1;
-            // Lần đầu tiên giao bóng của các nội dung đôi luôn là 0-0-2 theo đúng luật Pickleball
             if (m.serverNum === undefined) m.serverNum = isSingles ? 1 : 2;
 
             const isMatchFinished = (m.status === 'FINISHED');
@@ -620,8 +672,8 @@
             const showSinglesSwap = isSingles && !isMatchFinished && totalScore > 0 && totalScore % 4 === 0;
             document.getElementById('singlesSwapAlertBanner').classList.toggle('hidden', !showSinglesSwap);
 
-            const cl1 = getClubById(m.club1Id).name, cl2 = getClubById(m.club2Id).name;
-            document.getElementById('liveMatchStageBadge').textContent = `${m.catLabel} • ${cl1} vs ${cl2}`;
+            const cleanStageLabel = (m.catLabel || '').replace(/^Vòng \d+\s*•\s*/i, '');
+            document.getElementById('liveMatchStageBadge').textContent = `${cleanStageLabel} • ${cl1} vs ${cl2}`;
             document.getElementById('liveTeam1ClubLabel').textContent = cl1;
             document.getElementById('liveTeam2ClubLabel').textContent = cl2;
             document.getElementById('liveTeam1Name').textContent = m.team1Name || cs.t1Right;
@@ -660,16 +712,12 @@
                 ` : `<div class="col-span-3 h-12 rounded-lg bg-slate-900 text-slate-500 text-[11px] font-bold flex items-center justify-center">🔒 Khóa</div>`;
             }
 
-            // SƠ ĐỒ SÂN 2D: QUY ƯỚC GÓC NHÌN TỪ TRÊN XUỐNG (TOP-DOWN)
-            // - Nửa sân TRÁI (x = 75): Nhìn về lưới (sang phải) -> Ô PHẢI là DƯỚI (y = 155), Ô TRÁI là TRÊN (y = 55)
-            // - Nửa sân PHẢI (x = 365): Nhìn về lưới (sang trái) -> Ô PHẢI là TRÊN (y = 55), Ô TRÁI là DƯỚI (y = 155)
-            // - Luật giao bóng Pickleball: Điểm giao bóng CHẴN -> giao từ ô PHẢI; Điểm giao bóng LẺ -> giao từ ô TRÁI, luôn bay CHÉO góc sang ô đối diện!
+            // SƠ ĐỒ SÂN 2D & ĐƯỜNG CHÉO GIAO BÓNG CHUẨN LUẬT PICKLEBALL
             const isEvenScore = (servingScore % 2 === 0);
             const leftIsT1 = !cs.swappedEnds;
             const leftTeamNum = leftIsT1 ? 1 : 2;
             const rightTeamNum = leftIsT1 ? 2 : 1;
 
-            // Tọa độ Y của người phát bóng theo luật ô Chẵn (Phải) / Lẻ (Trái)
             const leftServerY = isEvenScore ? 155 : 55;
             const rightServerY = isEvenScore ? 55 : 155;
 
@@ -679,7 +727,6 @@
                 const leftPlayerName = String(leftIsT1 ? cs.t1Right : cs.t2Right);
                 const rightPlayerName = String(leftIsT1 ? cs.t2Right : cs.t1Right);
 
-                // Trong đánh đơn, người nhận luôn đứng chéo góc với người giao bóng
                 const activeYLeft = (servingTeam === leftTeamNum) ? leftServerY : (210 - rightServerY);
                 const activeYRight = (servingTeam === rightTeamNum) ? rightServerY : (210 - leftServerY);
 
@@ -688,10 +735,10 @@
                     { team: rightTeamNum, x: 355, y: activeYRight, name: rightPlayerName, color: leftIsT1 ? '#22c55e' : '#f43f5e', isServer: (servingTeam === rightTeamNum) }
                 ];
             } else {
-                const leftTopName = String(leftIsT1 ? cs.t1Left : cs.t2Left);     // Ô Trái của đội bên trái (y = 55)
-                const leftBottomName = String(leftIsT1 ? cs.t1Right : cs.t2Right); // Ô Phải của đội bên trái (y = 155)
-                const rightTopName = String(leftIsT1 ? cs.t2Right : cs.t1Right);   // Ô Phải của đội bên phải (y = 55)
-                const rightBottomName = String(leftIsT1 ? cs.t2Left : cs.t1Left);  // Ô Trái của đội bên phải (y = 155)
+                const leftTopName = String(leftIsT1 ? cs.t1Left : cs.t2Left);
+                const leftBottomName = String(leftIsT1 ? cs.t1Right : cs.t2Right);
+                const rightTopName = String(leftIsT1 ? cs.t2Right : cs.t1Right);
+                const rightBottomName = String(leftIsT1 ? cs.t2Left : cs.t1Left);
 
                 dots = [
                     { team: leftTeamNum, x: 75, y: 55, name: leftTopName, color: leftIsT1 ? '#f43f5e' : '#22c55e', isServer: (servingTeam === leftTeamNum) && !isEvenScore },
@@ -702,7 +749,6 @@
             }
 
             const serverDot = dots.find(d => d.isServer) || dots[0];
-            // Ô nhận bóng luôn nằm ở nửa sân đối diện và góc chéo (tổng tọa độ Y = 210)
             const receiverDot = dots.find(d => d.team !== serverDot.team && Math.abs(d.y - (210 - serverDot.y)) < 20) || dots[dots.length - 1];
             
             const dx = receiverDot.x - serverDot.x, dy = receiverDot.y - serverDot.y;
