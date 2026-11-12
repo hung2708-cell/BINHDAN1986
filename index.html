@@ -124,6 +124,7 @@
                     </h3>
                     <span class="text-xs text-slate-400">Cập nhật thời gian thực</span>
                 </div>
+                <!-- DANH SÁCH 8 SÂN ĐẤU HIỂN THỊ TỰ ĐỘNG -->
                 <div id="overview-courts-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div>
             </div>
         </section>
@@ -133,7 +134,7 @@
             <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h2 class="text-xl font-bold text-white">Lịch thi đấu chi tiết từng Sân</h2>
-                    <p class="text-xs text-slate-400">Bấm chọn sân bên dưới để lọc danh sách trận đấu tương ứng.</p>
+                    <p class="text-xs text-slate-400">Bấm chọn sân bên dưới để xem chi tiết các trận đấu.</p>
                 </div>
                 <div id="court-filter-buttons" class="flex flex-wrap gap-1.5">
                     <button onclick="filterCourt('Sân 1')" class="court-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-brand-600 text-white transition shadow">Sân 1</button>
@@ -553,6 +554,11 @@
             document.getElementById('stat-matches-count').innerText = matches.length;
             document.getElementById('stat-live-count').innerText = liveCount;
             document.getElementById('stat-finished-count').innerText = finishedCount;
+        }
+
+        function getClubName(id) { 
+            const found = teams.find(c => c.id === id); 
+            return found ? found.name : 'CLB'; 
         }
 
         function renderHomeOverview() {
@@ -989,7 +995,7 @@
                         <span class="text-slate-400 font-bold">-</span>
                         <input type="number" id="admin-s2-${m.id}" value="${m.score2 || 0}" class="w-12 bg-slate-900 border border-slate-700 rounded text-center text-sm text-white font-bold p-1">
                         <button onclick="updateMatchDirect('${m.id}')" class="px-3 py-1 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-xs font-semibold transition">Lưu</button>
-                        <button onclick="promptDeleteMatch('${m.id}')" class="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-xs"><i class="fa-solid fa-trash"></i></button>
+                        <button onclick="promptDeleteMatch('${m.id}')" class="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-lg text-xs"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </div>
             `).join('');
