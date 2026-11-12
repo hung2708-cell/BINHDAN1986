@@ -39,12 +39,12 @@
         @keyframes pulse-live { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.9); } }
         .live-dot { animation: pulse-live 1.2s infinite; }
         @keyframes serve-blink {
-            0%, 100% { opacity: 1; filter: drop-shadow(0 0 10px #22c55e); transform: scale(1.05); }
-            50% { opacity: 0.25; filter: drop-shadow(0 0 2px #ffffff); transform: scale(0.95); }
+            0%, 100% { opacity: 1; filter: drop-shadow(0 0 10px #ccff00); transform: scale(1.08); }
+            50% { opacity: 0.3; filter: drop-shadow(0 0 2px #ffffff); transform: scale(0.92); }
         }
-        .serve-blinking { animation: serve-blink 0.7s ease-in-out infinite; }
+        .serve-blinking { animation: serve-blink 0.65s ease-in-out infinite; }
         @keyframes dash-flow { to { stroke-dashoffset: -24; } }
-        .serve-trajectory-line { stroke-dasharray: 8 4; animation: dash-flow 0.65s linear infinite; }
+        .serve-trajectory-line { stroke-dasharray: 8 4; animation: dash-flow 0.6s linear infinite; }
         @media (max-width: 768px) { body { padding: 4px; } .ref-score-btn { height: 68px !important; font-size: 1.35rem !important; } }
     </style>
 </head>
@@ -81,14 +81,19 @@
         <select id="liveMatchSelector" onchange="selectMatchForScoreboard(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-brand-500"></select>
     </div>
 
-    <!-- 1. SƠ ĐỒ SÂN 2D (ĐÃ ĐƯA LÊN TRÊN & CHUẨN ĐƯỜNG CHÉO) -->
+    <!-- 1. SƠ ĐỒ SÂN 2D & MŨI TÊN ĐƯỜNG CHÉO -->
     <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-2.5 space-y-1.5 shadow-xl backdrop-blur-sm">
         <div class="flex justify-between items-center text-[11px] font-extrabold text-amber-400">
-            <span><i class="fa-solid fa-court mr-1"></i>Sơ Đồ Sân 2D & Hướng Phát Bóng Chéo</span>
+            <span><i class="fa-solid fa-court mr-1"></i>Sơ Đồ Sân 2D & Mũi Tên Đường Chéo</span>
             <button type="button" onclick="openRefereePlayerSetupModal()" class="px-2 py-0.5 rounded bg-brand-600 text-white font-extrabold text-[10px] shadow">Chọn VĐV</button>
         </div>
         <div class="relative w-full aspect-[2/1] bg-emerald-950/90 rounded-lg border-2 border-emerald-500/40 overflow-hidden shadow-inner flex items-center justify-center">
             <svg class="absolute inset-0 w-full h-full" viewBox="0 0 440 210" preserveAspectRatio="none">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="6" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#ccff00"/>
+                    </marker>
+                </defs>
                 <rect x="15" y="15" width="410" height="180" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.85"/>
                 <line x1="220" y1="15" x2="220" y2="195" stroke="#ffffff" stroke-width="2" stroke-dasharray="6 4" opacity="0.75"/>
                 <line x1="135" y1="15" x2="135" y2="195" stroke="#ffffff" stroke-width="1.8" opacity="0.7"/>
@@ -383,6 +388,20 @@
                 if (cs && m.catKey !== 'DON' && delta > 0) { const tmp = cs.t2Left; cs.t2Left = cs.t2Right; cs.t2Right = tmp; }
             }
 
+            const currentTotalScore = (parseInt(m.score1) || 0) + (parseInt(m.score2) || 0);
+            const target = parseInt(m.targetPoints) || 11;
+
+            // KIỂM TRA ĐỔI SÂN: Chạm 11 đổi sân ở điểm 6, chạm 15 đổi sân ở điểm 8
+            if (target === 11 && currentTotalScore === 6 && !m.swappedAtMid) {
+                cs.swappedEnds = !cs.swappedEnds;
+                m.swappedAtMid = true;
+                showToast('🔄 Đổi sân giữa trận (Điểm 6)!');
+            } else if (target === 15 && currentTotalScore === 8 && !m.swappedAtMid) {
+                cs.swappedEnds = !cs.swappedEnds;
+                m.swappedAtMid = true;
+                showToast('🔄 Đổi sân giữa trận (Điểm 8)!');
+            }
+
             const res = evaluateMatchWinCondition(m);
             if (res.isWon) {
                 m.status = 'FINISHED';
@@ -490,7 +509,6 @@
                 document.getElementById('team1ScoreActionArea').innerHTML = `<div class="col-span-3 h-12 rounded-lg bg-emerald-950/60 text-emerald-300 font-extrabold text-xs flex items-center justify-center">🏆 XONG</div>`;
                 document.getElementById('team2ScoreActionArea').innerHTML = `<div class="col-span-3 h-12 rounded-lg bg-emerald-950/60 text-emerald-300 font-extrabold text-xs flex items-center justify-center">🏆 XONG</div>`;
             } else {
-                // Đội phát bóng hiển thị nút +-, Đội đỡ bóng hiển thị khóa
                 document.getElementById('team1ScoreActionArea').innerHTML = isTeam1Serving ? `
                     <button type="button" onclick="adjustLiveScore(1, -1)" class="col-span-1 ref-score-btn h-12 rounded-lg bg-slate-800 text-slate-200 font-bold text-base">-1</button>
                     <button type="button" onclick="adjustLiveScore(1, 1)" class="col-span-2 ref-score-btn h-12 rounded-lg bg-gradient-to-r from-brand-600 to-amber-500 text-white font-extrabold text-xs uppercase shadow-lg">+ ĐIỂM</button>
@@ -502,7 +520,7 @@
                 ` : `<div class="col-span-3 h-12 rounded-lg bg-slate-900 text-slate-500 text-[11px] font-bold flex items-center justify-center">🔒 Khóa</div>`;
             }
 
-            // SƠ ĐỒ SÂN 2D & ĐƯỜNG CHÉO PHÁT BÓNG CHUẨN XÁC
+            // SƠ ĐỒ SÂN 2D & MŨI TÊN ĐƯỜNG CHÉO CHUẨN XÁC
             const isEvenScore = (servingScore % 2 === 0);
             const leftIsT1 = !cs.swappedEnds;
             let dots = [
@@ -518,20 +536,20 @@
             const dx = receiverDot.x - serverDot.x, dy = receiverDot.y - serverDot.y;
             const dist = Math.hypot(dx, dy) || 1;
             const startX = serverDot.x + (dx / dist) * 18, startY = serverDot.y + (dy / dist) * 18;
-            const endX = receiverDot.x - (dx / dist) * 20, endY = receiverDot.y - (dy / dist) * 20;
+            const endX = receiverDot.x - (dx / dist) * 22, endY = receiverDot.y - (dy / dist) * 22;
 
             document.getElementById('courtDynamicVectors').innerHTML = `
-                <line x1="${startX}" y1="${startY}" x2="${endX}" y2="${endY}" stroke="#22c55e" stroke-width="3" class="serve-trajectory-line" />
+                <line x1="${startX}" y1="${startY}" x2="${endX}" y2="${endY}" stroke="#ccff00" stroke-width="3.5" marker-end="url(#arrowhead)" class="serve-trajectory-line" />
             `;
 
             document.getElementById('courtSvgPlayers').innerHTML = dots.map(d => `
                 <div class="absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-none" style="left: ${(d.x / 440) * 100}%; top: ${(d.y / 210) * 100}%;">
-                    ${d.isServer ? `<div class="absolute w-8 h-8 rounded-full border-2 border-fengshui-wood serve-blinking"></div>` : ''}
+                    ${d.isServer ? `<div class="absolute w-8 h-8 rounded-full border-2 border-pickle-lime serve-blinking"></div>` : ''}
                     <div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-md border-2 border-white" style="background-color: ${d.color};">
                         <i class="fa-solid fa-user text-[9px]"></i>
                     </div>
-                    <div class="mt-0.5 px-1 py-0.5 rounded bg-slate-950/90 border border-white/20 text-[8px] font-bold text-white whitespace-nowrap shadow">
-                        ${String(d.name || 'VĐV').slice(0, 10)}
+                    <div class="mt-0.5 px-1.5 py-0.5 rounded bg-slate-950/95 border border-white/20 text-[9px] font-bold text-white whitespace-nowrap shadow">
+                        ${String(d.name || 'VĐV').slice(0, 12)}
                     </div>
                 </div>
             `).join('');
