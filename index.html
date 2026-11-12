@@ -258,8 +258,8 @@
                 </div>
                 <div class="flex flex-wrap gap-2">
                     <a href="referee.html?court=Sân 1" target="_blank" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold transition shadow-lg flex items-center"><i class="fa-solid fa-whistle mr-2"></i> App Trọng Tài (Sân 1)</a>
-                    <button onclick="promptGenerateCircleSchedule()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition shadow-lg flex items-center"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Tự động xếp lịch vòng tròn (Circle)</button>
-                    <button onclick="promptResetDefault()" class="px-4 py-2 rounded-xl bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 text-xs font-semibold transition border border-rose-500/20 flex items-center"><i class="fa-solid fa-rotate-right mr-2"></i> Khôi phục mẫu</button>
+                    <button onclick="confirmGenerateCircleSchedule()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition shadow-lg flex items-center"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Tự động xếp lịch vòng tròn (Circle)</button>
+                    <button onclick="confirmResetDefault()" class="px-4 py-2 rounded-xl bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 text-xs font-semibold transition border border-rose-500/20 flex items-center"><i class="fa-solid fa-rotate-right mr-2"></i> Khôi phục mẫu</button>
                 </div>
             </div>
 
@@ -398,6 +398,8 @@
 
         function saveAppState() {
             try {
+                // Đảm bảo đồng bộ trực tiếp giữa appState.clubs và biến teams
+                appState.clubs = teams;
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
                 if (indexMqttClient && indexMqttClient.connected) {
                     indexMqttClient.publish(`caycoi/pickleball/v28/${INDEX_ROOM_CODE}/state`, JSON.stringify({ sender: 'web_index', state: appState }), { qos: 1, retain: true });
@@ -438,8 +440,8 @@
             if(e.key === 'Enter') confirmPasswordAction(); 
         });
 
-        // THUẬT TOÁN XẾP LỊCH VÒNG TRÒN CHUẨN ĐỒNG ĐỘI (MỖI CẶP CLB ĐÁNH TRỌN VẸN TRÊN 1 SÂN TRONG 1 VÒNG)
-        function promptGenerateCircleSchedule() {
+        // BẢO VỆ CÁC HÀM QUẢN TRỊ BẰNG MODAL MẬT KHẨU ĐÚNG CHUẨN
+        function confirmGenerateCircleSchedule() {
             openPasswordModal("Xác nhận Tự động sắp xếp lịch vòng tròn", () => {
                 if (teams.length < 2) {
                     showToast('Cần ít nhất 2 đội tuyển để xếp lịch!', true);
@@ -492,7 +494,7 @@
             });
         }
 
-        function promptResetDefault() {
+        function confirmResetDefault() {
             openPasswordModal("Khôi phục dữ liệu mẫu ban đầu", () => {
                 appState = { ties: JSON.parse(JSON.stringify(DEFAULT_TIES)), clubs: JSON.parse(JSON.stringify(DEFAULT_TEAMS)), activeLiveMatchId: 'm1' };
                 teams = appState.clubs;
@@ -534,6 +536,9 @@
         function toggleMobileMenu() { document.getElementById('mobile-menu').classList.toggle('hidden'); }
 
         function initApp() {
+            teams = appState.clubs || [];
+            matches = [];
+            (appState.ties || []).forEach(t => (t.matches || []).forEach(m => matches.push(m)));
             renderStats();
             renderHomeOverview();
             filterCourt(currentCourtFilter || 'Sân 1');
@@ -624,7 +629,6 @@
                 return;
             }
 
-            // GOM TOÀN BỘ CÁC TRẬN CỦA CÙNG 1 CẶP CLB VÀO CHUNG 1 Ô DUY NHẤT
             let tiesMap = {};
             courtMatches.forEach(m => {
                 let key = m.club1Id + '_vs_' + m.club2Id;
@@ -642,7 +646,7 @@
             Object.values(tiesMap).forEach(tie => {
                 let allFinished = tie.matches.every(x => x.status === 'FINISHED');
                 let someLive = tie.matches.some(x => x.status === 'LIVE');
-                let tieStatusBadge = allFinished ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400">Đã xong cặp đấu</span>` : (someLive ? `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-brand-500/20 text-brand-400 animate-pulse">Đang LIVE</span>` : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400">Sắp đấu</span>`);
+                let tieStatusBadge = allFinished ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400">Đã xong cặp đấu</span>` : (someLive ? `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-brand-500/20 text-brand-400 animate-pulse">Đang LIVE</span>` : `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400">Sắp đấu</span>`);
 
                 html += `
                     <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl backdrop-blur-sm">
@@ -864,12 +868,12 @@
                         teamsMap[teamName].push({ id: 'p_' + Date.now() + '_' + idx, name: String(playerName).trim(), level: String(level).trim() });
                     });
 
-                    appState.clubs = Object.keys(teamsMap).map((tName, i) => ({
+                    teams = Object.keys(teamsMap).map((tName, i) => ({
                         id: 't_imp_' + i + '_' + Date.now(),
                         name: tName,
                         players: teamsMap[tName]
                     }));
-                    teams = appState.clubs;
+                    appState.clubs = teams;
                     saveAppState();
                     showToast(`✅ Đã import thành công ${teams.length} đội tuyển!`);
                 } catch (err) {
@@ -893,7 +897,7 @@
 
         function renderTeams() {
             const container = document.getElementById('teams-grid-container');
-            if (teams.length === 0) {
+            if (!teams || teams.length === 0) {
                 container.innerHTML = `<div class="col-span-full text-center py-12 text-slate-500 bg-slate-900/30 rounded-2xl border border-slate-800">Chưa có đội tuyển nào. Hãy bấm <strong>Import VĐV (Excel)</strong> ở trên.</div>`;
                 return;
             }
@@ -923,8 +927,8 @@
 
         function promptDeleteTeam(teamId) {
             openPasswordModal("Xác nhận xóa Đội tuyển", () => {
-                appState.clubs = appState.clubs.filter(c => c.id !== teamId);
-                teams = appState.clubs;
+                teams = teams.filter(c => c.id !== teamId);
+                appState.clubs = teams;
                 saveAppState();
                 showToast('🗑️ Đã xóa đội tuyển!');
             });
@@ -932,9 +936,10 @@
 
         function promptDeletePlayer(teamId, playerId) {
             openPasswordModal("Xác nhận xóa VĐV", () => {
-                const team = appState.clubs.find(c => c.id === teamId);
+                const team = teams.find(c => c.id === teamId);
                 if (team && team.players) {
                     team.players = team.players.filter(p => p.id !== playerId);
+                    appState.clubs = teams;
                     saveAppState();
                     showToast('🗑️ Đã xóa VĐV!');
                 }
@@ -944,11 +949,12 @@
         function promptEditPlayer(teamId, playerId, currentName) {
             const newName = prompt("Nhập tên mới cho vận động viên:", currentName);
             if (newName && newName.trim() !== "") {
-                const team = appState.clubs.find(c => c.id === teamId);
+                const team = teams.find(c => c.id === teamId);
                 if (team && team.players) {
                     const player = team.players.find(p => p.id === playerId);
                     if (player) {
                         player.name = newName.trim();
+                        appState.clubs = teams;
                         saveAppState();
                         showToast('✅ Đã cập nhật tên VĐV!');
                     }
@@ -974,7 +980,7 @@
                         <span class="text-slate-400 font-bold">-</span>
                         <input type="number" id="admin-s2-${m.id}" value="${m.score2 || 0}" class="w-12 bg-slate-900 border border-slate-700 rounded text-center text-sm text-white font-bold p-1">
                         <button onclick="updateMatchDirect('${m.id}')" class="px-3 py-1 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-xs font-semibold transition">Lưu</button>
-                        <button onclick="promptDeleteMatch('${m.id}')" class="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-xs"><i class="fa-solid fa-trash"></i></button>
+                        <button onclick="promptDeleteMatch('${m.id}')" class="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-lg text-xs"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </div>
             `).join('');
@@ -986,8 +992,8 @@
             const membersStr = document.getElementById('team-members').value.trim();
             if(!name || !membersStr) return;
             const players = membersStr.split(',').map((m, idx) => ({ id: 'p_' + Date.now() + '_' + idx, name: m.trim(), level: 'A' })).filter(p => p.name);
-            appState.clubs.push({ id: 't_' + Date.now(), name, players });
-            teams = appState.clubs;
+            
+            teams.push({ id: 't_' + Date.now(), name, players });
             document.getElementById('form-add-team').reset();
             saveAppState();
             showToast(`✅ Đã thêm đội ${name}!`);
