@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- MQTT Client CDN -->
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
-    <!-- SheetJS (XLSX) cho tính năng Import/Export Excel -->
+    <!-- SheetJS (XLSX) cho tính năng Xuất Excel Bảng xếp hạng -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
         tailwind.config = {
@@ -138,7 +138,7 @@
             <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h2 class="text-xl font-bold text-white">Lịch thi đấu theo Sân (Sân 1 - Sân 8)</h2>
-                    <p class="text-xs text-slate-400">Mỗi sân hiển thị cặp CLB đang thi đấu. Bấm <strong>Xem nội dung</strong> để mở bảng chi tiết VĐV.</p>
+                    <p class="text-xs text-slate-400">Mỗi sân hiển thị cặp CLB đang thi đấu. Bấm <strong>Xem nội dung</strong> để theo dõi & cập nhật tỷ số trực tiếp.</p>
                 </div>
                 <div id="court-filter-buttons" class="flex flex-wrap gap-1.5">
                     <button onclick="filterCourt('ALL')" class="court-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-brand-600 text-white transition shadow">Tất cả Sân</button>
@@ -200,12 +200,12 @@
             </div>
         </section>
 
-        <!-- TAB 4: STANDINGS & EXPORT EXCEL -->
+        <!-- TAB 4: STANDINGS & COMPLETED TIES -->
         <section id="tab-standings" class="tab-content hidden space-y-6">
             <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
                     <h2 class="text-xl font-bold text-white">Bảng xếp hạng Vòng bảng & Kết quả</h2>
-                    <p class="text-xs text-slate-400">Tính theo kết quả tổng của từng cặp đối đầu: <strong class="text-emerald-400">Thắng tổng (2đ)</strong> • <strong class="text-amber-400">Hòa tổng (1đ)</strong> • <strong class="text-rose-400">Thua tổng (0đ)</strong>.</p>
+                    <p class="text-xs text-slate-400">Tính theo kết quả tổng từng cặp đối đầu: <strong class="text-emerald-400">Thắng tổng (2đ)</strong> • <strong class="text-amber-400">Hòa tổng (1đ)</strong> • <strong class="text-rose-400">Thua tổng (0đ)</strong>.</p>
                 </div>
                 <div class="flex gap-2">
                     <button onclick="exportResultToExcel()" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition shadow flex items-center">
@@ -248,7 +248,7 @@
             </div>
         </section>
 
-        <!-- TAB 5: TEAMS & IMPORT EXCEL -->
+        <!-- TAB 5: TEAMS (ĐÃ BỎ IMPORT VĐV, GIỮ THÊM/XÓA VĐV TRÌNH A/B/C & GIỚI TÍNH NAM/NỮ) -->
         <section id="tab-teams" class="tab-content hidden space-y-6">
             <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
@@ -259,12 +259,9 @@
                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-pink-500/15 text-pink-400 border border-pink-500/30 font-semibold"><i class="fa-solid fa-venus"></i> Nữ</span>
                     </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <label class="px-3 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs transition cursor-pointer shadow flex items-center">
-                        <i class="fa-solid fa-file-import mr-1.5"></i> Import VĐV (Excel)
-                        <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" onchange="importPlayersFromExcel(event)" class="hidden">
-                    </label>
-                </div>
+                <button onclick="switchTab('admin')" class="px-3.5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs transition shadow flex items-center">
+                    <i class="fa-solid fa-plus mr-1.5"></i> Thêm CLB mới
+                </button>
             </div>
             <div id="teams-grid-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </section>
@@ -286,16 +283,42 @@
                 </div>
             </div>
 
-            <div class="bg-slate-900/50 border border-slate-800 p-5 rounded-2xl space-y-4 max-w-xl">
+            <!-- FORM THÊM ĐỘI TUYỂN / CLB MỚI CÓ CHỌN TRÌNH A, B, C & GIỚI TÍNH NAM, NỮ -->
+            <div class="bg-slate-900/50 border border-slate-800 p-5 rounded-2xl space-y-4 max-w-2xl">
                 <h3 class="font-bold text-white flex items-center text-base"><i class="fa-solid fa-user-plus text-brand-400 mr-2"></i> Thêm đội tuyển / CLB mới</h3>
-                <form id="form-add-team" onsubmit="handleAddTeam(event)" class="space-y-3">
-                    <div><label class="block text-xs font-medium text-slate-400 mb-1">Tên đội / CLB</label><input type="text" id="team-name" required placeholder="VD: Bính Dần FC" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500"></div>
+                <form id="form-add-team" onsubmit="handleAddTeam(event)" class="space-y-4">
                     <div>
-                        <label class="block text-xs font-medium text-slate-400 mb-1">Thành viên ban đầu (VD: Hùng-Nam-A, Lan-Nữ-B)</label>
-                        <input type="text" id="team-members" required placeholder="VD: Hùng-Nam-A, Lan-Nữ-B, Dũng-Nam-C" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500">
-                        <p class="text-[11px] text-slate-500 mt-1">Có thể nhập nhanh tên (mặc định Nam - Trình A), sau đó thêm/chỉnh chi tiết tại Tab <strong>Đội tuyển</strong>.</p>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Tên đội / CLB</label>
+                        <input type="text" id="team-name" required placeholder="VD: Bính Dần FC" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500">
                     </div>
-                    <button type="submit" class="w-full py-2.5 bg-brand-600 hover:bg-brand-500 text-white font-medium rounded-xl text-sm transition shadow-lg">Thêm đội tuyển</button>
+
+                    <div class="space-y-2">
+                        <label class="block text-xs font-medium text-slate-400">Thêm thành viên vào đội (Chọn Giới tính Nam/Nữ & Trình A, B, C)</label>
+                        <div class="flex flex-wrap sm:flex-nowrap items-center gap-2">
+                            <input type="text" id="draft-player-name" placeholder="Nhập họ tên VĐV..." onkeypress="if(event.key==='Enter'){event.preventDefault(); addDraftPlayer();}" class="flex-1 min-w-[140px] bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500">
+                            <select id="draft-player-gender" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-brand-500">
+                                <option value="Nam">Nam</option>
+                                <option value="Nữ">Nữ</option>
+                            </select>
+                            <select id="draft-player-level" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-bold text-amber-400 focus:outline-none focus:border-brand-500">
+                                <option value="A">Trình A</option>
+                                <option value="B">Trình B</option>
+                                <option value="C">Trình C</option>
+                            </select>
+                            <button type="button" onclick="addDraftPlayer()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 text-xs font-bold transition shrink-0">
+                                <i class="fa-solid fa-plus mr-1"></i> Thêm VĐV
+                            </button>
+                        </div>
+
+                        <!-- Danh sách VĐV đang chuẩn bị tạo cho CLB -->
+                        <div id="draft-players-list" class="flex flex-wrap gap-1.5 pt-1 min-h-[28px]">
+                            <span class="text-xs text-slate-500 italic">Chưa có VĐV nào trong danh sách tạo mới...</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full py-2.5 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded-xl text-sm transition shadow-lg">
+                        <i class="fa-solid fa-check-circle mr-1.5"></i> Lưu Đội tuyển / CLB mới
+                    </button>
                 </form>
             </div>
 
@@ -307,7 +330,7 @@
 
     </main>
 
-    <!-- POPUP MODAL XEM CHI TIẾT NỘI DUNG & TÊN VĐV VỪA KHÍT KHUNG HÌNH (KHÔNG CUỘN) -->
+    <!-- POPUP MODAL XEM CHI TIẾT & CẬP NHẬT TỶ SỐ TRỰC TIẾP VỪA KHÍT KHUNG HÌNH -->
     <div id="match-detail-modal" onclick="if(event.target === this) closeMatchDetailModal()" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden p-3">
         <div class="bg-slate-950 border-2 border-brand-500/40 w-full max-w-2xl p-4 sm:p-5 rounded-2xl shadow-2xl space-y-3 animate-modal-pop">
             <div class="flex justify-between items-center border-b border-slate-800 pb-2.5">
@@ -445,6 +468,9 @@
         let matches = [];
         appState.ties.forEach(t => (t.matches || []).forEach(m => matches.push(m)));
 
+        // Biến lưu context Popup đang mở để cập nhật tỷ số realtime ngay trong Popup
+        let currentOpenDetailModalCtx = null;
+
         function showToast(msg, isError = false) {
             const c = document.getElementById('toastContainer');
             if (!c) return;
@@ -474,6 +500,16 @@
                 } catch (e) {}
             });
         }
+
+        // Lắng nghe thay đổi localStorage từ tab referee.html cùng trình duyệt để cập nhật tức thì
+        window.addEventListener('storage', (e) => {
+            if (e.key === STORAGE_KEY && e.newValue) {
+                try {
+                    appState = JSON.parse(e.newValue);
+                    initApp();
+                } catch (err) {}
+            }
+        });
 
         function saveAppState() {
             try {
@@ -623,6 +659,11 @@
             renderStandings();
             renderTeams();
             renderAdminMatchesList();
+
+            // Tự động làm mới Popup nếu đang mở để cập nhật tỷ số realtime
+            if (currentOpenDetailModalCtx && !document.getElementById('match-detail-modal').classList.contains('hidden')) {
+                openCourtDetailModal(currentOpenDetailModalCtx.courtName, currentOpenDetailModalCtx.club1Id, currentOpenDetailModalCtx.club2Id);
+            }
         }
 
         function renderStats() {
@@ -702,7 +743,6 @@
             container.innerHTML = html;
         }
 
-        // TAB 2: HIỂN THỊ ĐÚNG 1 Ô DUY NHẤT CHO MỖI SÂN (SÂN 1 - SÂN 8)
         let currentCourtFilter = 'ALL';
         function filterCourt(courtFilter) {
             currentCourtFilter = courtFilter;
@@ -801,8 +841,9 @@
             container.innerHTML = html;
         }
 
-        // POPUP GIỮA MÀN HÌNH HIỂN THỊ CÔ ĐỌNG 5 NỘI DUNG KÈM TÊN VĐV TỪNG TRẬN (VỪA KHÍT KHUNG HÌNH)
+        // POPUP GIỮA MÀN HÌNH HIỂN THỊ CÔ ĐỌNG 5 NỘI DUNG + TÊN VĐV + CẬP NHẬT TỶ SỐ TRỰC TIẾP
         function openCourtDetailModal(courtName, club1Id, club2Id) {
+            currentOpenDetailModalCtx = { courtName, club1Id, club2Id };
             const courtMatches = matches.filter(m => !courtName || (m.court || 'Sân 1') === courtName);
             let activeMatch = courtMatches.find(m => m.status === 'LIVE') || courtMatches.find(m => m.status === 'UPCOMING') || courtMatches[0];
             
@@ -839,7 +880,7 @@
             };
 
             document.getElementById('detail-modal-title').textContent = `${displayCourt}: ${c1Name} (${c1Wins}) - (${c2Wins}) ${c2Name}`;
-            document.getElementById('detail-modal-subtitle').textContent = `Chi tiết ${tieMatches.length} nội dung thi đấu & danh sách VĐV`;
+            document.getElementById('detail-modal-subtitle').textContent = `Cập nhật tỷ số trực tiếp • Chi tiết ${tieMatches.length} nội dung & VĐV`;
             document.getElementById('detail-modal-referee-link').href = `referee.html?court=${encodeURIComponent(displayCourt)}`;
 
             document.getElementById('detail-modal-content').innerHTML = tieMatches.length ? tieMatches.map((m, idx) => {
@@ -881,16 +922,21 @@
                                 <span class="text-[11px] text-amber-400 font-bold truncate">${cleanLabel}</span>
                                 <span class="text-[10px] text-slate-500 shrink-0">(${m.targetPoints || 15}đ)</span>
                             </div>
-                            ${statusBadge}
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                ${statusBadge}
+                            </div>
                         </div>
-                        <div class="grid grid-cols-7 items-center gap-2">
-                            <div class="col-span-3 text-right min-w-0">
+                        <div class="grid grid-cols-12 items-center gap-1.5">
+                            <div class="col-span-4 text-right min-w-0">
                                 ${side1Html}
                             </div>
-                            <div class="col-span-1 flex justify-center items-center bg-slate-950 py-1 rounded-lg border border-slate-800 font-score font-black text-brand-400 text-xs sm:text-sm">
-                                ${s1}-${s2}
+                            <div class="col-span-4 flex justify-center items-center gap-1">
+                                <input type="number" min="0" id="popup-s1-${m.id}" value="${s1}" class="w-10 bg-slate-950 border border-slate-700 focus:border-brand-500 rounded-lg text-center font-score font-black text-brand-400 text-xs py-1 focus:outline-none">
+                                <span class="text-slate-500 font-bold text-xs">-</span>
+                                <input type="number" min="0" id="popup-s2-${m.id}" value="${s2}" class="w-10 bg-slate-950 border border-slate-700 focus:border-emerald-500 rounded-lg text-center font-score font-black text-emerald-400 text-xs py-1 focus:outline-none">
+                                <button type="button" onclick="savePopupMatchScore('${m.id}')" class="px-2 py-1 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-[10px] font-bold transition shadow" title="Cập nhật tỷ số">Lưu</button>
                             </div>
-                            <div class="col-span-3 text-left min-w-0">
+                            <div class="col-span-4 text-left min-w-0">
                                 ${side2Html}
                             </div>
                         </div>
@@ -902,7 +948,32 @@
             document.getElementById('match-detail-modal').classList.add('flex');
         }
 
+        function savePopupMatchScore(matchId) {
+            const s1El = document.getElementById(`popup-s1-${matchId}`);
+            const s2El = document.getElementById(`popup-s2-${matchId}`);
+            if (!s1El || !s2El) return;
+
+            const s1 = parseInt(s1El.value) || 0;
+            const s2 = parseInt(s2El.value) || 0;
+            const m = matches.find(x => x.id === matchId);
+            if (m) {
+                m.score1 = s1;
+                m.score2 = s2;
+                const target = parseInt(m.targetPoints) || (m.catKey === 'DON' ? 21 : 15);
+                if (s1 === 0 && s2 === 0) {
+                    m.status = 'UPCOMING';
+                } else if ((s1 >= target || s2 >= target) && (s1 === 21 || s2 === 21 || Math.abs(s1 - s2) >= 2)) {
+                    m.status = 'FINISHED';
+                } else {
+                    m.status = 'LIVE';
+                }
+                saveAppState();
+                showToast(`✅ Đã cập nhật tỷ số ${s1}-${s2}!`);
+            }
+        }
+
         function closeMatchDetailModal() { 
+            currentOpenDetailModalCtx = null;
             document.getElementById('match-detail-modal').classList.add('hidden'); 
             document.getElementById('match-detail-modal').classList.remove('flex'); 
         }
@@ -929,7 +1000,6 @@
             const groupMatches = matches.filter(m => !m.knockoutRound);
             const allGroupFinished = groupMatches.length > 0 && groupMatches.every(m => m.status === 'FINISHED');
 
-            // Gom nhóm các trận vòng bảng theo từng cặp đối đầu (Tie)
             let tiesList = [];
             (appState.ties || []).forEach(tie => {
                 const tMatches = (tie.matches || []).filter(m => !m.knockoutRound);
@@ -944,7 +1014,6 @@
                 }
             });
 
-            // Fallback nếu dữ liệu cũ không có cấu trúc appState.ties chuẩn
             if (tiesList.length === 0 && groupMatches.length > 0) {
                 let fallbackMap = {};
                 groupMatches.forEach(m => {
@@ -978,13 +1047,11 @@
                     else if (s2 > s1) c2SubWins++;
                 });
 
-                // Cộng dồn hiệu số trận lẻ cho hai đội
                 statsMap[c1Id].matchWins += c1SubWins;
                 statsMap[c1Id].matchLosses += c2SubWins;
                 statsMap[c2Id].matchWins += c2SubWins;
                 statsMap[c2Id].matchLosses += c1SubWins;
 
-                // Xét cặp đấu đã kết thúc toàn bộ các nội dung (hoặc đã phân định thắng thua)
                 const isTieCompleted = finishedInTie.length === tie.matches.length;
                 if (isTieCompleted) {
                     statsMap[c1Id].played += 1;
@@ -992,7 +1059,6 @@
 
                     let c1Pts = 0, c2Pts = 0;
                     if (c1SubWins > c2SubWins) {
-                        // Đội 1 thắng tổng các nội dung: +2đ, Đội 2 thua: 0đ
                         statsMap[c1Id].won += 1;
                         statsMap[c1Id].points += 2;
                         statsMap[c2Id].lost += 1;
@@ -1000,7 +1066,6 @@
                         statsMap[c2Id].headToHead[c1Id] = -1;
                         c1Pts = 2; c2Pts = 0;
                     } else if (c2SubWins > c1SubWins) {
-                        // Đội 2 thắng tổng các nội dung: +2đ, Đội 1 thua: 0đ
                         statsMap[c2Id].won += 1;
                         statsMap[c2Id].points += 2;
                         statsMap[c1Id].lost += 1;
@@ -1008,7 +1073,6 @@
                         statsMap[c1Id].headToHead[c2Id] = -1;
                         c1Pts = 0; c2Pts = 2;
                     } else {
-                        // Hòa tổng các nội dung: mỗi đội +1đ
                         statsMap[c1Id].draw += 1;
                         statsMap[c1Id].points += 1;
                         statsMap[c2Id].draw += 1;
@@ -1080,7 +1144,6 @@
                 `;
             }).join('') : `<tr><td colspan="9" class="text-center py-6 text-slate-500">Chưa có dữ liệu đội tuyển.</td></tr>`;
 
-            // Render danh sách các cặp đấu (Tie) đã kết thúc để xem chi tiết Popup
             const completedContainer = document.getElementById('completed-ties-container');
             const completedTies = window.__completedTiesCache || [];
             if (completedContainer) {
@@ -1196,42 +1259,6 @@
             return 'A';
         }
 
-        function importPlayersFromExcel(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const json = XLSX.utils.sheet_to_json(worksheet);
-
-                    let teamsMap = {};
-                    json.forEach((row, idx) => {
-                        const teamName = row['Tên Đội / CLB'] || row['Đội'] || row['Team'] || 'Đội Mới';
-                        const playerName = row['Họ và Tên VĐV'] || row['VĐV'] || row['Tên'] || `VĐV ${idx+1}`;
-                        const gender = normalizeGender(row['Giới tính'] || row['Giới Tính'] || row['Gender'] || 'Nam');
-                        const level = normalizeLevel(row['Cấp độ/Trình độ'] || row['Trình độ'] || row['Level'] || 'A');
-                        if (!teamsMap[teamName]) teamsMap[teamName] = [];
-                        teamsMap[teamName].push({ id: 'p_' + Date.now() + '_' + idx, name: String(playerName).trim(), gender, level });
-                    });
-
-                    teams = Object.keys(teamsMap).map((tName, i) => ({
-                        id: 't_imp_' + i + '_' + Date.now(),
-                        name: tName,
-                        players: teamsMap[tName]
-                    }));
-                    appState.clubs = teams;
-                    saveAppState();
-                    showToast(`✅ Đã import thành công ${teams.length} đội tuyển!`);
-                } catch (err) {
-                    showToast('Lỗi đọc file Excel!', true);
-                }
-            };
-            reader.readAsArrayBuffer(file);
-        }
-
         function exportResultToExcel() {
             const standings = calculateStandingsAndSeries();
             let exportData = standings.map((st, i) => ({
@@ -1252,10 +1279,11 @@
             showToast('📥 Đã xuất kết quả ra Excel!');
         }
 
+        // HIỂN THỊ DANH SÁCH VĐV PHÂN BIỆT MÀU SẮC NAM (XANH DƯƠNG) / NỮ (HỒNG) VÀ TRÌNH ĐỘ A, B, C
         function renderTeams() {
             const container = document.getElementById('teams-grid-container');
             if (!teams || teams.length === 0) {
-                container.innerHTML = `<div class="col-span-full text-center py-12 text-slate-500 bg-slate-900/30 rounded-2xl border border-slate-800">Chưa có đội tuyển nào. Hãy bấm <strong>Import VĐV (Excel)</strong> ở trên hoặc thêm tại Tab <strong>Quản trị</strong>.</div>`;
+                container.innerHTML = `<div class="col-span-full text-center py-12 text-slate-500 bg-slate-900/30 rounded-2xl border border-slate-800">Chưa có đội tuyển nào. Hãy bấm <strong>Thêm CLB mới</strong> ở trên.</div>`;
                 return;
             }
             container.innerHTML = teams.map(t => `
@@ -1428,6 +1456,96 @@
             });
         }
 
+        // QUẢN LÝ DANH SÁCH VĐV NHÁP KHI TẠO ĐỘI TUYỂN / CLB MỚI
+        let draftNewTeamPlayers = [];
+
+        function addDraftPlayer() {
+            const nameEl = document.getElementById('draft-player-name');
+            const genderEl = document.getElementById('draft-player-gender');
+            const levelEl = document.getElementById('draft-player-level');
+            if (!nameEl || !genderEl || !levelEl) return;
+
+            const rawName = nameEl.value.trim();
+            if (!rawName) {
+                showToast('Vui lòng nhập tên VĐV!', true);
+                nameEl.focus();
+                return;
+            }
+
+            const gender = normalizeGender(genderEl.value);
+            const level = normalizeLevel(levelEl.value);
+
+            rawName.split(',').map(s => s.trim()).filter(Boolean).forEach((name, idx) => {
+                draftNewTeamPlayers.push({
+                    id: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6) + '_' + idx,
+                    name,
+                    gender,
+                    level
+                });
+            });
+
+            nameEl.value = '';
+            nameEl.focus();
+            renderDraftPlayersList();
+        }
+
+        function removeDraftPlayer(idx) {
+            draftNewTeamPlayers.splice(idx, 1);
+            renderDraftPlayersList();
+        }
+
+        function renderDraftPlayersList() {
+            const container = document.getElementById('draft-players-list');
+            if (!container) return;
+            if (draftNewTeamPlayers.length === 0) {
+                container.innerHTML = `<span class="text-xs text-slate-500 italic">Chưa có VĐV nào trong danh sách tạo mới...</span>`;
+                return;
+            }
+            container.innerHTML = draftNewTeamPlayers.map((p, idx) => {
+                const isFemale = p.gender === 'Nữ';
+                const pillTheme = isFemale ? 'bg-pink-500/15 border-pink-500/40 text-pink-200' : 'bg-sky-500/15 border-sky-500/40 text-sky-200';
+                const icon = isFemale ? '<i class="fa-solid fa-venus text-pink-400 text-[10px]"></i>' : '<i class="fa-solid fa-mars text-sky-400 text-[10px]"></i>';
+                return `
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs ${pillTheme}">
+                        ${icon}
+                        <span class="font-semibold">${p.name}</span>
+                        <span class="px-1 rounded bg-black/30 text-amber-300 font-black text-[10px]">${p.level}</span>
+                        <button type="button" onclick="removeDraftPlayer(${idx})" class="text-slate-400 hover:text-rose-400 ml-0.5"><i class="fa-solid fa-xmark text-[10px]"></i></button>
+                    </span>
+                `;
+            }).join('');
+        }
+
+        function handleAddTeam(e) {
+            e.preventDefault();
+            const name = document.getElementById('team-name').value.trim();
+            if (!name) return;
+
+            // Nếu người dùng đang gõ dở tên VĐV ở ô input mà chưa bấm nút "+ Thêm VĐV", tự động thêm luôn
+            const pendingInputName = document.getElementById('draft-player-name').value.trim();
+            if (pendingInputName) {
+                addDraftPlayer();
+            }
+
+            if (draftNewTeamPlayers.length === 0) {
+                showToast('Vui lòng thêm ít nhất 1 VĐV cho đội!', true);
+                document.getElementById('draft-player-name').focus();
+                return;
+            }
+
+            teams.push({
+                id: 't_' + Date.now(),
+                name,
+                players: [...draftNewTeamPlayers]
+            });
+
+            draftNewTeamPlayers = [];
+            document.getElementById('form-add-team').reset();
+            renderDraftPlayersList();
+            saveAppState();
+            showToast(`✅ Đã thêm đội ${name}!`);
+        }
+
         function renderAdminMatchesList() {
             const listEl = document.getElementById('admin-matches-list');
             if(!matches.length) {
@@ -1450,26 +1568,6 @@
                     </div>
                 </div>
             `).join('');
-        }
-
-        function handleAddTeam(e) {
-            e.preventDefault();
-            const name = document.getElementById('team-name').value.trim();
-            const membersStr = document.getElementById('team-members').value.trim();
-            if(!name || !membersStr) return;
-
-            const players = membersStr.split(',').map((item, idx) => {
-                const parts = item.split('-').map(s => s.trim());
-                const pName = parts[0] || '';
-                const pGender = parts[1] ? normalizeGender(parts[1]) : 'Nam';
-                const pLevel = parts[2] ? normalizeLevel(parts[2]) : 'A';
-                return { id: 'p_' + Date.now() + '_' + idx, name: pName, gender: pGender, level: pLevel };
-            }).filter(p => p.name);
-            
-            teams.push({ id: 't_' + Date.now(), name, players });
-            document.getElementById('form-add-team').reset();
-            saveAppState();
-            showToast(`✅ Đã thêm đội ${name}!`);
         }
 
         function updateMatchDirect(id) {
