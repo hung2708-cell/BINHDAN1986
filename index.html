@@ -124,6 +124,7 @@
                     </h3>
                     <span class="text-xs text-slate-400">Cập nhật thời gian thực</span>
                 </div>
+                <!-- 8 SÂN HIỂN THỊ TỰ ĐỘNG Ở ĐÂY -->
                 <div id="overview-courts-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div>
             </div>
         </section>
@@ -439,7 +440,6 @@
             if(e.key === 'Enter') confirmPasswordAction(); 
         });
 
-        // HÀM XÁC THỰC MẬT KHẨU CHO CÁC NÚT QUẢN TRỊ
         function confirmGenerateCircleSchedule() {
             openPasswordModal("Xác nhận Tự động sắp xếp lịch vòng tròn", () => {
                 if (teams.length < 2) {
@@ -556,7 +556,7 @@
             document.getElementById('stat-finished-count').innerText = finishedCount;
         }
 
-                function renderHomeOverview() {
+        function renderHomeOverview() {
             const container = document.getElementById('overview-courts-grid');
             if(!container) return;
 
@@ -578,7 +578,6 @@
                         </div>
                     `;
                 } else {
-                    // Kiểm tra trạng thái các trận trên sân này
                     let liveMatch = courtMatches.find(m => m.status === 'LIVE');
                     let upcomingMatch = courtMatches.find(m => m.status === 'UPCOMING');
                     let activeMatch = liveMatch || upcomingMatch || courtMatches[courtMatches.length - 1];
