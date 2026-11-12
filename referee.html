@@ -70,7 +70,7 @@
         </div>
     </header>
 
-    <!-- CHỌN TRẬN ĐẤU / NỘI DUNG -->
+    <!-- CHỌN NỘI DUNG THI ĐẤU TRÊN SÂN -->
     <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-2.5 space-y-1 shadow-lg backdrop-blur-sm">
         <div class="flex justify-between items-center text-[10px] text-slate-400 font-bold">
             <span>Chọn nội dung (Đôi Nam, Nữ, Nam Nữ 1, 2, Đơn):</span>
@@ -83,7 +83,7 @@
     <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-2.5 space-y-1.5 shadow-xl backdrop-blur-sm">
         <div class="flex justify-between items-center text-[11px] font-extrabold text-amber-400">
             <span><i class="fa-solid fa-earth-asia mr-1"></i>Sơ Đồ Sân 2D & VĐV Chấm Sáng</span>
-            <button type="button" onclick="openRefereePlayerSetupModal()" class="px-2.5 py-1 rounded bg-brand-600 text-white font-extrabold text-[10px] shadow hover:bg-brand-500">Cấu hình Đội Hình</button>
+            <button type="button" onclick="openRefereePlayerSetupModal()" class="px-2.5 py-1 rounded bg-brand-600 text-white font-extrabold text-[10px] shadow hover:bg-brand-500"><i class="fa-solid fa-users-gear mr-1"></i>Đăng Ký VĐV Nội Dung</button>
         </div>
         <div class="relative w-full aspect-[2/1] bg-emerald-950/90 rounded-lg border-2 border-emerald-500/40 overflow-hidden shadow-inner flex items-center justify-center">
             <svg class="absolute inset-0 w-full h-full" viewBox="0 0 440 210" preserveAspectRatio="none">
@@ -108,13 +108,13 @@
     <div class="bg-slate-900/80 border-2 border-brand-500/40 rounded-xl p-3 space-y-2.5 shadow-2xl backdrop-blur-md">
         <div class="flex justify-between items-center border-b border-slate-800 pb-2">
             <span id="liveMatchStageBadge" class="px-2 py-0.5 rounded bg-brand-600 text-white font-extrabold text-[10px] uppercase shadow">Đang tải...</span>
-            <div class="font-score font-extrabold text-amber-300 text-sm tracking-widest bg-slate-950 px-2.5 py-0.5 rounded-lg border border-amber-400/30 shadow-inner" id="officialScoreCallout">0 - 0</div>
+            <div class="font-score font-extrabold text-amber-300 text-sm tracking-widest bg-slate-950 px-2.5 py-0.5 rounded-lg border border-amber-400/30 shadow-inner" id="officialScoreCallout">0 - 0 - 1</div>
         </div>
 
         <div class="grid grid-cols-2 gap-2.5">
             <!-- ĐỘI 1 -->
             <div class="bg-slate-950 border border-brand-500/30 rounded-xl p-2.5 space-y-2 relative flex flex-col justify-between shadow-md">
-                <div id="team1ServeBadge" class="hidden absolute -top-2 -left-1.5 bg-brand-600 text-white px-1.5 py-0.5 rounded font-extrabold text-[8px] shadow uppercase">Phát bóng (<span id="team1ServerNum">2</span>)</div>
+                <div id="team1ServeBadge" class="hidden absolute -top-2 -left-1.5 bg-brand-600 text-white px-1.5 py-0.5 rounded font-extrabold text-[8px] shadow uppercase">Phát bóng (<span id="team1ServerNum">1</span>)</div>
                 <div>
                     <div id="liveTeam1ClubLabel" class="text-[9px] text-brand-400 font-extrabold uppercase truncate">Đội 1</div>
                     <div id="liveTeam1Name" class="text-[11px] font-bold text-white truncate mt-0.5">---</div>
@@ -125,7 +125,7 @@
 
             <!-- ĐỘI 2 -->
             <div class="bg-slate-950 border border-fengshui-wood/30 rounded-xl p-2.5 space-y-2 relative flex flex-col justify-between shadow-md">
-                <div id="team2ServeBadge" class="hidden absolute -top-2 -left-1.5 bg-fengshui-wood text-slate-950 px-1.5 py-0.5 rounded font-extrabold text-[8px] shadow uppercase">Phát bóng (<span id="team2ServerNum">2</span>)</div>
+                <div id="team2ServeBadge" class="hidden absolute -top-2 -left-1.5 bg-fengshui-wood text-slate-950 px-1.5 py-0.5 rounded font-extrabold text-[8px] shadow uppercase">Phát bóng (<span id="team2ServerNum">1</span>)</div>
                 <div>
                     <div id="liveTeam2ClubLabel" class="text-[9px] text-fengshui-wood font-extrabold uppercase truncate">Đội 2</div>
                     <div id="liveTeam2Name" class="text-[11px] font-bold text-white truncate mt-0.5">---</div>
@@ -155,11 +155,11 @@
         <button type="button" onclick="reopenFinishedMatch()" class="px-2.5 py-0.5 rounded bg-emerald-500 text-slate-950">Mở lại</button>
     </div>
 
-    <!-- MODAL CHỌN ĐỦ VĐV CÁC NỘI DUNG -->
+    <!-- MODAL ĐĂNG KÝ VĐV CHO TỪNG NỘI DUNG (ẨN CÁC VĐV ĐÃ ĐƯỢC CHỌN TRONG TỈNH/ĐỘI) -->
     <div id="refereePlayerSetupModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/90 p-4 backdrop-blur-sm">
         <div class="bg-slate-950 border-2 border-brand-500/60 rounded-xl max-w-sm w-full p-4 space-y-3 shadow-2xl max-h-[85vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-                <h3 class="text-xs font-extrabold text-brand-400 uppercase">Chọn VĐV Thi Đấu (Đồng Đội)</h3>
+                <h3 class="text-xs font-extrabold text-brand-400 uppercase">Đăng Ký VĐV Thi Đấu Nội Dung</h3>
                 <button type="button" onclick="closeRefereePlayerSetupModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-base"></i></button>
             </div>
             <div id="refereePlayerSetupContent" class="space-y-3 text-xs"></div>
@@ -281,17 +281,6 @@
             const p1List = (m.team1PlayerIds || []).map(pid => getPlayerById(m.club1Id, pid)?.name).filter(Boolean);
             const p2List = (m.team2PlayerIds || []).map(pid => getPlayerById(m.club2Id, pid)?.name).filter(Boolean);
             
-            if (p1List.length === 0 && c1.players && c1.players.length > 0) {
-                const limit = m.catKey === 'DON' ? 1 : 2;
-                m.team1PlayerIds = c1.players.slice(0, limit).map(p => p.id);
-                p1List.push(...c1.players.slice(0, limit).map(p => p.name));
-            }
-            if (p2List.length === 0 && c2.players && c2.players.length > 0) {
-                const limit = m.catKey === 'DON' ? 1 : 2;
-                m.team2PlayerIds = c2.players.slice(0, limit).map(p => p.id);
-                p2List.push(...c2.players.slice(0, limit).map(p => p.name));
-            }
-
             if (m.catKey === 'DON') {
                 const activeP1 = p1List[0] || c1.name;
                 const activeP2 = p2List[0] || c2.name;
@@ -317,16 +306,43 @@
             renderRefereeApp();
         }
 
+        // LẤY DANH SÁCH CÁC VĐV ĐÃ ĐƯỢC CHỌN Ở CÁC NỘI DUNG KHÁC TRONG CÙNG MỘT ĐỘI
+        function getAlreadySelectedPlayerIdsForClub(clubId, currentMatchId) {
+            let usedIds = [];
+            getAllMatchesFlat().forEach(m => {
+                if (m.id !== currentMatchId && (m.club1Id === clubId || m.club2Id === clubId)) {
+                    if (m.club1Id === clubId && m.team1PlayerIds) usedIds.push(...m.team1PlayerIds);
+                    if (m.club2Id === clubId && m.team2PlayerIds) usedIds.push(...m.team2PlayerIds);
+                }
+            });
+            return usedIds;
+        }
+
         function openRefereePlayerSetupModal() {
             const { match: m } = findMatchById(state.activeLiveMatchId);
             if (!m) return;
             const c1 = getClubById(m.club1Id), c2 = getClubById(m.club2Id);
             const req = m.catKey === 'DON' ? 1 : 2;
 
-            const renderTeamPlayerSelectors = (club, side, selectedIds) => {
+            const used1 = getAlreadySelectedPlayerIdsForClub(m.club1Id, m.id);
+            const used2 = getAlreadySelectedPlayerIdsForClub(m.club2Id, m.id);
+
+            const renderTeamPlayerSelectors = (club, side, selectedIds, usedIds) => {
                 return (club.players || []).map(p => {
                     const isSelected = selectedIds.includes(p.id);
-                    return `<button type="button" onclick="toggleRefereePlayerSelection('${m.id}', ${side}, '${p.id}', ${req})" class="px-2.5 py-1.5 rounded-lg border text-xs font-bold transition ${isSelected ? 'bg-brand-600 text-white border-brand-400 shadow' : 'bg-slate-900 text-slate-300 border-slate-700'}">${p.name}</button>`;
+                    const isAlreadyUsedElsewhere = usedIds.includes(p.id);
+                    
+                    let badge = '';
+                    if (isAlreadyUsedElsewhere && !isSelected) {
+                        badge = `<span class="text-[9px] text-amber-400 block italic">Đã đánh nội dung khác</span>`;
+                    }
+
+                    return `
+                        <button type="button" onclick="toggleRefereePlayerSelection('${m.id}', ${side}, '${p.id}', ${req})" class="px-2.5 py-1.5 rounded-lg border text-xs font-bold transition flex flex-col items-center justify-center ${isSelected ? 'bg-brand-600 text-white border-brand-400 shadow' : 'bg-slate-900 text-slate-300 border-slate-700'}">
+                            <span>${p.name}</span>
+                            ${badge}
+                        </button>
+                    `;
                 }).join('') || '<span class="text-xs text-slate-500">Chưa có VĐV trong danh sách CLB</span>';
             };
 
@@ -334,11 +350,11 @@
                 <div class="space-y-3">
                     <div class="p-3 rounded-xl bg-slate-900 border border-brand-500/30 space-y-2">
                         <div class="font-extrabold text-brand-400 text-xs">${c1.name} (Chọn bắt buộc ${req} VĐV cho nội dung ${m.catLabel || 'Này'})</div>
-                        <div class="flex flex-wrap gap-1.5">${renderTeamPlayerSelectors(c1, 1, m.team1PlayerIds || [])}</div>
+                        <div class="grid grid-cols-2 gap-1.5">${renderTeamPlayerSelectors(c1, 1, m.team1PlayerIds || [], used1)}</div>
                     </div>
                     <div class="p-3 rounded-xl bg-slate-900 border border-fengshui-wood/30 space-y-2">
                         <div class="font-extrabold text-fengshui-wood text-xs">${c2.name} (Chọn bắt buộc ${req} VĐV cho nội dung ${m.catLabel || 'Này'})</div>
-                        <div class="flex flex-wrap gap-1.5">${renderTeamPlayerSelectors(c2, 2, m.team2PlayerIds || [])}</div>
+                        <div class="grid grid-cols-2 gap-1.5">${renderTeamPlayerSelectors(c2, 2, m.team2PlayerIds || [], used2)}</div>
                     </div>
                 </div>
             `;
@@ -385,10 +401,9 @@
             const { match: m } = findMatchById(state.activeLiveMatchId);
             if (!m || m.status === 'FINISHED' || teamNum !== (m.servingTeam || 1)) return;
             
-            // Kiểm tra xem đã chọn đủ VĐV chưa
             const req = m.catKey === 'DON' ? 1 : 2;
             if ((m.team1PlayerIds || []).length < req || (m.team2PlayerIds || []).length < req) {
-                showToast('⚠️ Bạn chưa cấu hình đủ VĐV thi đấu! Hãy bấm "Cấu hình Đội Hình".');
+                showToast('⚠️ Bạn chưa cấu hình đủ VĐV thi đấu! Hãy bấm "Đăng Ký VĐV Nội Dung".');
                 openRefereePlayerSetupModal();
                 return;
             }
@@ -495,6 +510,10 @@
             if (!m.courtState) syncMatchCourtStateFromLineup(m);
             const cs = m.courtState;
 
+            // Khởi tạo mặc định phát bóng là 1 thay vì 2 nếu chưa set
+            if (!m.servingTeam) m.servingTeam = 1;
+            if (!m.serverNum) m.serverNum = 1;
+
             const isMatchFinished = (m.status === 'FINISHED');
             document.getElementById('matchFinishedCelebrationBanner').classList.toggle('hidden', !isMatchFinished);
 
@@ -509,9 +528,11 @@
             document.getElementById('liveTeam2Score').textContent = m.score2 || 0;
 
             const servingTeam = m.servingTeam || 1;
-            const serverNum = isSingles ? 1 : (m.serverNum || 2);
+            const serverNum = isSingles ? 1 : (m.serverNum || 1);
             const servingScore = servingTeam === 1 ? (parseInt(m.score1) || 0) : (parseInt(m.score2) || 0);
             const receivingScore = servingTeam === 1 ? (parseInt(m.score2) || 0) : (parseInt(m.score1) || 0);
+            
+            // Xướng điểm chuẩn chỉnh 0-0-1 hoặc 0-0-2
             document.getElementById('officialScoreCallout').textContent = isSingles ? `${servingScore} - ${receivingScore}` : `${servingScore} - ${receivingScore} - ${serverNum}`;
 
             const isTeam1Serving = (servingTeam === 1);
@@ -536,7 +557,7 @@
                 ` : `<div class="col-span-3 h-12 rounded-lg bg-slate-900 text-slate-500 text-[11px] font-bold flex items-center justify-center">🔒 Khóa</div>`;
             }
 
-            // XỬ LÝ SƠ ĐỒ SÂN 2D: NẾU LÀ ĐƠN (DON) THÌ CHỈ HIỂN THỊ ĐÚNG 1 CHẤM CHO MỖI BÊN
+            // SƠ ĐỒ SÂN 2D
             const isEvenScore = (servingScore % 2 === 0);
             const leftIsT1 = !cs.swappedEnds;
             let dots = [];
