@@ -39,7 +39,7 @@
     <header class="bg-slate-950/90 backdrop-blur-md sticky top-0 z-50 border-b border-slate-800/80">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
-                <!-- LOGO BÍNH DẦN PICKLEBALL -->
+                <!-- LOGO BÍNH DẦN PICKLEBALL (Icon Vector chuẩn Hỏa - Mộc) -->
                 <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('home')">
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-600 via-amber-500 to-brand-600 flex items-center justify-center shadow-lg shadow-brand-500/30 border border-amber-400/50 text-white font-black text-lg">
                         <i class="fa-solid fa-cat" title="Bính Dần Tiger"></i>
@@ -86,7 +86,7 @@
                 </div>
                 <div class="relative z-10 max-w-3xl">
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-brand-500/10 text-brand-400 border border-brand-500/20 mb-3">
-                        <span class="w-2 h-2 rounded-full bg-brand-500 animate-pulse mr-2"></span> Đánh bằng bản lĩnh - Thắng bằng tinh thần
+                        <span class="w-2 h-2 rounded-full bg-brand-500 animate-pulse mr-2"></span> Bản mệnh Lô Trung Hỏa - Sẵn sàng bứt phá
                     </span>
                     <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-2">
                         Trạng Thái Thi Đấu <span class="text-brand-400">Tất Cả 8 Sân</span>
@@ -262,7 +262,7 @@
                 </div>
                 <div class="flex flex-wrap gap-2">
                     <a href="referee.html?court=Sân 1" target="_blank" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold transition shadow-lg flex items-center"><i class="fa-solid fa-whistle mr-2"></i> Mở App Trọng Tài (Sân 1)</a>
-                    <button onclick="promptResetDefault()" class="px-4 py-2 rounded-xl bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 text-xs font-semibold transition border border-rose-500/20 flex items-center"><i class="fa-solid fa-rotate-right mr-2"></i> Làm mới toàn bộ hệ thống</button>
+                    <button onclick="promptResetDefault()" class="px-4 py-2 rounded-xl bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 text-xs font-semibold transition border border-rose-500/20 flex items-center"><i class="fa-solid fa-rotate-right mr-2"></i> Làm sạch toàn bộ dữ liệu</button>
                 </div>
             </div>
 
@@ -377,7 +377,7 @@
 
         const COURTS_LIST = ['Sân 1', 'Sân 2', 'Sân 3', 'Sân 4', 'Sân 5', 'Sân 6', 'Sân 7', 'Sân 8'];
 
-        // XÓA SẠCH DỮ LIỆU CŨ MẶC ĐỊNH (BẮT ĐẦU TRỐNG HOẶC TỰ IMPORT)
+        // KHỞI TẠO TRỐNG (XÓA SẠCH DỮ LIỆU CŨ SẴN SÀNG CHO BẠN TỰ TẠO HOẶC IMPORT)
         function loadState() {
             try {
                 let raw = localStorage.getItem(STORAGE_KEY);
@@ -471,7 +471,7 @@
         });
 
         function promptResetDefault() {
-            openPasswordModal("Xóa toàn bộ hệ thống giải đấu", () => {
+            openPasswordModal("Xóa toàn bộ dữ liệu hệ thống", () => {
                 appState = { ties: [], clubs: [], activeLiveMatchId: null };
                 teams = appState.clubs;
                 matches = [];
