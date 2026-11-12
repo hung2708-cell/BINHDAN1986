@@ -287,27 +287,28 @@
 
     </main>
 
-    <!-- POPUP MODAL XEM CHI TIẾT NỘI DUNG Ở GIỮA MÀN HÌNH -->
-    <div id="match-detail-modal" onclick="if(event.target === this) closeMatchDetailModal()" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden p-4">
-        <div class="bg-slate-950 border-2 border-brand-500/40 w-full max-w-xl p-6 rounded-2xl shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto animate-modal-pop">
-            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <div class="flex items-center space-x-2.5">
-                    <div class="w-8 h-8 rounded-lg bg-brand-500/10 text-brand-400 flex items-center justify-center"><i class="fa-solid fa-list-ol"></i></div>
-                    <div>
-                        <h3 id="detail-modal-title" class="font-extrabold text-white text-base">Chi tiết nội dung thi đấu</h3>
-                        <p id="detail-modal-subtitle" class="text-xs text-amber-400 font-semibold"></p>
+    <!-- POPUP MODAL XEM CHI TIẾT NỘI DUNG VỪA KHÍT KHUNG HÌNH (KHÔNG CUỘN) -->
+    <div id="match-detail-modal" onclick="if(event.target === this) closeMatchDetailModal()" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden p-3">
+        <div class="bg-slate-950 border-2 border-brand-500/40 w-full max-w-2xl p-4 sm:p-5 rounded-2xl shadow-2xl space-y-3 animate-modal-pop">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2.5">
+                <div class="flex items-center space-x-2.5 min-w-0">
+                    <div class="w-8 h-8 rounded-lg bg-brand-500/10 text-brand-400 flex items-center justify-center shrink-0"><i class="fa-solid fa-table-list"></i></div>
+                    <div class="min-w-0">
+                        <h3 id="detail-modal-title" class="font-extrabold text-white text-sm sm:text-base truncate">Chi tiết nội dung thi đấu</h3>
+                        <p id="detail-modal-subtitle" class="text-[11px] text-amber-400 font-semibold truncate"></p>
                     </div>
                 </div>
-                <button onclick="closeMatchDetailModal()" class="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <button onclick="closeMatchDetailModal()" class="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition shrink-0"><i class="fa-solid fa-xmark text-base"></i></button>
             </div>
             
-            <div id="detail-modal-content" class="space-y-2.5"></div>
+            <!-- Danh sách 5 trận hiển thị cô đọng vừa 1 màn hình -->
+            <div id="detail-modal-content" class="space-y-1.5"></div>
             
-            <div class="pt-3 border-t border-slate-800 flex items-center justify-between gap-3">
-                <a id="detail-modal-referee-link" href="#" target="_blank" class="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold transition shadow-lg flex items-center">
+            <div class="pt-2.5 border-t border-slate-800 flex items-center justify-between gap-3">
+                <a id="detail-modal-referee-link" href="#" target="_blank" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold transition shadow-lg flex items-center">
                     <i class="fa-solid fa-whistle mr-2"></i> Mở App Trọng Tài Sân Này
                 </a>
-                <button onclick="closeMatchDetailModal()" class="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-bold rounded-xl border border-slate-800 transition">Đóng</button>
+                <button onclick="closeMatchDetailModal()" class="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-bold rounded-xl border border-slate-800 transition">Đóng</button>
             </div>
         </div>
     </div>
