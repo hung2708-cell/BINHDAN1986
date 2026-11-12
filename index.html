@@ -136,14 +136,14 @@
                     <p class="text-xs text-slate-400">Bấm chọn sân bên dưới để lọc danh sách trận đấu tương ứng.</p>
                 </div>
                 <div id="court-filter-buttons" class="flex flex-wrap gap-1.5">
-                    <button onclick="filterCourt('Sân 1')" class="court-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-brand-600 text-white transition shadow">Sân 1</button>
-                    <button onclick="filterCourt('Sân 2')" class="court-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-slate-300 hover:bg-slate-800 transition border border-slate-800">Sân 2</button>
-                    <button onclick="filterCourt('Sân 3')" class="court-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-slate-300 hover:bg-slate-800 transition border border-slate-800">Sân 3</button>
-                    <button onclick="filterCourt('Sân 4')" class="court-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-slate-300 hover:bg-slate-800 transition border border-slate-800">Sân 4</button>
-                    <button onclick="filterCourt('Sân 5')" class="court-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-slate-300 hover:bg-slate-800 transition border border-slate-800">Sân 5</button>
-                    <button onclick="filterCourt('Sân 6')" class="court-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-slate-300 hover:bg-slate-800 transition border border-slate-800">Sân 6</button>
-                    <button onclick="filterCourt('Sân 7')" class="court-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-slate-300 hover:bg-slate-800 transition border border-slate-800">Sân 7</button>
-                    <button onclick="filterCourt('Sân 8')" class="court-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-slate-300 hover:bg-slate-800 transition border border-slate-800">Sân 8</button>
+                    <button onclick="('Sân 1')" class="court-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-brand-600 text-white transition shadow">Sân 1</button>
+                    <button onclick="('Sân 2')" class="court-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-slate-300 hover:bg-slate-800 transition border border-slate-800">Sân 2</button>
+                    <button onclick="('Sân 3')" class="court-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-slate-300 hover:bg-slate-800 transition border border-slate-800">Sân 3</button>
+                    <button onclick="('Sân 4')" class="court-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-slate-300 hover:bg-slate-800 transition border border-slate-800">Sân 4</button>
+                    <button onclick="('Sân 5')" class="court-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-slate-300 hover:bg-slate-800 transition border border-slate-800">Sân 5</button>
+                    <button onclick="('Sân 6')" class="court-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-slate-300 hover:bg-slate-800 transition border border-slate-800">Sân 6</button>
+                    <button onclick="('Sân 7')" class="court-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-slate-300 hover:bg-slate-800 transition border border-slate-800">Sân 7</button>
+                    <button onclick="('Sân 8')" class="court-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-slate-300 hover:bg-slate-800 transition border border-slate-800">Sân 8</button>
                 </div>
             </div>
             <div id="matches-by-court-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
@@ -538,7 +538,7 @@
         function initApp() {
             renderStats();
             renderHomeOverview();
-            filterCourt(currentCourtFilter || 'Sân 1');
+            (currentCourtFilter || 'Sân 1');
             renderBracket();
             renderStandings();
             renderTeams();
@@ -617,31 +617,76 @@
                     btn.classList.add('bg-brand-600', 'text-white', 'shadow');
                 }
             });
+
             const container = document.getElementById('matches-by-court-container');
-            const filtered = matches.filter(m => (m.court || 'Sân 1') === courtName);
-            container.innerHTML = filtered.length ? filtered.map(m => createMatchCardHTML(m)).join('') : `<div class="col-span-full text-center py-12 text-slate-500 bg-slate-900/30 rounded-2xl border border-slate-800">Chưa có trận đấu nào trên ${courtName}.</div>`;
-        }
+            const courtMatches = matches.filter(m => (m.court || 'Sân 1') === courtName);
 
-        function getClubName(id) { const found = teams.find(c => c.id === id); return found ? found.name : 'CLB'; }
+            if (courtMatches.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-12 text-slate-500 bg-slate-900/30 rounded-2xl border border-slate-800">Chưa có trận đấu nào trên ${courtName}.</div>`;
+                return;
+            }
 
-        function createMatchCardHTML(m) {
-            let statusBadge = m.status === 'LIVE' ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-brand-500/20 text-brand-400">LIVE</span>` : (m.status === 'FINISHED' ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400">Đã xong</span>` : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-400">Sắp đấu</span>`);
-            const cName1 = getClubName(m.club1Id), cName2 = getClubName(m.club2Id);
-            return `
-                <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-4 space-y-3">
-                    <div class="flex justify-between items-center pb-2 border-b border-slate-800 text-xs">
-                        <span class="font-bold text-amber-400">${m.court || 'Sân 1'} • ${m.catLabel || 'Trận đấu'}</span>
-                        ${statusBadge}
+            // Nhóm các trận đấu theo cặp CLB (Tie) trên cùng sân đó
+            let tiesMap = {};
+            courtMatches.forEach(m => {
+                let key = m.club1Id + '_vs_' + m.club2Id;
+                if (!tiesMap[key]) {
+                    tiesMap[key] = {
+                        club1Name: getClubName(m.club1Id),
+                        club2Name: getClubName(m.club2Id),
+                        matches: []
+                    };
+                }
+                tiesMap[key].matches.push(m);
+            });
+
+            let html = '';
+            Object.values(tiesMap).forEach(tie => {
+                let allFinished = tie.matches.every(x => x.status === 'FINISHED');
+                let someLive = tie.matches.some(x => x.status === 'LIVE');
+                let tieStatusBadge = allFinished ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400">Đã xong cặp đấu</span>` : (someLive ? `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-brand-500/20 text-brand-400 animate-pulse">Đang LIVE</span>` : `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400">Sắp đấu</span>`);
+
+                html += `
+                    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl backdrop-blur-sm">
+                        <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs font-black text-amber-400 uppercase tracking-wide"><i class="fa-solid fa-location-dot mr-1"></i> ${courtName}</span>
+                                <span class="text-slate-600">•</span>
+                                <span class="text-xs font-extrabold text-white">${tie.club1Name} vs ${tie.club2Name}</span>
+                            </div>
+                            ${tieStatusBadge}
+                        </div>
+
+                        <div class="space-y-2.5">
+                `;
+
+                tie.matches.forEach(m => {
+                    let statusDot = m.status === 'FINISHED' ? '<i class="fa-solid fa-check text-emerald-400"></i>' : (m.status === 'LIVE' ? '<i class="fa-solid fa-spinner animate-spin text-brand-400"></i>' : '<span class="w-2 h-2 rounded-full bg-slate-600 inline-block"></span>');
+                    html += `
+                        <div class="bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                            <div class="flex items-center space-x-2.5 min-w-0">
+                                <div class="shrink-0">${statusDot}</div>
+                                <div class="min-w-0">
+                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">${m.catLabel} (${m.targetPoints} điểm)</div>
+                                    <div class="text-xs font-bold text-white truncate mt-0.5">${m.team1Name || tie.club1Name} <span class="text-brand-400 px-1 font-score font-black text-sm">${m.score1 || 0}-${m.score2 || 0}</span> ${m.team2Name || tie.club2Name}</div>
+                                </div>
+                            </div>
+                            <div class="shrink-0 self-end sm:self-auto">
+                                <a href="referee.html?court=${encodeURIComponent(courtName)}" target="_blank" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-brand-400 border border-brand-500/30 text-[11px] font-bold transition flex items-center shadow">
+                                    <i class="fa-solid fa-whistle mr-1.5"></i> Mở Trọng Tài
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `
+                        </div>
                     </div>
-                    <div class="grid grid-cols-7 items-center gap-2">
-                        <div class="col-span-3 text-right"><div class="font-bold text-white text-xs">${m.team1Name || cName1}</div></div>
-                        <div class="col-span-1 flex justify-center items-center bg-slate-950 py-1.5 rounded-lg border border-slate-800 font-score font-black text-brand-400 text-sm">${m.score1 || 0}-${m.score2 || 0}</div>
-                        <div class="col-span-3 text-left"><div class="font-bold text-white text-xs">${m.team2Name || cName2}</div></div>
-                    </div>
-                    <div class="flex justify-end pt-1">
-                        <a href="referee.html?court=${encodeURIComponent(m.court || 'Sân 1')}" target="_blank" class="text-xs font-bold text-brand-400 flex items-center">Mở App Trọng Tài <i class="fa-solid fa-arrow-up-right-from-square ml-1"></i></a>
-                    </div>
-                </div>`;
+                `;
+            });
+
+            container.innerHTML = html;
         }
 
         function openCourtDetailModal(courtName) {
