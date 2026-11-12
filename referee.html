@@ -1032,23 +1032,40 @@
             }
         }
 
-        // ĐỔI PHÁT BÓNG: LẬP TỨC ĐỔI VỊ TRÍ ĐỨNG CỦA CÁC VĐV (BÊN GIAO MỚI LÙI VỀ CUỐI SÂN, BÊN ĐỠ MỚI LÊN SÁT VẠCH BẾP) & CHUYỂN MŨI TÊN
+        // ĐỔI PHÁT BÓNG: LẬP TỨC ĐỔI NGƯỜI GIAO (LƯỢT 1 -> LƯỢT 2) HOẶC ĐỔI SANG ĐỘI KIA (SIDE-OUT) & XOAY MŨI TÊN
         function triggerSideOutOrNextServer() {
             const { match: m } = findMatchById(state.activeLiveMatchId);
             if (!m) return;
             const isSingles = (m.catKey === 'DON');
+            if (!m.courtState) syncMatchCourtStateFromLineup(m, false);
+            const cs = m.courtState;
 
             if (isSingles) {
                 m.servingTeam = (m.servingTeam || 1) === 1 ? 2 : 1;
                 m.serverNum = 1;
+                showToast(`🔄 Đổi quyền giao bóng!`);
             } else {
-                if ((m.serverNum || 2) === 1) {
+                const curServerNum = m.serverNum || 2;
+                const curTeam = m.servingTeam || 1;
+
+                if (curServerNum === 1) {
+                    // Chuyển sang người giao thứ 2 của cùng đội: Hoán đổi 2 VĐV trong đội để người thứ 2 vào đúng ô giao
                     m.serverNum = 2;
+                    if (curTeam === 1) {
+                        const tmp = cs.t1Left; cs.t1Left = cs.t1Right; cs.t1Right = tmp;
+                    } else {
+                        const tmp = cs.t2Left; cs.t2Left = cs.t2Right; cs.t2Right = tmp;
+                    }
+                    showToast(`2️⃣ Chuyển sang người giao bóng số 2!`);
                 } else {
-                    m.servingTeam = (m.servingTeam || 1) === 1 ? 2 : 1;
+                    // Mất lượt giao thứ 2 -> Đổi giao sang đội đối phương (Side-Out) với lượt 1
+                    m.servingTeam = curTeam === 1 ? 2 : 1;
                     m.serverNum = 1;
+                    const newServerClub = getClubById(m.servingTeam === 1 ? m.club1Id : m.club2Id).name;
+                    showToast(`🔄 Đổi giao bóng sang ${newServerClub} (Lượt 1)!`);
                 }
             }
+
             saveState();
             renderRefereeApp();
         }
