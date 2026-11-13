@@ -521,29 +521,33 @@
     </div>
 
     <!-- CUSTOM PASSWORD MODAL -->
-    <div id="password-modal" class="fixed inset-0 z-[60] flex items-center justify-center bg-stone-900/55 backdrop-blur-sm hidden p-4">
-        <div id="modal-box" class="bg-white border border-amber-200 w-full max-w-md p-5 sm:p-6 rounded-2xl shadow-2xl space-y-4 relative transition-all animate-modal-pop">
-            <div class="flex items-center space-x-3 text-brand-600">
-                <div class="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center text-lg shrink-0">
-                    <i class="fa-solid fa-lock"></i>
-                </div>
-                <div>
-                    <h3 id="modal-title" class="font-extrabold text-stone-900 text-sm sm:text-base">Xác nhận mật khẩu Quản trị</h3>
-                    <p class="text-xs text-stone-500">Vui lòng nhập mật khẩu quản trị để tiếp tục.</p>
-                </div>
+<div id="password-modal" onclick="if(event.target === this) closePasswordModal()" class="fixed inset-0 z-[60] flex items-center justify-center bg-stone-900/55 backdrop-blur-sm hidden p-4">
+    <div id="modal-box" class="bg-white border-2 border-amber-200 w-full max-w-md p-5 sm:p-6 rounded-2xl shadow-2xl space-y-4 relative transition-colors duration-200 animate-modal-pop">
+        <div class="flex items-center space-x-3 text-brand-600">
+            <div id="modal-lock-icon" class="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center text-lg shrink-0 transition-colors">
+                <i class="fa-solid fa-lock"></i>
             </div>
-            <div class="space-y-2">
-                <input type="password" id="modal-password-input" placeholder="Mật khẩu..." class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2.5 text-sm text-stone-900 focus:outline-none focus:border-brand-500 font-mono tracking-widest">
-                <div class="min-h-[20px] flex items-center">
-                    <p id="modal-error-msg" class="text-xs text-rose-600 font-bold hidden">Sai mật khẩu!</p>
-                </div>
-            </div>
-            <div class="flex items-center justify-end space-x-3 pt-2 border-t border-stone-200">
-                <button onclick="closePasswordModal()" class="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold transition">Hủy</button>
-                <button onclick="confirmPasswordAction()" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold transition shadow-md">Xác nhận</button>
+            <div>
+                <h3 id="modal-title" class="font-extrabold text-stone-900 text-sm sm:text-base">Xác nhận mật khẩu Quản trị</h3>
+                <p class="text-xs text-stone-500">Vui lòng nhập mật khẩu quản trị để tiếp tục.</p>
             </div>
         </div>
+        <div class="space-y-1.5">
+            <input type="password" id="modal-password-input" placeholder="Nhập mật khẩu..." class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2.5 text-sm text-stone-900 focus:outline-none focus:border-brand-500 font-mono tracking-widest transition-colors">
+            <div class="min-h-[20px] flex items-center">
+                <p id="modal-error-msg" class="text-xs text-rose-600 font-bold hidden flex items-center gap-1.5">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span>Sai mật khẩu! Vui lòng thử lại.</span>
+                </p>
+            </div>
+        </div>
+        <div class="flex items-center justify-end space-x-2.5 pt-2 border-t border-stone-200">
+            <button type="button" onclick="closePasswordModal()" class="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 active:scale-95 text-stone-700 text-xs font-bold transition">Hủy</button>
+            <button type="button" onclick="confirmPasswordAction()" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 active:scale-95 text-white text-xs font-bold transition shadow-md">Xác nhận</button>
+        </div>
     </div>
+</div>
+
 
     <div id="toastContainer" class="fixed top-16 sm:top-20 right-3 sm:right-4 z-[70] flex flex-col gap-2 pointer-events-none max-w-[90vw]"></div>
 
