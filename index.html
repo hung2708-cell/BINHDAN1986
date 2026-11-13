@@ -754,13 +754,21 @@
 
         let pendingAction = null;
         function openPasswordModal(title, actionCallback) {
-            document.getElementById('modal-title').innerText = title;
-            document.getElementById('modal-password-input').value = '';
-            document.getElementById('modal-error-msg').classList.add('hidden');
-            document.getElementById('password-modal').classList.remove('hidden');
-            document.getElementById('modal-password-input').focus();
-            pendingAction = actionCallback;
-        }
+    document.getElementById('modal-title').innerText = title;
+    const pwdInput = document.getElementById('modal-password-input');
+    const modalBox = document.getElementById('modal-box');
+    const errorMsg = document.getElementById('modal-error-msg');
+
+    pwdInput.value = '';
+    pwdInput.classList.remove('border-rose-500', 'bg-rose-50/60');
+    modalBox.classList.remove('animate-shake', 'border-rose-500', 'shadow-rose-500/25');
+    modalBox.classList.add('border-amber-200');
+    errorMsg.classList.add('hidden');
+
+    document.getElementById('password-modal').classList.remove('hidden');
+    setTimeout(() => pwdInput.focus(), 50);
+    pendingAction = actionCallback;
+}
 
         function closePasswordModal() { document.getElementById('password-modal').classList.add('hidden'); pendingAction = null; }
 
