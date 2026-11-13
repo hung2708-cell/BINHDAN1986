@@ -80,7 +80,6 @@
         .fluid-score-num { font-size: clamp(1.85rem, 6.5dvh, 2.8rem); line-height: 1; }
         .ref-score-btn { height: clamp(42px, 9.5dvh, 56px); }
 
-        /* TỐI ƯU BỐ CỤC KHI XOAY NGANG ĐIỆN THOẠI (LANDSCAPE) */
         @media (orientation: landscape) and (max-height: 620px) {
             body {
                 max-width: 100% !important;
@@ -189,7 +188,7 @@
                 </div>
             </div>
 
-            <!-- Khung sân 2D (Xanh ngọc lục bảo tươi sáng hợp mệnh Mộc sinh Hỏa) -->
+            <!-- Khung sân 2D -->
             <div id="courtSvgWrapper" class="relative w-full h-[130px] sm:h-[146px] bg-gradient-to-br from-emerald-700 via-emerald-600 to-teal-700 rounded-lg border-2 border-emerald-500 overflow-hidden shadow-inner flex items-center justify-center">
                 <div id="leftCourtSideTag" class="absolute top-1 left-2 text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-white/90 text-stone-800 shadow-sm pointer-events-none z-10">Sân Trái</div>
                 <div id="rightCourtSideTag" class="absolute top-1 right-2 text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-white/90 text-stone-800 shadow-sm pointer-events-none z-10">Sân Phải</div>
@@ -291,8 +290,8 @@
 
         <!-- BANNER HOÀN TẤT -->
         <div id="matchFinishedCelebrationBanner" class="hidden px-2.5 py-1.5 rounded-xl bg-emerald-100 border border-emerald-400 text-emerald-900 text-[11px] font-extrabold text-center flex items-center justify-between shadow-sm shrink-0">
-            <span>🏆 Nội dung đã hoàn tất!</span>
-            <button type="button" onclick="reopenFinishedMatch()" class="px-2 py-0.5 rounded bg-emerald-600 text-white">Mở lại</button>
+            <span id="finishedBannerText">🏆 Nội dung đã hoàn tất!</span>
+            <button type="button" onclick="reopenFinishedMatch()" class="px-2 py-0.5 rounded bg-emerald-600 text-white shrink-0">Mở lại</button>
         </div>
     </div>
 
@@ -370,6 +369,7 @@
     <script>
         const STORAGE_KEY = 'CAY_COI_TEAM_LINEUP_V28_PERMANENT';
         const ALL_COURTS = ['Sân 1', 'Sân 2', 'Sân 3', 'Sân 4', 'Sân 5', 'Sân 6', 'Sân 7', 'Sân 8'];
+        const WINS_TO_CLINCH_TIE = 3; // Chạm 3 trận thắng kết thúc cặp đấu ngay lập tức
         window.__deviceClientId = 'REF_' + Math.random().toString(36).slice(2, 9);
         window.__currentSyncRoomCode = 'BINHDAN';
         let currentSetupStep = 1;
@@ -388,6 +388,63 @@
         
         const urlParams = new URLSearchParams(window.location.search);
         let currentAssignedCourt = urlParams.get('court') || localStorage.getItem('REF_STANDALONE_COURT') || 'Sân 1';
+
+        function evaluateTieStatus(tieMatches) {
+            let c1Wins = 0;
+            let c2Wins = 0;
+            let finishedCount = 0;
+
+            (tieMatches || []).forEach(m => {
+                if (m.status === 'FINISHED') {
+                    finishedCount++;
+                    const s1 = parseInt(m.score1) || 0;
+                    const s2 = parseInt(m.score2) || 0;
+                    if (s1 > s2) c1Wins++;
+                    else if (s2 > s1) c2Wins++;
+                }
+            });
+
+            const isClinched = (c1Wins >= WINS_TO_CLINCH_TIE || c2Wins >= WINS_TO_CLINCH_TIE);
+            const allResolved = (tieMatches || []).length > 0 && (tieMatches || []).every(m => m.status === 'FINISHED' || m.status === 'SKIPPED');
+            const isCompleted = isClinched || allResolved;
+            const isLive = !isCompleted && (
+                (tieMatches || []).some(m => m.status === 'LIVE' || (m.status !== 'FINISHED' && m.status !== 'SKIPPED' && ((parseInt(m.score1) || 0) > 0 || (parseInt(m.score2) || 0) > 0))) ||
+                finishedCount > 0
+            );
+
+            return {
+                c1Wins,
+                c2Wins,
+                finishedCount,
+                totalCount: (tieMatches || []).length,
+                isClinched,
+                isCompleted,
+                isLive,
+                winnerSide: c1Wins > c2Wins ? 1 : (c2Wins > c1Wins ? 2 : 0)
+            };
+        }
+
+        function enforceTieClinchRules() {
+            (state.ties || []).forEach(tie => {
+                const tMatches = tie.matches || [];
+                const st = evaluateTieStatus(tMatches);
+                if (st.isClinched) {
+                    tie.status = 'FINISHED';
+                    tMatches.forEach(m => {
+                        if (m.status !== 'FINISHED') {
+                            m.status = 'SKIPPED';
+                        }
+                    });
+                } else {
+                    tie.status = st.isCompleted ? 'FINISHED' : (st.isLive ? 'LIVE' : 'UPCOMING');
+                    tMatches.forEach(m => {
+                        if (m.status === 'SKIPPED') {
+                            m.status = 'UPCOMING';
+                        }
+                    });
+                }
+            });
+        }
 
         function getActiveCourtsWithMatches() {
             const allMatches = getAllMatchesFlat();
@@ -428,7 +485,7 @@
             document.getElementById('liveCurrentCourtBadge').textContent = courtName;
             
             const activeTieMatches = getActiveTieMatchesForCourt(courtName);
-            const active = activeTieMatches.find(x => x.status !== 'FINISHED') || activeTieMatches[0];
+            const active = activeTieMatches.find(x => x.status !== 'FINISHED' && x.status !== 'SKIPPED') || activeTieMatches[0];
             if (active) state.activeLiveMatchId = active.id;
             renderRefereeApp();
         }
@@ -440,7 +497,7 @@
             el.className = 'px-3.5 py-2 rounded-xl bg-white/95 border-2 border-brand-300 text-brand-700 text-xs font-extrabold shadow-xl text-center';
             el.textContent = msg;
             c.appendChild(el);
-            setTimeout(() => el.remove(), 2200);
+            setTimeout(() => el.remove(), 2400);
         }
 
         let mqttClient = null;
@@ -476,6 +533,7 @@
 
         function saveState() {
             try {
+                enforceTieClinchRules();
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
                 if (mqttClient && mqttClient.connected) {
                     mqttClient.publish(`caycoi/pickleball/v28/${window.__currentSyncRoomCode}/state`, JSON.stringify({ sender: window.__deviceClientId, state }), { qos: 1, retain: true });
@@ -510,17 +568,25 @@
         }
 
         function getActiveTieMatchesForCourt(courtName) {
+            enforceTieClinchRules();
+            const courtTies = (state.ties || [])
+                .filter(t => (t.court || t.matches?.[0]?.court || 'Sân 1') === courtName && (t.matches || []).length > 0)
+                .sort((a, b) => (a.wave || a.matches?.[0]?.wave || 1) - (b.wave || b.matches?.[0]?.wave || 1));
+
+            if (courtTies.length > 0) {
+                let targetTie = courtTies.find(t => evaluateTieStatus(t.matches).isLive);
+                if (!targetTie) {
+                    targetTie = courtTies.find(t => !evaluateTieStatus(t.matches).isCompleted);
+                }
+                if (!targetTie) {
+                    targetTie = courtTies[courtTies.length - 1];
+                }
+                return targetTie.matches || [];
+            }
+
             const courtMatches = getAllMatchesFlat().filter(x => (x.court || 'Sân 1') === courtName);
             if (courtMatches.length === 0) return [];
-
-            let anchorMatch = courtMatches.find(m => m.status === 'LIVE' || (m.status !== 'FINISHED' && ((parseInt(m.score1) || 0) > 0 || (parseInt(m.score2) || 0) > 0)));
-            if (!anchorMatch) {
-                anchorMatch = courtMatches.find(m => m.status !== 'FINISHED');
-            }
-            if (!anchorMatch) {
-                anchorMatch = courtMatches[courtMatches.length - 1];
-            }
-
+            const anchorMatch = courtMatches[0];
             return courtMatches.filter(m => m.club1Id === anchorMatch.club1Id && m.club2Id === anchorMatch.club2Id);
         }
 
@@ -739,7 +805,7 @@
             saveState();
             renderRefereeApp();
             const { match: m } = findMatchById(matchId);
-            if (m) {
+            if (m && m.status !== 'SKIPPED') {
                 const req = getRequiredPlayerCount(m);
                 if ((m.team1PlayerIds || []).length < req) {
                     openRefereePlayerSetupModal(1);
@@ -821,7 +887,7 @@
                     const hasSelectedFemale = selectedObjs.some(x => isPlayerFemale(x));
 
                     const isComplete = selIds.length >= req;
-                    const cleanCat = (m.catLabel || `Trận ${idx + 1}`).replace(/^(Bảng [^•]+•\s*)?Vòng \d+\s*•\s*/i, '');
+                    const cleanCat = (m.catLabel || `Trận ${idx + 1}`).replace(/^(Bảng [^•]+•\s*)?(Lượt \d+\s*•\s*)?(Vòng \d+\s*•\s*)?/i, '');
 
                     let filterHintBadge = '';
                     if (isSingles) {
@@ -1008,7 +1074,7 @@
                 const m = activeTieMatches[i];
                 const req = getRequiredPlayerCount(m);
                 if ((m.team1PlayerIds || []).length < req) {
-                    const cleanCat = (m.catLabel || `Trận ${i + 1}`).replace(/^(Bảng [^•]+•\s*)?Vòng \d+\s*•\s*/i, '');
+                    const cleanCat = (m.catLabel || `Trận ${i + 1}`).replace(/^(Bảng [^•]+•\s*)?(Lượt \d+\s*•\s*)?(Vòng \d+\s*•\s*)?/i, '');
                     showToast(`⚠️ ${cleanCat} của Đội 1 chưa chọn đủ ${req} VĐV!`);
                     return;
                 }
@@ -1025,7 +1091,7 @@
                 const m = activeTieMatches[i];
                 const req = getRequiredPlayerCount(m);
                 if ((m.team2PlayerIds || []).length < req) {
-                    const cleanCat = (m.catLabel || `Trận ${i + 1}`).replace(/^(Bảng [^•]+•\s*)?Vòng \d+\s*•\s*/i, '');
+                    const cleanCat = (m.catLabel || `Trận ${i + 1}`).replace(/^(Bảng [^•]+•\s*)?(Lượt \d+\s*•\s*)?(Vòng \d+\s*•\s*)?/i, '');
                     showToast(`⚠️ ${cleanCat} của Đội 2 chưa chọn đủ ${req} VĐV!`);
                     return;
                 }
@@ -1043,7 +1109,7 @@
 
         function adjustLiveScore(teamNum, delta) {
             const { match: m } = findMatchById(state.activeLiveMatchId);
-            if (!m || m.status === 'FINISHED' || teamNum !== (m.servingTeam || 1)) return;
+            if (!m || m.status === 'FINISHED' || m.status === 'SKIPPED' || teamNum !== (m.servingTeam || 1)) return;
             
             const isSingles = (m.catKey === 'DON');
             const req = getRequiredPlayerCount(m);
@@ -1089,24 +1155,43 @@
             const res = evaluateMatchWinCondition(m);
             if (res.isWon) {
                 m.status = 'FINISHED';
-                showToast(`🏆 Trận kết thúc! Tỷ số ${res.winnerScore}-${res.loserScore}`);
-                autoAdvanceToNextMatchOrTie(m);
+                saveState();
+                autoAdvanceToNextMatchOrTie(m, res);
+            } else {
+                saveState();
             }
-            saveState();
             renderRefereeApp();
         }
 
-        function autoAdvanceToNextMatchOrTie(finishedMatch) {
-            const activeTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
-            const nextUnfinished = activeTieMatches.find(x => x.id !== finishedMatch.id && x.status !== 'FINISHED');
+        function autoAdvanceToNextMatchOrTie(finishedMatch, winRes = null) {
+            const { tie } = findMatchById(finishedMatch.id);
+            const tieMatches = tie ? (tie.matches || []) : getActiveTieMatchesForCourt(currentAssignedCourt);
+            const tieSt = evaluateTieStatus(tieMatches);
+
+            // Nếu 1 đội đã chạm 3 trận thắng -> Kết thúc cặp đấu ngay lập tức
+            if (tieSt.isClinched) {
+                const winnerClubName = getClubById(tieSt.winnerSide === 1 ? finishedMatch.club1Id : finishedMatch.club2Id).name;
+                showToast(`🏆 ${winnerClubName} đạt ${WINS_TO_CLINCH_TIE} trận thắng (${tieSt.c1Wins}-${tieSt.c2Wins})! Kết thúc cặp đấu!`);
+
+                // Chuyển sang cặp CLB kế tiếp trên sân nếu có
+                const nextTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
+                const nextTieSt = evaluateTieStatus(nextTieMatches);
+                if (nextTieMatches.length > 0 && !nextTieSt.isCompleted) {
+                    const firstSub = nextTieMatches.find(x => x.status !== 'FINISHED' && x.status !== 'SKIPPED') || nextTieMatches[0];
+                    state.activeLiveMatchId = firstSub.id;
+                    saveState();
+                }
+                return;
+            }
+
+            const nextUnfinished = tieMatches.find(x => x.id !== finishedMatch.id && x.status !== 'FINISHED' && x.status !== 'SKIPPED');
             if (nextUnfinished) {
                 state.activeLiveMatchId = nextUnfinished.id;
-                showToast('Chuyển sang nội dung tiếp theo!');
-            } else {
-                const nextTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
-                if (nextTieMatches.length > 0) {
-                    state.activeLiveMatchId = nextTieMatches[0].id;
-                    showToast('🎉 Cặp đấu hoàn tất! Đã chuyển sang cặp CLB kế tiếp.');
+                saveState();
+                if (winRes) {
+                    showToast(`✅ Kết thúc trận (${winRes.winnerScore}-${winRes.loserScore})! Sang nội dung tiếp theo.`);
+                } else {
+                    showToast('Chuyển sang nội dung tiếp theo!');
                 }
             }
         }
@@ -1143,12 +1228,11 @@
 
         function finishCurrentLiveMatchAndAdvance() {
             const { match: m } = findMatchById(state.activeLiveMatchId);
-            if (!m) return;
+            if (!m || m.status === 'SKIPPED') return;
             m.status = 'FINISHED';
-            autoAdvanceToNextMatchOrTie(m);
             saveState();
+            autoAdvanceToNextMatchOrTie(m);
             renderRefereeApp();
-            showToast('Đã chốt kết quả nội dung!');
         }
 
         function reopenFinishedMatch() {
@@ -1157,6 +1241,7 @@
             m.status = 'LIVE';
             saveState();
             renderRefereeApp();
+            showToast('🔓 Đã mở lại nội dung thi đấu!');
         }
 
         function swapCourtEnds() {
@@ -1169,14 +1254,14 @@
         }
 
         function renderRefereeApp() {
-            // Đồng bộ và ẩn hoàn toàn các sân không có trận thi đấu
+            enforceTieClinchRules();
             syncCourtSelectorOptions();
 
             const activeTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
             let { match: m } = findMatchById(state.activeLiveMatchId);
             
             if (!m || !activeTieMatches.some(x => x.id === m.id)) {
-                m = activeTieMatches.find(x => x.status !== 'FINISHED') || activeTieMatches[0];
+                m = activeTieMatches.find(x => x.status !== 'FINISHED' && x.status !== 'SKIPPED') || activeTieMatches[0];
                 if (m) state.activeLiveMatchId = m.id;
             }
 
@@ -1192,18 +1277,20 @@
 
             const cl1 = getClubById(m.club1Id).name;
             const cl2 = getClubById(m.club2Id).name;
+            const tieSt = evaluateTieStatus(activeTieMatches);
 
             if (headerLabelEl) {
-                headerLabelEl.innerHTML = `<i class="fa-solid fa-swords mr-1 text-orange-500"></i><span class="text-stone-900 font-extrabold">${cl1}</span> <span class="text-stone-400">vs</span> <span class="text-stone-900 font-extrabold">${cl2}</span>`;
+                headerLabelEl.innerHTML = `<i class="fa-solid fa-swords mr-1 text-orange-500"></i><span class="text-stone-900 font-extrabold">${cl1}</span> <span class="px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 font-black">${tieSt.c1Wins}-${tieSt.c2Wins}</span> <span class="text-stone-900 font-extrabold">${cl2}</span>`;
             }
 
             if (selector) {
                 selector.innerHTML = activeTieMatches.map(x => {
-                    const cleanCat = (x.catLabel || '').replace(/^(Bảng [^•]+•\s*)?Vòng \d+\s*•\s*/i, '');
+                    const cleanCat = (x.catLabel || '').replace(/^(Bảng [^•]+•\s*)?(Lượt \d+\s*•\s*)?(Vòng \d+\s*•\s*)?/i, '');
                     const req = getRequiredPlayerCount(x);
                     const hasFullLineup = (x.team1PlayerIds || []).length >= req && (x.team2PlayerIds || []).length >= req;
-                    const statusIcon = x.status === 'FINISHED' ? '✅' : (x.status === 'LIVE' ? '🔴' : (hasFullLineup ? '🟢' : '⏳'));
-                    return `<option value="${x.id}">${statusIcon} ${cleanCat} (${x.score1 || 0}-${x.score2 || 0})</option>`;
+                    const statusIcon = x.status === 'FINISHED' ? '✅' : (x.status === 'SKIPPED' ? '⏭️' : (x.status === 'LIVE' ? '🔴' : (hasFullLineup ? '🟢' : '⏳')));
+                    const suffix = x.status === 'SKIPPED' ? 'Không đấu' : `${x.score1 || 0}-${x.score2 || 0}`;
+                    return `<option value="${x.id}">${statusIcon} ${cleanCat} (${suffix})</option>`;
                 }).join('');
                 selector.value = m.id;
             }
@@ -1217,8 +1304,18 @@
             if (m.servingTeam === undefined) m.servingTeam = 1;
             if (m.serverNum === undefined) m.serverNum = isSingles ? 1 : 2;
 
-            const isMatchFinished = (m.status === 'FINISHED');
-            document.getElementById('matchFinishedCelebrationBanner').classList.toggle('hidden', !isMatchFinished);
+            const isMatchFinished = (m.status === 'FINISHED' || m.status === 'SKIPPED');
+            const bannerEl = document.getElementById('matchFinishedCelebrationBanner');
+            const bannerTextEl = document.getElementById('finishedBannerText');
+            bannerEl.classList.toggle('hidden', !isMatchFinished);
+            if (isMatchFinished && bannerTextEl) {
+                if (tieSt.isClinched) {
+                    const winClub = getClubById(tieSt.winnerSide === 1 ? m.club1Id : m.club2Id).name;
+                    bannerTextEl.textContent = `🏆 ${winClub} thắng chung cuộc ${tieSt.c1Wins}-${tieSt.c2Wins} (Chạm ${WINS_TO_CLINCH_TIE} trận)!`;
+                } else {
+                    bannerTextEl.textContent = '🏆 Nội dung đã hoàn tất!';
+                }
+            }
 
             const totalScore = (parseInt(m.score1) || 0) + (parseInt(m.score2) || 0);
             const rotBanner = document.getElementById('singlesRotationBanner');
@@ -1231,7 +1328,7 @@
                 rotBanner.classList.add('hidden');
             }
 
-            const cleanStageLabel = (m.catLabel || '').replace(/^(Bảng [^•]+•\s*)?Vòng \d+\s*•\s*/i, '');
+            const cleanStageLabel = (m.catLabel || '').replace(/^(Bảng [^•]+•\s*)?(Lượt \d+\s*•\s*)?(Vòng \d+\s*•\s*)?/i, '');
             const ruleTag = isSingles ? 'Chạm 21 • 11đ đổi sân' : 'Chạm 15 • 8đ đổi sân';
             document.getElementById('liveMatchStageBadge').textContent = `${cleanStageLabel} (${ruleTag})`;
 
@@ -1244,7 +1341,6 @@
                 ? `${servingScore} - ${receivingScore}` 
                 : `${servingScore} - ${receivingScore} - ${serverNum}`;
 
-            // ĐỒNG BỘ HAI Ô TÍNH ĐIỂM BÊN TRÁI / BÊN PHẢI THEO ĐÚNG VỊ TRÍ HAI ĐỘI TRÊN SÂN
             const leftIsT1 = !cs.swappedEnds;
             const leftTeamNum = leftIsT1 ? 1 : 2;
             const rightTeamNum = leftIsT1 ? 2 : 1;
@@ -1267,9 +1363,8 @@
                 const scoreEl = document.getElementById(`${sidePos}PanelScore`);
                 const actionEl = document.getElementById(`${sidePos}PanelActionArea`);
 
-                // Đồng bộ màu sáng hợp mệnh: Đội 1 (Hành Hỏa - Đỏ Son), Đội 2 (Hành Mộc - Xanh Ngọc Lục Bảo)
                 boxEl.className = `${isT1 ? 'bg-rose-50/75 border-brand-300' : 'bg-emerald-50/75 border-emerald-300'} border rounded-xl p-2 space-y-1 relative flex flex-col justify-between shadow-sm transition-all`;
-                serveBadgeEl.className = `${isServing ? '' : 'hidden'} absolute -top-2 -left-1 ${isT1 ? 'bg-brand-600 text-white' : 'bg-emerald-600 text-white'} px-1.5 py-0.5 rounded font-extrabold text-[8px] shadow-sm uppercase`;
+                serveBadgeEl.className = `${isServing && !isMatchFinished ? '' : 'hidden'} absolute -top-2 -left-1 ${isT1 ? 'bg-brand-600 text-white' : 'bg-emerald-600 text-white'} px-1.5 py-0.5 rounded font-extrabold text-[8px] shadow-sm uppercase`;
                 serverNumEl.textContent = serverNum;
 
                 clubEl.className = `text-[9px] ${isT1 ? 'text-brand-700' : 'text-emerald-700'} font-extrabold uppercase truncate leading-tight`;
@@ -1279,7 +1374,9 @@
                 scoreEl.className = `text-center font-score fluid-score-num font-extrabold ${isT1 ? 'text-brand-600' : 'text-emerald-700'} py-0.5`;
                 scoreEl.textContent = scoreVal;
 
-                if (isMatchFinished) {
+                if (m.status === 'SKIPPED') {
+                    actionEl.innerHTML = `<div class="col-span-3 ref-score-btn rounded-lg bg-stone-100 border border-stone-200 text-stone-500 font-extrabold text-[11px] flex items-center justify-center">⏭️ Không đấu</div>`;
+                } else if (m.status === 'FINISHED') {
                     actionEl.innerHTML = `<div class="col-span-3 ref-score-btn rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-800 font-extrabold text-xs flex items-center justify-center">🏆 XONG</div>`;
                 } else if (isServing) {
                     const btnGradient = isT1 ? 'from-brand-600 to-orange-500 text-white' : 'from-emerald-600 to-teal-500 text-white';
@@ -1295,7 +1392,6 @@
             renderSideScoreBox('left', leftTeamNum);
             renderSideScoreBox('right', rightTeamNum);
 
-            // VỊ TRÍ ĐỨNG & MŨI TÊN CHÉO SÂN
             const isEvenScore = (servingScore % 2 === 0);
             const isFirstServerSlot = isSingles || (serverNum === 1);
             const serveFromRightBox = isFirstServerSlot ? isEvenScore : !isEvenScore;
