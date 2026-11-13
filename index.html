@@ -756,6 +756,7 @@
     const modalBox = document.getElementById('modal-box');
     const errorMsg = document.getElementById('modal-error-msg');
 
+    // Chỉ reset khi thực sự mở lần đầu từ các nút quản trị
     pwdInput.value = '';
     pwdInput.classList.remove('border-rose-500', 'bg-rose-50/60');
     modalBox.classList.remove('animate-shake', 'border-rose-500', 'shadow-rose-500/25');
@@ -767,6 +768,11 @@
     pendingAction = actionCallback;
 }
 
+function closePasswordModal() {
+    document.getElementById('password-modal').classList.add('hidden');
+    pendingAction = null;
+}
+
 function confirmPasswordAction() {
     const pwdInput = document.getElementById('modal-password-input');
     const pwd = pwdInput.value.trim();
@@ -774,31 +780,24 @@ function confirmPasswordAction() {
     const errorMsg = document.getElementById('modal-error-msg');
 
     if (pwd === ADMIN_PASSWORD) {
+        // Mật khẩu đúng: Thực hiện hành động và đóng popup
         const actionToRun = pendingAction;
         closePasswordModal();
         if (actionToRun) actionToRun();
     } else {
+        // Mật khẩu SAI: GIỮ NGUYÊN POPUP (không đóng, không nhảy đi đâu cả), chỉ rung và hiện lỗi
         errorMsg.classList.remove('hidden');
         pwdInput.classList.add('border-rose-500', 'bg-rose-50/60');
         
-        // Gỡ bỏ class cũ trước để reset animation
-        modalBox.classList.remove('animate-shake', 'border-rose-500', 'shadow-rose-500/25');
-        
-        // Ép trình duyệt vẽ lại giao diện (DOM reflow) để nhận diện lệnh rung mới ngay cả khi bấm sai lần 2, lần 3
-        void modalBox.offsetWidth; 
-        
-        // Thêm lại hiệu ứng rung và viền đỏ cảnh báo
+        modalBox.classList.remove('border-amber-200', 'animate-shake');
+        void modalBox.offsetWidth; // Kích hoạt lại hiệu ứng DOM reflow để rung liên tục nếu bấm sai nhiều lần
         modalBox.classList.add('animate-shake', 'border-rose-500', 'shadow-rose-500/25');
 
-        // Rung thiết bị (nếu điện thoại của bạn hỗ trợ tính năng rung phần cứng)
-        if (navigator.vibrate) {
-            navigator.vibrate([100, 50, 100]);
-        }
+        if (navigator.vibrate) navigator.vibrate([80, 40, 80]); // Rung điện thoại nhẹ
 
         pwdInput.focus();
         pwdInput.select();
 
-        // Tự động gỡ class hiệu ứng sau khi animation chạy xong để sẵn sàng cho lần sai tiếp theo
         setTimeout(() => {
             modalBox.classList.remove('animate-shake');
         }, 450);
