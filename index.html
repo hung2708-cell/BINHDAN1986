@@ -63,13 +63,13 @@
                 font-size: 16px !important;
             }
         }
-        @keyframes shake {
+        @keyframes shakeModal {
     0%, 100% { transform: translateX(0); }
-    15%, 45%, 75% { transform: translateX(-8px); }
-    30%, 60%, 90% { transform: translateX(8px); }
+    20%, 60% { transform: translateX(-10px); }
+    40%, 80% { transform: translateX(10px); }
 }
 .animate-shake {
-    animation: shake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    animation: shake 0.4s ease-in-out;
 }
         @keyframes modalPop {
             0% { opacity: 0; transform: scale(0.95); }
@@ -511,9 +511,10 @@
         </div>
     </div>
 
-    <!-- C<!-- CUSTOM PASSWORD MODAL -->
+    <!-- CUSTOM PASSWORD MODAL -->
 <div id="password-modal" onclick="if(event.target === this) closePasswordModal()" class="fixed inset-0 z-[60] flex items-center justify-center bg-stone-900/55 backdrop-blur-sm hidden p-4">
-    <div id="modal-box" class="bg-white border-2 border-amber-200 w-full max-w-md p-5 sm:p-6 rounded-2xl shadow-2xl space-y-4 relative transition-colors duration-200 animate-modal-pop">
+    <!-- Đảm bảo có id="modal-card-container" ở đây -->
+    <div id="modal-card-container" class="bg-white border-2 border-amber-200 w-full max-w-md p-5 sm:p-6 rounded-2xl shadow-2xl space-y-4 relative transition-colors duration-200 animate-modal-pop">
         <div class="flex items-center space-x-3 text-brand-600">
             <div id="modal-lock-icon" class="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center text-lg shrink-0 transition-colors">
                 <i class="fa-solid fa-lock"></i>
@@ -528,10 +529,17 @@
             <div class="min-h-[20px] flex items-center">
                 <p id="modal-error-msg" class="text-xs text-rose-600 font-bold hidden flex items-center gap-1.5">
                     <i class="fa-solid fa-circle-exclamation"></i>
-                    <span>Sai mật khẩu! Vui lòng thử lại.</span>
+                    <span>Sai mật khẩu! Không thể thực hiện.</span>
                 </p>
             </div>
         </div>
+        <div class="flex items-center justify-end space-x-2.5 pt-2 border-t border-stone-200">
+            <button type="button" onclick="closePasswordModal()" class="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 active:scale-95 text-stone-700 text-xs font-bold transition">Hủy</button>
+            <button type="button" onclick="confirmPasswordAction()" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 active:scale-95 text-white text-xs font-bold transition shadow-md">Xác nhận</button>
+        </div>
+    </div>
+</div>
+
         <div class="flex items-center justify-end space-x-2.5 pt-2 border-t border-stone-200">
             <button type="button" onclick="closePasswordModal()" class="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 active:scale-95 text-stone-700 text-xs font-bold transition">Hủy</button>
             <button type="button" onclick="confirmPasswordAction()" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 active:scale-95 text-white text-xs font-bold transition shadow-md">Xác nhận</button>
@@ -773,33 +781,50 @@ function closePasswordModal() {
     pendingAction = null;
 }
 
+function openPasswordModal(title, actionCallback) {
+    document.getElementById('modal-title').innerText = title;
+    const pwdInput = document.getElementById('modal-password-input');
+    const modalCard = document.getElementById('modal-card-container');
+    const errorMsg = document.getElementById('modal-error-msg');
+
+    pwdInput.value = '';
+    pwdInput.classList.remove('border-rose-500', 'bg-rose-50/60');
+    modalCard.classList.remove('animate-shake', 'border-rose-500', 'shadow-rose-500/25');
+    modalCard.classList.add('border-amber-200');
+    errorMsg.classList.add('hidden');
+
+    document.getElementById('password-modal').classList.remove('hidden');
+    setTimeout(() => pwdInput.focus(), 50);
+    pendingAction = actionCallback;
+}
+
 function confirmPasswordAction() {
     const pwdInput = document.getElementById('modal-password-input');
     const pwd = pwdInput.value.trim();
-    const modalBox = document.getElementById('modal-box');
+    const modalCard = document.getElementById('modal-card-container');
     const errorMsg = document.getElementById('modal-error-msg');
 
     if (pwd === ADMIN_PASSWORD) {
-        // Mật khẩu đúng: Thực hiện hành động và đóng popup
         const actionToRun = pendingAction;
         closePasswordModal();
         if (actionToRun) actionToRun();
     } else {
-        // Mật khẩu SAI: GIỮ NGUYÊN POPUP (không đóng, không nhảy đi đâu cả), chỉ rung và hiện lỗi
+        // Hiện thông báo lỗi
         errorMsg.classList.remove('hidden');
         pwdInput.classList.add('border-rose-500', 'bg-rose-50/60');
         
-        modalBox.classList.remove('border-amber-200', 'animate-shake');
-        void modalBox.offsetWidth; // Kích hoạt lại hiệu ứng DOM reflow để rung liên tục nếu bấm sai nhiều lần
-        modalBox.classList.add('animate-shake', 'border-rose-500', 'shadow-rose-500/25');
+        // Kích hoạt hiệu ứng rung lắc toàn bộ khung Popup
+        modalCard.classList.remove('border-amber-200', 'animate-shake');
+        void modalCard.offsetWidth; // DOM reflow để lặp lại hiệu ứng khi bấm sai nhiều lần
+        modalCard.classList.add('animate-shake', 'border-rose-500', 'shadow-rose-500/25');
 
-        if (navigator.vibrate) navigator.vibrate([80, 40, 80]); // Rung điện thoại nhẹ
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100]); // Rung điện thoại
 
         pwdInput.focus();
         pwdInput.select();
 
         setTimeout(() => {
-            modalBox.classList.remove('animate-shake');
+            modalCard.classList.remove('animate-shake');
         }, 450);
     }
 }
