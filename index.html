@@ -139,7 +139,7 @@
                 </div>
             </div>
 
-            <!-- Stats Grid (Thẻ sáng sạch sẽ, viền ấm) -->
+            <!-- Stats Grid -->
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 <div class="bg-white border border-rose-100 rounded-2xl p-3.5 sm:p-4 shadow-sm hover:shadow-md transition">
                     <div class="flex items-center justify-between mb-1.5 sm:mb-2"><span class="text-[10px] sm:text-[11px] font-bold text-stone-500 uppercase tracking-wider">Tổng đội tuyển</span><div class="w-7 h-7 rounded-lg bg-rose-100 text-brand-600 flex items-center justify-center text-xs"><i class="fa-solid fa-users"></i></div></div>
@@ -251,7 +251,7 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                <!-- NHÁNH SERIE A (HÀNH HỎA - ĐỎ SON & VÀNG KIM) -->
+                <!-- NHÁNH SERIE A -->
                 <div class="bg-white border-2 border-brand-200 p-4 sm:p-5 rounded-2xl space-y-4 shadow-md">
                     <div class="flex items-center justify-between pb-3 border-b border-rose-100 gap-2">
                         <h3 class="font-black text-brand-700 text-sm sm:text-base uppercase flex items-center">
@@ -267,7 +267,7 @@
                     </div>
                 </div>
 
-                <!-- NHÁNH SERIE B (HÀNH MỘC - XANH NGỌC LỤC BẢO) -->
+                <!-- NHÁNH SERIE B -->
                 <div class="bg-white border-2 border-emerald-200 p-4 sm:p-5 rounded-2xl space-y-4 shadow-md">
                     <div class="flex items-center justify-between pb-3 border-b border-emerald-100 gap-2">
                         <h3 class="font-black text-emerald-700 text-sm sm:text-base uppercase flex items-center">
@@ -285,7 +285,7 @@
             </div>
         </section>
 
-        <!-- 5. TAB ĐỘI TUYỂN (THÊM/XÓA VĐV KHÔNG CẦN MẬT KHẨU) -->
+        <!-- 5. TAB ĐỘI TUYỂN (THÊM CLB MỚI NGAY TẠI ĐÂY - KHÔNG NHẢY SANG QUẢN TRỊ) -->
         <section id="tab-teams" class="tab-content hidden space-y-5 sm:space-y-6">
             <div class="bg-white p-4 rounded-2xl border border-amber-200/80 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
@@ -296,21 +296,75 @@
                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-pink-50 text-pink-700 border border-pink-200 font-bold"><i class="fa-solid fa-venus"></i> Nữ</span>
                     </div>
                 </div>
-                <button onclick="switchTab('admin')" class="px-3.5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs transition shadow-sm flex items-center shrink-0">
+                <button type="button" id="toggle-add-club-btn" onclick="toggleAddClubPanel()" class="px-3.5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs transition shadow-sm flex items-center shrink-0">
                     <i class="fa-solid fa-plus mr-1.5"></i> Thêm CLB mới
                 </button>
             </div>
+
+            <!-- FORM THÊM ĐỘI TUYỂN / CLB MỚI NẰM TRỰC TIẾP TRONG TAB ĐỘI TUYỂN -->
+            <div id="add-club-panel" class="hidden bg-white border-2 border-brand-200 p-4 sm:p-5 rounded-2xl space-y-4 shadow-md animate-modal-pop">
+                <div class="flex items-center justify-between border-b border-rose-100 pb-2.5">
+                    <h3 class="font-extrabold text-stone-900 flex items-center text-sm sm:text-base">
+                        <i class="fa-solid fa-user-plus text-brand-600 mr-2"></i> Thêm đội tuyển / CLB mới
+                    </h3>
+                    <button type="button" onclick="toggleAddClubPanel(false)" class="w-7 h-7 rounded-lg bg-stone-100 hover:bg-rose-100 text-stone-500 hover:text-brand-600 flex items-center justify-center transition">
+                        <i class="fa-solid fa-xmark text-xs"></i>
+                    </button>
+                </div>
+
+                <form id="form-add-team" onsubmit="handleAddTeam(event)" class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
+                    <div class="lg:col-span-4">
+                        <label class="block text-xs font-bold text-stone-600 mb-1">Tên đội / CLB</label>
+                        <input type="text" id="team-name" required placeholder="VD: Bính Dần FC" class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2 text-sm text-stone-900 focus:outline-none focus:border-brand-500 focus:bg-white">
+                    </div>
+
+                    <div class="lg:col-span-8 space-y-1.5">
+                        <label class="block text-xs font-bold text-stone-600">Thêm thành viên vào đội (Giới tính & Trình A, B, C)</label>
+                        <div class="flex flex-wrap sm:flex-nowrap items-center gap-2">
+                            <input type="text" id="draft-player-name" placeholder="Nhập họ tên VĐV (cách nhau dấu phẩy nếu nhiều)..." onkeypress="if(event.key==='Enter'){event.preventDefault(); addDraftPlayer();}" class="flex-1 min-w-[160px] bg-stone-50 border border-stone-300 rounded-xl px-3 py-2 text-sm text-stone-900 focus:outline-none focus:border-brand-500 focus:bg-white">
+                            <select id="draft-player-gender" class="bg-stone-50 border border-stone-300 rounded-xl px-2.5 py-2 text-xs font-bold text-stone-800 focus:outline-none focus:border-brand-500">
+                                <option value="Nam">Nam</option>
+                                <option value="Nữ">Nữ</option>
+                            </select>
+                            <select id="draft-player-level" class="bg-stone-50 border border-stone-300 rounded-xl px-2.5 py-2 text-xs font-bold text-amber-700 focus:outline-none focus:border-brand-500">
+                                <option value="A">Trình A</option>
+                                <option value="B">Trình B</option>
+                                <option value="C">Trình C</option>
+                            </select>
+                            <button type="button" onclick="addDraftPlayer()" class="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 text-xs font-bold transition shrink-0">
+                                <i class="fa-solid fa-plus mr-1"></i> Thêm VĐV
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Danh sách VĐV đang chuẩn bị tạo cho CLB -->
+                    <div class="lg:col-span-12 flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-stone-100">
+                        <div id="draft-players-list" class="flex flex-wrap gap-1.5 min-h-[28px] items-center">
+                            <span class="text-xs text-stone-400 italic">Chưa có VĐV nào trong danh sách tạo mới...</span>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                            <button type="button" onclick="toggleAddClubPanel(false)" class="px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold transition">
+                                Đóng
+                            </button>
+                            <button type="submit" class="px-5 py-2 bg-gradient-to-r from-brand-600 to-orange-600 hover:from-brand-500 hover:to-orange-500 text-white font-bold rounded-xl text-xs transition shadow-md">
+                                <i class="fa-solid fa-check-circle mr-1.5"></i> Lưu Đội tuyển / CLB
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
             <div id="teams-grid-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </section>
 
-        <!-- 6. TAB QUẢN TRỊ (TỰ ĐỘNG SẮP XẾP KHÔNG CẦN MẬT KHẨU) -->
+        <!-- 6. TAB QUẢN TRỊ (ĐÃ BỎ PHẦN THÊM CLB - TẬP TRUNG XẾP LỊCH & TỶ SỐ) -->
         <section id="tab-admin" class="tab-content hidden space-y-5 sm:space-y-6">
             <div class="bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 border border-amber-200 p-4 sm:p-6 rounded-2xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 shadow-sm">
                 <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-700 flex items-center justify-center shrink-0 border border-amber-300"><i class="fa-solid fa-sliders"></i></div>
                     <div>
                         <h2 class="text-lg sm:text-xl font-extrabold text-stone-900">Khu vực Quản trị viên</h2>
-                        <p class="text-xs text-stone-600">Quản lý đội tuyển, tự động sắp xếp lịch thi đấu & cập nhật tỷ số nhanh</p>
+                        <p class="text-xs text-stone-600">Tự động sắp xếp lịch thi đấu vòng tròn & cập nhật tỷ số trận đấu</p>
                     </div>
                 </div>
                 <div class="flex flex-wrap gap-2 w-full lg:w-auto">
@@ -326,58 +380,16 @@
                 </div>
             </div>
 
-            <!-- BỐ CỤC 2 CỘT TRÊN MÁY TÍNH -->
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start">
-                <!-- FORM THÊM ĐỘI TUYỂN / CLB MỚI -->
-                <div class="lg:col-span-5 bg-white border border-amber-200/80 p-4 sm:p-5 rounded-2xl space-y-4 shadow-sm">
-                    <h3 class="font-extrabold text-stone-900 flex items-center text-sm sm:text-base"><i class="fa-solid fa-user-plus text-brand-600 mr-2"></i> Thêm đội tuyển / CLB mới</h3>
-                    <form id="form-add-team" onsubmit="handleAddTeam(event)" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-bold text-stone-600 mb-1">Tên đội / CLB</label>
-                            <input type="text" id="team-name" required placeholder="VD: Bính Dần FC" class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2.5 text-sm text-stone-900 focus:outline-none focus:border-brand-500 focus:bg-white">
-                        </div>
-
-                        <div class="space-y-2">
-                            <label class="block text-xs font-bold text-stone-600">Thêm thành viên vào đội (Giới tính & Trình A, B, C)</label>
-                            <div class="grid grid-cols-12 gap-2">
-                                <input type="text" id="draft-player-name" placeholder="Họ tên VĐV..." onkeypress="if(event.key==='Enter'){event.preventDefault(); addDraftPlayer();}" class="col-span-12 sm:col-span-6 bg-stone-50 border border-stone-300 rounded-xl px-3 py-2 text-sm text-stone-900 focus:outline-none focus:border-brand-500 focus:bg-white">
-                                <select id="draft-player-gender" class="col-span-6 sm:col-span-3 bg-stone-50 border border-stone-300 rounded-xl px-2.5 py-2 text-xs font-bold text-stone-800 focus:outline-none focus:border-brand-500">
-                                    <option value="Nam">Nam</option>
-                                    <option value="Nữ">Nữ</option>
-                                </select>
-                                <select id="draft-player-level" class="col-span-6 sm:col-span-3 bg-stone-50 border border-stone-300 rounded-xl px-2.5 py-2 text-xs font-bold text-amber-700 focus:outline-none focus:border-brand-500">
-                                    <option value="A">Trình A</option>
-                                    <option value="B">Trình B</option>
-                                    <option value="C">Trình C</option>
-                                </select>
-                            </div>
-                            <button type="button" onclick="addDraftPlayer()" class="w-full py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 text-xs font-bold transition">
-                                <i class="fa-solid fa-plus mr-1"></i> Thêm VĐV vào danh sách
-                            </button>
-
-                            <!-- Danh sách VĐV đang chuẩn bị tạo cho CLB -->
-                            <div id="draft-players-list" class="flex flex-wrap gap-1.5 pt-1 min-h-[28px]">
-                                <span class="text-xs text-stone-400 italic">Chưa có VĐV nào trong danh sách tạo mới...</span>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="w-full py-2.5 bg-gradient-to-r from-brand-600 to-orange-600 hover:from-brand-500 hover:to-orange-500 text-white font-bold rounded-xl text-sm transition shadow-md">
-                            <i class="fa-solid fa-check-circle mr-1.5"></i> Lưu Đội tuyển / CLB mới
-                        </button>
-                    </form>
-                </div>
-
-                <!-- DANH SÁCH QUẢN LÝ & CẬP NHẬT TỶ SỐ TRẬN ĐẤU -->
-                <div class="lg:col-span-7 bg-white border border-amber-200/80 p-4 sm:p-5 rounded-2xl space-y-4 shadow-sm">
-                    <h3 class="font-extrabold text-stone-900 flex items-center text-sm sm:text-base"><i class="fa-solid fa-pen-to-square text-orange-600 mr-2"></i> Quản lý & Cập nhật tỷ số trận đấu</h3>
-                    <div id="admin-matches-list" class="space-y-3 max-h-[600px] overflow-y-auto pr-1"></div>
-                </div>
+            <!-- DANH SÁCH QUẢN LÝ & CẬP NHẬT TỶ SỐ TRẬN ĐẤU -->
+            <div class="bg-white border border-amber-200/80 p-4 sm:p-5 rounded-2xl space-y-4 shadow-sm">
+                <h3 class="font-extrabold text-stone-900 flex items-center text-sm sm:text-base"><i class="fa-solid fa-pen-to-square text-orange-600 mr-2"></i> Quản lý & Cập nhật tỷ số trận đấu</h3>
+                <div id="admin-matches-list" class="space-y-3 max-h-[650px] overflow-y-auto pr-1"></div>
             </div>
         </section>
 
     </main>
 
-    <!-- POPUP MODAL XEM CHI TIẾT & CẬP NHẬT TỶ SỐ TRỰC TIẾP (NỀN SÁNG RÕ NÉT) -->
+    <!-- POPUP MODAL XEM CHI TIẾT & CẬP NHẬT TỶ SỐ TRỰC TIẾP -->
     <div id="match-detail-modal" onclick="if(event.target === this) closeMatchDetailModal()" class="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/50 backdrop-blur-sm hidden p-3">
         <div class="bg-[#FFFDF9] border-2 border-brand-300 w-full max-w-2xl p-4 sm:p-5 rounded-2xl shadow-2xl space-y-3 animate-modal-pop">
             <div class="flex justify-between items-center border-b border-amber-200/80 pb-2.5 gap-2">
@@ -476,7 +488,7 @@
         <p>© 2026 Giải Pickleball Đồng Đội Bính Dần 1986 • Mệnh Lư Trung Hỏa & Mộc Tương Sinh</p>
     </footer>
 
-    <!-- THANH ĐIỀU HƯỚNG DƯỚI ĐÁY PHONG CÁCH KSPORTLIVE (NỀN SÁNG SANG TRỌNG) -->
+    <!-- THANH ĐIỀU HƯỚNG DƯỚI ĐÁY PHONG CÁCH KSPORTLIVE -->
     <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-50 px-2 pt-1.5 pb-safe bg-gradient-to-t from-[#FFFBF5] via-[#FFFBF5]/90 to-transparent pointer-events-none">
         <div class="max-w-lg mx-auto flex items-center gap-1.5 pointer-events-auto">
             <!-- Thanh pill chính chứa 5 tab theo đúng thứ tự -->
@@ -1394,10 +1406,24 @@
             showToast('📥 Đã xuất kết quả ra Excel!');
         }
 
+        // MỞ / ĐÓNG FORM THÊM CLB MỚI NGAY TRONG TAB ĐỘI TUYỂN
+        function toggleAddClubPanel(forceState) {
+            const panel = document.getElementById('add-club-panel');
+            if (!panel) return;
+            const shouldOpen = typeof forceState === 'boolean' ? forceState : panel.classList.contains('hidden');
+            if (shouldOpen) {
+                panel.classList.remove('hidden');
+                const input = document.getElementById('team-name');
+                if (input) setTimeout(() => input.focus(), 50);
+            } else {
+                panel.classList.add('hidden');
+            }
+        }
+
         function renderTeams() {
             const container = document.getElementById('teams-grid-container');
             if (!teams || teams.length === 0) {
-                container.innerHTML = `<div class="col-span-full text-center py-12 text-stone-400 bg-white rounded-2xl border border-stone-200">Chưa có đội tuyển nào. Hãy bấm <strong class="text-brand-600">Thêm CLB mới</strong> ở trên.</div>`;
+                container.innerHTML = `<div class="col-span-full text-center py-12 text-stone-400 bg-white rounded-2xl border border-stone-200">Chưa có đội tuyển nào. Hãy bấm <strong class="text-brand-600">+ Thêm CLB mới</strong> ở trên.</div>`;
                 return;
             }
             container.innerHTML = teams.map(t => `
@@ -1652,6 +1678,7 @@
             draftNewTeamPlayers = [];
             document.getElementById('form-add-team').reset();
             renderDraftPlayersList();
+            toggleAddClubPanel(false);
             saveAppState();
             showToast(`✅ Đã thêm đội ${name}!`);
         }
