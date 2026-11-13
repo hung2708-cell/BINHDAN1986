@@ -160,8 +160,7 @@
                 </div>
                 <div class="shrink-0">
                     <select id="refereeCourtSelect" onchange="changeRefereeCourt(this.value)" class="bg-rose-50 border border-brand-300 rounded-lg px-2 py-1 text-brand-700 font-extrabold text-xs shadow-sm focus:outline-none">
-                        <option value="Sân 1">Sân 1</option><option value="Sân 2">Sân 2</option><option value="Sân 3">Sân 3</option><option value="Sân 4">Sân 4</option>
-                        <option value="Sân 5">Sân 5</option><option value="Sân 6">Sân 6</option><option value="Sân 7">Sân 7</option><option value="Sân 8">Sân 8</option>
+                        <option value="Sân 1">Sân 1</option>
                     </select>
                 </div>
             </header>
@@ -370,6 +369,7 @@
 
     <script>
         const STORAGE_KEY = 'CAY_COI_TEAM_LINEUP_V28_PERMANENT';
+        const ALL_COURTS = ['Sân 1', 'Sân 2', 'Sân 3', 'Sân 4', 'Sân 5', 'Sân 6', 'Sân 7', 'Sân 8'];
         window.__deviceClientId = 'REF_' + Math.random().toString(36).slice(2, 9);
         window.__currentSyncRoomCode = 'BINHDAN';
         let currentSetupStep = 1;
@@ -388,13 +388,40 @@
         
         const urlParams = new URLSearchParams(window.location.search);
         let currentAssignedCourt = urlParams.get('court') || localStorage.getItem('REF_STANDALONE_COURT') || 'Sân 1';
-        
-        const courtSel = document.getElementById('refereeCourtSelect');
-        if (courtSel) courtSel.value = currentAssignedCourt;
-        document.getElementById('refereeCourtTitle').textContent = `Đang bắt chính: ${currentAssignedCourt}`;
-        document.getElementById('liveCurrentCourtBadge').textContent = currentAssignedCourt;
+
+        function getActiveCourtsWithMatches() {
+            const allMatches = getAllMatchesFlat();
+            const occupiedSet = new Set(allMatches.map(m => (m.court || 'Sân 1').trim()));
+            return ALL_COURTS.filter(c => occupiedSet.has(c));
+        }
+
+        function syncCourtSelectorOptions() {
+            const courtSel = document.getElementById('refereeCourtSelect');
+            if (!courtSel) return;
+
+            const activeCourts = getActiveCourtsWithMatches();
+            if (activeCourts.length === 0) {
+                courtSel.innerHTML = `<option value="">Trống lịch</option>`;
+                courtSel.classList.add('opacity-60');
+                document.getElementById('refereeCourtTitle').textContent = 'Chưa có sân thi đấu';
+                document.getElementById('liveCurrentCourtBadge').textContent = 'Trống';
+                return;
+            }
+
+            courtSel.classList.remove('opacity-60');
+            if (!activeCourts.includes(currentAssignedCourt)) {
+                currentAssignedCourt = activeCourts[0];
+                localStorage.setItem('REF_STANDALONE_COURT', currentAssignedCourt);
+            }
+
+            courtSel.innerHTML = activeCourts.map(c => `<option value="${c}">${c}</option>`).join('');
+            courtSel.value = currentAssignedCourt;
+            document.getElementById('refereeCourtTitle').textContent = `Đang bắt chính: ${currentAssignedCourt}`;
+            document.getElementById('liveCurrentCourtBadge').textContent = currentAssignedCourt;
+        }
 
         function changeRefereeCourt(courtName) {
+            if (!courtName) return;
             currentAssignedCourt = courtName;
             localStorage.setItem('REF_STANDALONE_COURT', courtName);
             document.getElementById('refereeCourtTitle').textContent = `Đang bắt chính: ${courtName}`;
@@ -437,6 +464,15 @@
                 } catch (e) {}
             });
         }
+
+        window.addEventListener('storage', (e) => {
+            if (e.key === STORAGE_KEY && e.newValue) {
+                try {
+                    state = JSON.parse(e.newValue);
+                    renderRefereeApp();
+                } catch (err) {}
+            }
+        });
 
         function saveState() {
             try {
@@ -785,7 +821,7 @@
                     const hasSelectedFemale = selectedObjs.some(x => isPlayerFemale(x));
 
                     const isComplete = selIds.length >= req;
-                    const cleanCat = (m.catLabel || `Trận ${idx + 1}`).replace(/^Vòng \d+\s*•\s*/i, '');
+                    const cleanCat = (m.catLabel || `Trận ${idx + 1}`).replace(/^(Bảng [^•]+•\s*)?Vòng \d+\s*•\s*/i, '');
 
                     let filterHintBadge = '';
                     if (isSingles) {
@@ -972,7 +1008,7 @@
                 const m = activeTieMatches[i];
                 const req = getRequiredPlayerCount(m);
                 if ((m.team1PlayerIds || []).length < req) {
-                    const cleanCat = (m.catLabel || `Trận ${i + 1}`).replace(/^Vòng \d+\s*•\s*/i, '');
+                    const cleanCat = (m.catLabel || `Trận ${i + 1}`).replace(/^(Bảng [^•]+•\s*)?Vòng \d+\s*•\s*/i, '');
                     showToast(`⚠️ ${cleanCat} của Đội 1 chưa chọn đủ ${req} VĐV!`);
                     return;
                 }
@@ -989,7 +1025,7 @@
                 const m = activeTieMatches[i];
                 const req = getRequiredPlayerCount(m);
                 if ((m.team2PlayerIds || []).length < req) {
-                    const cleanCat = (m.catLabel || `Trận ${i + 1}`).replace(/^Vòng \d+\s*•\s*/i, '');
+                    const cleanCat = (m.catLabel || `Trận ${i + 1}`).replace(/^(Bảng [^•]+•\s*)?Vòng \d+\s*•\s*/i, '');
                     showToast(`⚠️ ${cleanCat} của Đội 2 chưa chọn đủ ${req} VĐV!`);
                     return;
                 }
@@ -1133,6 +1169,9 @@
         }
 
         function renderRefereeApp() {
+            // Đồng bộ và ẩn hoàn toàn các sân không có trận thi đấu
+            syncCourtSelectorOptions();
+
             const activeTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
             let { match: m } = findMatchById(state.activeLiveMatchId);
             
@@ -1145,7 +1184,7 @@
             const selector = document.getElementById('liveMatchSelector');
 
             if (!m || activeTieMatches.length === 0) {
-                if (headerLabelEl) headerLabelEl.innerHTML = `<i class="fa-solid fa-circle-info mr-1 text-orange-500"></i>Chưa có cặp đấu trên ${currentAssignedCourt}`;
+                if (headerLabelEl) headerLabelEl.innerHTML = `<i class="fa-solid fa-circle-info mr-1 text-orange-500"></i>Chưa có cặp đấu nào`;
                 if (selector) selector.innerHTML = '<option>Trống lịch thi đấu</option>';
                 document.getElementById('officialScoreCallout').textContent = "Chưa có trận";
                 return;
@@ -1160,7 +1199,7 @@
 
             if (selector) {
                 selector.innerHTML = activeTieMatches.map(x => {
-                    const cleanCat = (x.catLabel || '').replace(/^Vòng \d+\s*•\s*/i, '');
+                    const cleanCat = (x.catLabel || '').replace(/^(Bảng [^•]+•\s*)?Vòng \d+\s*•\s*/i, '');
                     const req = getRequiredPlayerCount(x);
                     const hasFullLineup = (x.team1PlayerIds || []).length >= req && (x.team2PlayerIds || []).length >= req;
                     const statusIcon = x.status === 'FINISHED' ? '✅' : (x.status === 'LIVE' ? '🔴' : (hasFullLineup ? '🟢' : '⏳'));
@@ -1192,7 +1231,7 @@
                 rotBanner.classList.add('hidden');
             }
 
-            const cleanStageLabel = (m.catLabel || '').replace(/^Vòng \d+\s*•\s*/i, '');
+            const cleanStageLabel = (m.catLabel || '').replace(/^(Bảng [^•]+•\s*)?Vòng \d+\s*•\s*/i, '');
             const ruleTag = isSingles ? 'Chạm 21 • 11đ đổi sân' : 'Chạm 15 • 8đ đổi sân';
             document.getElementById('liveMatchStageBadge').textContent = `${cleanStageLabel} (${ruleTag})`;
 
