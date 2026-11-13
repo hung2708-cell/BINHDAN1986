@@ -1279,15 +1279,16 @@
         }
 
         function renderMatchesSchedule() {
-            document.querySelectorAll('.court-btn').forEach(btn => {
-                btn.classList.remove('bg-brand-600', 'text-white', 'shadow-sm');
-                btn.classList.add('bg-stone-100', 'text-stone-600', 'border', 'border-stone-200');
-                const btnVal = btn.textContent.trim();
-                if ((currentCourtFilter === 'ALL' && btnVal === 'Tất cả Sân') || btnVal === currentCourtFilter) {
-                    btn.classList.remove('bg-stone-100', 'text-stone-600', 'border', 'border-stone-200');
-                    btn.classList.add('bg-brand-600', 'text-white', 'shadow-sm');
-                }
-            });
+    document.querySelectorAll('.court-btn').forEach(btn => {
+        const btnVal = btn.textContent.trim();
+        const isActive = (currentCourtFilter === 'ALL' && btnVal === 'Tất cả Sân') || btnVal === currentCourtFilter;
+
+        if (isActive) {
+            btn.className = 'court-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-r from-rose-600 to-orange-600 text-white shadow-sm transition';
+        } else {
+            btn.className = 'court-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold bg-stone-100 text-stone-700 hover:bg-amber-50 border border-stone-200 transition';
+        }
+    });
 
             const allTies = getAllStructuredTies();
             const waveNums = Array.from(new Set(allTies.map(t => t.wave || 1))).sort((a, b) => a - b);
