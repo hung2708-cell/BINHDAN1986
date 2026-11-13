@@ -511,7 +511,7 @@
         </div>
     </div>
 
-    <!-- CUSTOM PASSWORD MODAL -->
+    <!-- C<!-- CUSTOM PASSWORD MODAL -->
 <div id="password-modal" onclick="if(event.target === this) closePasswordModal()" class="fixed inset-0 z-[60] flex items-center justify-center bg-stone-900/55 backdrop-blur-sm hidden p-4">
     <div id="modal-box" class="bg-white border-2 border-amber-200 w-full max-w-md p-5 sm:p-6 rounded-2xl shadow-2xl space-y-4 relative transition-colors duration-200 animate-modal-pop">
         <div class="flex items-center space-x-3 text-brand-600">
@@ -532,6 +532,12 @@
                 </p>
             </div>
         </div>
+        <div class="flex items-center justify-end space-x-2.5 pt-2 border-t border-stone-200">
+            <button type="button" onclick="closePasswordModal()" class="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 active:scale-95 text-stone-700 text-xs font-bold transition">Hủy</button>
+            <button type="button" onclick="confirmPasswordAction()" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 active:scale-95 text-white text-xs font-bold transition shadow-md">Xác nhận</button>
+        </div>
+    </div>
+</div>
         <div class="flex items-center justify-end space-x-2.5 pt-2 border-t border-stone-200">
             <button type="button" onclick="closePasswordModal()" class="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 active:scale-95 text-stone-700 text-xs font-bold transition">Hủy</button>
             <button type="button" onclick="confirmPasswordAction()" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 active:scale-95 text-white text-xs font-bold transition shadow-md">Xác nhận</button>
