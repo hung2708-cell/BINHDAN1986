@@ -49,7 +49,6 @@
         button, input, select {
             touch-action: manipulation;
         }
-        /* Ngăn trình duyệt điện thoại tự zoom khi chạm vào ô nhập điểm */
         @media (max-width: 640px) {
             input[type="text"],
             input[type="password"],
@@ -64,13 +63,13 @@
             }
         }
         @keyframes shakeModal {
-    0%, 100% { transform: translateX(0); }
-    20%, 60% { transform: translateX(-10px); }
-    40%, 80% { transform: translateX(10px); }
-}
-.animate-shake {
-    animation: shake 0.4s ease-in-out;
-}
+            0%, 100% { transform: translateX(0); }
+            15%, 45%, 75% { transform: translateX(-10px); }
+            30%, 60%, 90% { transform: translateX(10px); }
+        }
+        .animate-shake {
+            animation: shake 0.4s ease-in-out both;
+        }
         @keyframes modalPop {
             0% { opacity: 0; transform: scale(0.95); }
             100% { opacity: 1; transform: scale(1); }
@@ -126,19 +125,6 @@
                         <i class="fa-solid fa-gear mr-1.5"></i>Quản trị
                     </button>
                 </nav>
-
-                <!-- NÚT MỞ APP TRỌNG TÀI GÓC TRÊN BÊN PHẢI -->
-                <div class="flex items-center shrink-0">
-                    <a href="referee.html?court=Sân 1" target="_blank" class="px-3 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-brand-600 to-orange-600 hover:from-brand-500 hover:to-orange-500 active:scale-95 text-white text-xs font-bold transition shadow-md shadow-orange-500/25 flex items-center gap-1.5 min-h-[36px]">
-                        <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M11 6h9a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-3.5a5.5 5.5 0 1 1-5.5-5Z"/>
-                            <circle cx="9.5" cy="12.5" r="1.5" fill="currentColor"/>
-                            <path d="M4 9.5 2.5 8"/>
-                            <path d="M6.5 6.5 5.5 4.5"/>
-                        </svg>
-                        <span>Trọng tài</span>
-                    </a>
-                </div>
             </div>
         </div>
     </header>
@@ -146,7 +132,7 @@
     <!-- MAIN CONTENT AREA -->
     <main class="flex-grow max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
 
-        <!-- 1. TAB TỔNG QUAN (8 SÂN THI ĐẤU) -->
+        <!-- 1. TAB TỔNG QUAN -->
         <section id="tab-home" class="tab-content space-y-3.5 sm:space-y-6">
             <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-rose-700 via-orange-600 to-amber-500 p-4 sm:p-8 shadow-lg shadow-orange-500/20 text-white">
                 <div class="absolute -right-6 -bottom-6 opacity-15 pointer-events-none">
@@ -165,7 +151,6 @@
                 </div>
             </div>
 
-            <!-- Stats Grid -->
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
                 <div class="bg-white border border-rose-100 rounded-2xl p-3 sm:p-4 shadow-sm">
                     <div class="flex items-center justify-between mb-1 sm:mb-2"><span class="text-[10px] sm:text-[11px] font-bold text-stone-500 uppercase tracking-wider truncate pr-1">Tổng đội tuyển</span><div class="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-rose-100 text-brand-600 flex items-center justify-center text-[11px] sm:text-xs shrink-0"><i class="fa-solid fa-users"></i></div></div>
@@ -196,38 +181,37 @@
             </div>
         </section>
 
-        <!-- 2. TAB LỊCH THI ĐẤU THEO SÂN & LƯỢT ĐẤU -->
+        <!-- 2. TAB LỊCH THI ĐẤU -->
         <section id="tab-matches" class="tab-content hidden space-y-3.5 sm:space-y-6">
             <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-amber-200/80 shadow-sm space-y-2.5">
                 <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-2.5">
                     <div>
                         <h2 class="text-[15px] sm:text-xl font-extrabold text-stone-900">Lịch thi đấu theo Lượt & Sân</h2>
-                        <p class="text-[11px] sm:text-xs text-stone-500">Đội đạt 3 trận thắng trước sẽ kết thúc cặp đấu ngay. Bấm <strong class="text-brand-600">Xem nội dung</strong> để cập nhật tỷ số.</p>
+                        <p class="text-[11px] sm:text-xs text-stone-500">Đội đạt 3 trận thắng trước sẽ kết thúc cặp đấu ngay.</p>
                     </div>
                     <div id="wave-filter-buttons" class="w-full lg:w-auto flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5"></div>
                 </div>
-
                 <div id="court-filter-buttons" class="w-full flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-2 border-t border-stone-100">
-                    <button onclick="filterCourt('ALL')" class="court-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold bg-brand-600 text-white transition shadow-sm">Tất cả Sân</button>
-                    <button onclick="filterCourt('Sân 1')" class="court-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold bg-stone-100 text-stone-600 hover:bg-amber-50 transition border border-stone-200">Sân 1</button>
-                    <button onclick="filterCourt('Sân 2')" class="court-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold bg-stone-100 text-stone-600 hover:bg-amber-50 transition border border-stone-200">Sân 2</button>
-                    <button onclick="filterCourt('Sân 3')" class="court-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold bg-stone-100 text-stone-600 hover:bg-amber-50 transition border border-stone-200">Sân 3</button>
-                    <button onclick="filterCourt('Sân 4')" class="court-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold bg-stone-100 text-stone-600 hover:bg-amber-50 transition border border-stone-200">Sân 4</button>
-                    <button onclick="filterCourt('Sân 5')" class="court-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold bg-stone-100 text-stone-600 hover:bg-amber-50 transition border border-stone-200">Sân 5</button>
-                    <button onclick="filterCourt('Sân 6')" class="court-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold bg-stone-100 text-stone-600 hover:bg-amber-50 transition border border-stone-200">Sân 6</button>
-                    <button onclick="filterCourt('Sân 7')" class="court-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold bg-stone-100 text-stone-600 hover:bg-amber-50 transition border border-stone-200">Sân 7</button>
-                    <button onclick="filterCourt('Sân 8')" class="court-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold bg-stone-100 text-stone-600 hover:bg-amber-50 transition border border-stone-200">Sân 8</button>
+                    <button onclick="filterCourt('ALL')" class="court-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-rose-600 to-orange-600 text-white shadow-sm transition">Tất cả Sân</button>
+                    <button onclick="filterCourt('Sân 1')" class="court-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold bg-stone-100 text-stone-700 hover:bg-amber-50 transition border border-stone-200">Sân 1</button>
+                    <button onclick="filterCourt('Sân 2')" class="court-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold bg-stone-100 text-stone-700 hover:bg-amber-50 transition border border-stone-200">Sân 2</button>
+                    <button onclick="filterCourt('Sân 3')" class="court-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold bg-stone-100 text-stone-700 hover:bg-amber-50 transition border border-stone-200">Sân 3</button>
+                    <button onclick="filterCourt('Sân 4')" class="court-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold bg-stone-100 text-stone-700 hover:bg-amber-50 transition border border-stone-200">Sân 4</button>
+                    <button onclick="filterCourt('Sân 5')" class="court-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold bg-stone-100 text-stone-700 hover:bg-amber-50 transition border border-stone-200">Sân 5</button>
+                    <button onclick="filterCourt('Sân 6')" class="court-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold bg-stone-100 text-stone-700 hover:bg-amber-50 transition border border-stone-200">Sân 6</button>
+                    <button onclick="filterCourt('Sân 7')" class="court-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold bg-stone-100 text-stone-700 hover:bg-amber-50 transition border border-stone-200">Sân 7</button>
+                    <button onclick="filterCourt('Sân 8')" class="court-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold bg-stone-100 text-stone-700 hover:bg-amber-50 transition border border-stone-200">Sân 8</button>
                 </div>
             </div>
             <div id="matches-by-court-container" class="space-y-3.5 sm:space-y-4"></div>
         </section>
 
-        <!-- 3. TAB VÒNG BẢNG & KẾT QUẢ -->
+        <!-- 3. TAB VÒNG BẢNG -->
         <section id="tab-standings" class="tab-content hidden space-y-3.5 sm:space-y-6">
             <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-amber-200/80 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5">
                 <div>
                     <h2 class="text-[15px] sm:text-xl font-extrabold text-stone-900">Bảng xếp hạng Vòng bảng & Kết quả</h2>
-                    <p class="text-[11px] sm:text-xs text-stone-500">Chạm 3 trận thắng kết thúc cặp đấu: <strong class="text-emerald-600">Thắng (2đ)</strong> • <strong class="text-amber-600">Hòa (1đ)</strong> • <strong class="text-rose-600">Thua (0đ)</strong>.</p>
+                    <p class="text-[11px] sm:text-xs text-stone-500">Thắng tổng: <strong class="text-emerald-600">2đ</strong> • Hòa: <strong class="text-amber-600">1đ</strong> • Thua: <strong class="text-rose-600">0đ</strong>.</p>
                 </div>
                 <div class="flex gap-2 w-full sm:w-auto justify-end">
                     <button onclick="exportResultToExcel()" class="flex-1 sm:flex-initial justify-center px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold text-xs transition shadow-sm flex items-center">
@@ -236,21 +220,16 @@
                     <button onclick="renderStandings()" class="px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-amber-50 active:scale-95 text-stone-600 transition text-xs font-bold border border-stone-200" title="Làm mới"><i class="fa-solid fa-rotate"></i></button>
                 </div>
             </div>
-
             <div id="standings-groups-container" class="space-y-3.5 sm:space-y-5"></div>
-
             <div class="space-y-2.5 pt-1">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                    <h3 class="text-[13px] sm:text-base font-extrabold text-stone-900 flex items-center">
-                        <i class="fa-solid fa-check-double text-emerald-600 mr-2"></i> Lịch sử các cặp đấu đã kết thúc
-                    </h3>
-                    <span class="text-[11px] text-stone-500">Bấm vào từng cặp để xem tỷ số & VĐV</span>
-                </div>
+                <h3 class="text-[13px] sm:text-base font-extrabold text-stone-900 flex items-center">
+                    <i class="fa-solid fa-check-double text-emerald-600 mr-2"></i> Lịch sử các cặp đấu đã kết thúc
+                </h3>
                 <div id="completed-ties-container" class="grid grid-cols-1 min-[520px]:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4"></div>
             </div>
         </section>
 
-        <!-- 4. TAB CHIA NHÁNH (SERIE A & B) -->
+        <!-- 4. TAB CHIA NHÁNH -->
         <section id="tab-bracket" class="tab-content hidden space-y-3.5 sm:space-y-6">
             <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-amber-200/80 shadow-sm flex justify-between items-center gap-3">
                 <div class="min-w-0">
@@ -259,12 +238,11 @@
                 </div>
                 <button onclick="renderBracket()" class="shrink-0 px-3 py-2 sm:py-1.5 rounded-xl bg-stone-100 hover:bg-amber-50 active:scale-95 text-stone-700 font-semibold transition text-xs border border-stone-200"><i class="fa-solid fa-rotate mr-1"></i> Làm mới</button>
             </div>
-
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-6">
                 <div class="bg-white border-2 border-brand-200 p-3.5 sm:p-5 rounded-2xl space-y-3.5 shadow-md">
                     <div class="flex items-center justify-between pb-2.5 border-b border-rose-100 gap-2">
-                        <h3 class="font-black text-brand-700 text-xs min-[375px]:text-sm sm:text-base uppercase flex items-center">
-                            <i class="fa-solid fa-trophy mr-1.5 sm:mr-2 text-amber-500"></i> Nhánh Serie A (Vô Địch)
+                        <h3 class="font-black text-brand-700 text-xs sm:text-base uppercase flex items-center">
+                            <i class="fa-solid fa-trophy mr-2 text-amber-500"></i> Nhánh Serie A (Vô Địch)
                         </h3>
                         <span class="text-[10px] bg-rose-100 text-brand-700 px-2 py-0.5 rounded-full font-extrabold shrink-0">Top 1 & 2</span>
                     </div>
@@ -275,11 +253,10 @@
                         <div id="serie-a-final" class="space-y-2"></div>
                     </div>
                 </div>
-
                 <div class="bg-white border-2 border-emerald-200 p-3.5 sm:p-5 rounded-2xl space-y-3.5 shadow-md">
                     <div class="flex items-center justify-between pb-2.5 border-b border-emerald-100 gap-2">
-                        <h3 class="font-black text-emerald-700 text-xs min-[375px]:text-sm sm:text-base uppercase flex items-center">
-                            <i class="fa-solid fa-medal mr-1.5 sm:mr-2 text-emerald-500"></i> Nhánh Serie B (Hạng Phụ)
+                        <h3 class="font-black text-emerald-700 text-xs sm:text-base uppercase flex items-center">
+                            <i class="fa-solid fa-medal mr-2 text-emerald-500"></i> Nhánh Serie B (Hạng Phụ)
                         </h3>
                         <span class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-extrabold shrink-0">Top 3 & 4</span>
                     </div>
@@ -324,7 +301,6 @@
                         <label class="block text-xs font-bold text-stone-600 mb-1">Tên đội / CLB</label>
                         <input type="text" id="team-name" required placeholder="VD: Bính Dần FC" class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2.5 text-sm text-stone-900 focus:outline-none focus:border-brand-500 focus:bg-white">
                     </div>
-
                     <div class="lg:col-span-2">
                         <label class="block text-xs font-bold text-stone-600 mb-1">Xếp vào bảng</label>
                         <select id="team-group-select" class="compact-select w-full bg-amber-50 border border-amber-300 rounded-xl px-3 py-2.5 text-xs font-extrabold text-amber-900 focus:outline-none focus:border-brand-500">
@@ -334,11 +310,10 @@
                             <option value="Bảng D">Bảng D</option>
                         </select>
                     </div>
-
                     <div class="lg:col-span-7 space-y-1.5">
                         <label class="block text-xs font-bold text-stone-600">Thêm thành viên vào đội (Giới tính & Trình A, B, C)</label>
                         <div class="grid grid-cols-12 gap-2">
-                            <input type="text" id="draft-player-name" placeholder="Họ tên VĐV (cách nhau dấu phẩy)..." onkeypress="if(event.key==='Enter'){event.preventDefault(); addDraftPlayer();}" class="col-span-12 sm:col-span-6 bg-stone-50 border border-stone-300 rounded-xl px-3 py-2.5 text-sm text-stone-900 focus:outline-none focus:border-brand-500 focus:bg-white">
+                            <input type="text" id="draft-player-name" placeholder="Họ tên VĐV..." onkeypress="if(event.key==='Enter'){event.preventDefault(); addDraftPlayer();}" class="col-span-12 sm:col-span-6 bg-stone-50 border border-stone-300 rounded-xl px-3 py-2.5 text-sm text-stone-900 focus:outline-none focus:border-brand-500 focus:bg-white">
                             <select id="draft-player-gender" class="compact-select col-span-4 sm:col-span-2 bg-stone-50 border border-stone-300 rounded-xl px-2 py-2.5 text-xs font-bold text-stone-800 focus:outline-none focus:border-brand-500">
                                 <option value="Nam">Nam</option>
                                 <option value="Nữ">Nữ</option>
@@ -353,24 +328,18 @@
                             </button>
                         </div>
                     </div>
-
                     <div class="lg:col-span-12 flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-stone-100">
                         <div id="draft-players-list" class="flex flex-wrap gap-1.5 min-h-[28px] items-center">
                             <span class="text-xs text-stone-400 italic">Chưa có VĐV nào trong danh sách tạo mới...</span>
                         </div>
                         <div class="grid grid-cols-2 sm:flex items-center gap-2 shrink-0 w-full sm:w-auto">
-                            <button type="button" onclick="toggleAddClubPanel(false)" class="px-4 py-2.5 sm:py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold transition text-center">
-                                Đóng
-                            </button>
-                            <button type="submit" class="px-5 py-2.5 sm:py-2 bg-gradient-to-r from-brand-600 to-orange-600 hover:from-brand-500 hover:to-orange-500 text-white font-bold rounded-xl text-xs transition shadow-md text-center">
-                                <i class="fa-solid fa-check-circle mr-1"></i> Lưu CLB
-                            </button>
+                            <button type="button" onclick="toggleAddClubPanel(false)" class="px-4 py-2.5 sm:py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold transition text-center">Đóng</button>
+                            <button type="submit" class="px-5 py-2.5 sm:py-2 bg-gradient-to-r from-brand-600 to-orange-600 hover:from-brand-500 hover:to-orange-500 text-white font-bold rounded-xl text-xs transition shadow-md text-center"><i class="fa-solid fa-check-circle mr-1"></i> Lưu CLB</button>
                         </div>
                     </div>
                 </form>
             </div>
-
-            <div id="teams-grid-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"></div>
+            <div id="teams-grid-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4"></div>
         </section>
 
         <!-- 6. TAB QUẢN TRỊ -->
@@ -389,18 +358,14 @@
                 </div>
             </div>
 
-            <!-- KHU VỰC CHIA BẢNG ĐẤU -->
             <div class="bg-white border-2 border-amber-200 p-3.5 sm:p-5 rounded-2xl space-y-3.5 shadow-sm">
                 <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-amber-100 pb-3">
                     <div>
                         <h3 class="font-extrabold text-stone-900 flex items-center text-sm sm:text-base">
                             <i class="fa-solid fa-layer-group text-brand-600 mr-2"></i> Chia Bảng & Sắp Xếp CLB Vào Các Bảng
                         </h3>
-                        <p class="text-[11px] sm:text-xs text-stone-500 mt-0.5">
-                            Tự động chia cân bằng sức mạnh & xếp lịch theo từng Lượt đấu để không CLB nào bị trùng 2 sân cùng lúc.
-                        </p>
+                        <p class="text-[11px] sm:text-xs text-stone-500 mt-0.5">Tự động chia cân bằng sức mạnh & xếp lịch theo từng Lượt đấu để không CLB nào bị trùng 2 sân cùng lúc.</p>
                     </div>
-
                     <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full lg:w-auto">
                         <select id="auto-group-count-select" class="compact-select bg-stone-50 border border-stone-300 rounded-xl px-3 py-2 text-xs font-bold text-stone-800 focus:outline-none focus:border-brand-500">
                             <option value="AUTO">Tự động số bảng hợp lý nhất</option>
@@ -415,7 +380,6 @@
                     </div>
                 </div>
 
-                <!-- THANH TỰ NHẬP TÊN BẢNG MỚI -->
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 bg-amber-50/70 p-3 rounded-xl border border-amber-200/80">
                     <form onsubmit="handleAddCustomGroup(event)" class="flex items-center gap-2 flex-1">
                         <input type="text" id="custom-group-name-input" placeholder="Nhập tên bảng mới (VD: Bảng C)..." class="flex-1 min-w-0 bg-white border border-stone-300 rounded-xl px-3 py-2 text-xs text-stone-900 focus:outline-none focus:border-brand-500">
@@ -431,7 +395,6 @@
                 <div id="admin-groups-board" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"></div>
             </div>
 
-            <!-- DANH SÁCH QUẢN LÝ & CẬP NHẬT TỶ SỐ TRẬN ĐẤU -->
             <div class="bg-white border border-amber-200/80 p-3.5 sm:p-5 rounded-2xl space-y-3 sm:space-y-4 shadow-sm">
                 <h3 class="font-extrabold text-stone-900 flex items-center text-sm sm:text-base"><i class="fa-solid fa-pen-to-square text-orange-600 mr-2"></i> Quản lý & Cập nhật tỷ số trận đấu</h3>
                 <div id="admin-matches-list" class="space-y-2.5 sm:space-y-3 max-h-[65vh] overflow-y-auto pr-0.5"></div>
@@ -440,10 +403,9 @@
 
     </main>
 
-    <!-- POPUP MODAL XEM CHI TIẾT & CẬP NHẬT TỶ SỐ TRỰC TIẾP (Z-60 NỔI LÊN TRÊN BOTTOM NAV, HIỂN THỊ TRỌN VẸN 5 TRẬN) -->
+    <!-- POPUP MODAL XEM CHI TIẾT & CẬP NHẬT TỶ SỐ TRỰC TIẾP -->
     <div id="match-detail-modal" onclick="if(event.target === this) closeMatchDetailModal()" class="fixed inset-0 z-[60] flex items-center justify-center bg-stone-900/65 backdrop-blur-sm hidden p-2.5 sm:p-4">
         <div class="bg-[#FFFDF9] border-2 border-brand-300 w-full max-w-2xl p-3 sm:p-5 rounded-2xl shadow-2xl space-y-2 animate-modal-pop max-h-[92dvh] flex flex-col">
-            <!-- Header Popup -->
             <div class="flex justify-between items-start gap-2 border-b border-amber-200/80 pb-2 shrink-0">
                 <div class="flex items-start space-x-2 min-w-0">
                     <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-rose-100 text-brand-600 flex items-center justify-center shrink-0 mt-0.5"><i class="fa-solid fa-table-list text-xs sm:text-sm"></i></div>
@@ -455,15 +417,15 @@
                 <button onclick="closeMatchDetailModal()" class="w-8 h-8 rounded-xl bg-stone-100 hover:bg-rose-100 active:scale-95 text-stone-600 hover:text-brand-600 flex items-center justify-center transition shrink-0"><i class="fa-solid fa-xmark text-base"></i></button>
             </div>
             
-            <!-- Danh sách 5 nội dung cô đọng -->
             <div id="detail-modal-content" class="space-y-1.5 overflow-y-auto pr-0.5 flex-1"></div>
             
-            <!-- Footer Popup luôn hiển thị rõ ràng -->
             <div class="pt-2 border-t border-amber-200/80 flex items-center justify-between gap-2 shrink-0">
                 <a id="detail-modal-referee-link" href="#" target="_blank" class="flex-1 sm:flex-initial justify-center px-3 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-brand-600 to-orange-600 hover:from-brand-500 hover:to-orange-500 active:scale-95 text-white text-xs font-bold transition shadow-md flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M11 6h9a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-3.5a5.5 5.5 0 1 1-5.5-5Z"/>
                         <circle cx="9.5" cy="12.5" r="1.5" fill="currentColor"/>
+                        <path d="M4 9.5 2.5 8"/>
+                        <path d="M6.5 6.5 5.5 4.5"/>
                     </svg>
                     <span>App Trọng Tài Sân Này</span>
                 </a>
@@ -512,47 +474,32 @@
     </div>
 
     <!-- CUSTOM PASSWORD MODAL -->
-<div id="password-modal" onclick="if(event.target === this) closePasswordModal()" class="fixed inset-0 z-[60] flex items-center justify-center bg-stone-900/55 backdrop-blur-sm hidden p-4">
-    <!-- Đảm bảo có id="modal-card-container" ở đây -->
-    <div id="modal-card-container" class="bg-white border-2 border-amber-200 w-full max-w-md p-5 sm:p-6 rounded-2xl shadow-2xl space-y-4 relative transition-colors duration-200 animate-modal-pop">
-        <div class="flex items-center space-x-3 text-brand-600">
-            <div id="modal-lock-icon" class="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center text-lg shrink-0 transition-colors">
-                <i class="fa-solid fa-lock"></i>
+    <div id="password-modal" onclick="if(event.target === this) closePasswordModal()" class="fixed inset-0 z-[60] flex items-center justify-center bg-stone-900/55 backdrop-blur-sm hidden p-4">
+        <div id="modal-card-container" class="bg-white border-2 border-amber-200 w-full max-w-md p-5 sm:p-6 rounded-2xl shadow-2xl space-y-4 relative transition-colors duration-200 animate-modal-pop">
+            <div class="flex items-center space-x-3 text-brand-600">
+                <div id="modal-lock-icon" class="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center text-lg shrink-0 transition-colors">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <div>
+                    <h3 id="modal-title" class="font-extrabold text-stone-900 text-sm sm:text-base">Xác nhận mật khẩu Quản trị</h3>
+                    <p class="text-xs text-stone-500">Vui lòng nhập mật khẩu quản trị để tiếp tục.</p>
+                </div>
             </div>
-            <div>
-                <h3 id="modal-title" class="font-extrabold text-stone-900 text-sm sm:text-base">Xác nhận mật khẩu Quản trị</h3>
-                <p class="text-xs text-stone-500">Vui lòng nhập mật khẩu quản trị để tiếp tục.</p>
+            <div class="space-y-1.5">
+                <input type="password" id="modal-password-input" placeholder="Nhập mật khẩu..." class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2.5 text-sm text-stone-900 focus:outline-none focus:border-brand-500 font-mono tracking-widest transition-colors">
+                <div class="min-h-[20px] flex items-center">
+                    <p id="modal-error-msg" class="text-xs text-rose-600 font-bold hidden flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                        <span>Sai mật khẩu! Không thể thực hiện.</span>
+                    </p>
+                </div>
             </div>
-        </div>
-        <div class="space-y-1.5">
-            <input type="password" id="modal-password-input" placeholder="Nhập mật khẩu..." class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2.5 text-sm text-stone-900 focus:outline-none focus:border-brand-500 font-mono tracking-widest transition-colors">
-            <div class="min-h-[20px] flex items-center">
-                <p id="modal-error-msg" class="text-xs text-rose-600 font-bold hidden flex items-center gap-1.5">
-                    <i class="fa-solid fa-circle-exclamation"></i>
-                    <span>Sai mật khẩu! Không thể thực hiện.</span>
-                </p>
+            <div class="flex items-center justify-end space-x-2.5 pt-2 border-t border-stone-200">
+                <button type="button" onclick="closePasswordModal()" class="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 active:scale-95 text-stone-700 text-xs font-bold transition">Hủy</button>
+                <button type="button" onclick="confirmPasswordAction()" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 active:scale-95 text-white text-xs font-bold transition shadow-md">Xác nhận</button>
             </div>
-        </div>
-        <div class="flex items-center justify-end space-x-2.5 pt-2 border-t border-stone-200">
-            <button type="button" onclick="closePasswordModal()" class="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 active:scale-95 text-stone-700 text-xs font-bold transition">Hủy</button>
-            <button type="button" onclick="confirmPasswordAction()" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 active:scale-95 text-white text-xs font-bold transition shadow-md">Xác nhận</button>
         </div>
     </div>
-</div>
-
-        <div class="flex items-center justify-end space-x-2.5 pt-2 border-t border-stone-200">
-            <button type="button" onclick="closePasswordModal()" class="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 active:scale-95 text-stone-700 text-xs font-bold transition">Hủy</button>
-            <button type="button" onclick="confirmPasswordAction()" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 active:scale-95 text-white text-xs font-bold transition shadow-md">Xác nhận</button>
-        </div>
-    </div>
-</div>
-        <div class="flex items-center justify-end space-x-2.5 pt-2 border-t border-stone-200">
-            <button type="button" onclick="closePasswordModal()" class="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 active:scale-95 text-stone-700 text-xs font-bold transition">Hủy</button>
-            <button type="button" onclick="confirmPasswordAction()" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 active:scale-95 text-white text-xs font-bold transition shadow-md">Xác nhận</button>
-        </div>
-    </div>
-</div>
-
 
     <div id="toastContainer" class="fixed top-16 sm:top-20 right-3 sm:right-4 z-[70] flex flex-col gap-2 pointer-events-none max-w-[90vw]"></div>
 
@@ -759,75 +706,56 @@
 
         let pendingAction = null;
         function openPasswordModal(title, actionCallback) {
-    document.getElementById('modal-title').innerText = title;
-    const pwdInput = document.getElementById('modal-password-input');
-    const modalBox = document.getElementById('modal-box');
-    const errorMsg = document.getElementById('modal-error-msg');
+            document.getElementById('modal-title').innerText = title;
+            const pwdInput = document.getElementById('modal-password-input');
+            const modalCard = document.getElementById('modal-card-container');
+            const errorMsg = document.getElementById('modal-error-msg');
 
-    // Chỉ reset khi thực sự mở lần đầu từ các nút quản trị
-    pwdInput.value = '';
-    pwdInput.classList.remove('border-rose-500', 'bg-rose-50/60');
-    modalBox.classList.remove('animate-shake', 'border-rose-500', 'shadow-rose-500/25');
-    modalBox.classList.add('border-amber-200');
-    errorMsg.classList.add('hidden');
+            pwdInput.value = '';
+            pwdInput.classList.remove('border-rose-500', 'bg-rose-50/60');
+            modalCard.classList.remove('animate-shake', 'border-rose-500', 'shadow-rose-500/25');
+            modalCard.classList.add('border-amber-200');
+            errorMsg.classList.add('hidden');
 
-    document.getElementById('password-modal').classList.remove('hidden');
-    setTimeout(() => pwdInput.focus(), 50);
-    pendingAction = actionCallback;
-}
+            document.getElementById('password-modal').classList.remove('hidden');
+            setTimeout(() => pwdInput.focus(), 50);
+            pendingAction = actionCallback;
+        }
 
-function closePasswordModal() {
-    document.getElementById('password-modal').classList.add('hidden');
-    pendingAction = null;
-}
+        function closePasswordModal() {
+            document.getElementById('password-modal').classList.add('hidden');
+            pendingAction = null;
+        }
 
-function openPasswordModal(title, actionCallback) {
-    document.getElementById('modal-title').innerText = title;
-    const pwdInput = document.getElementById('modal-password-input');
-    const modalCard = document.getElementById('modal-card-container');
-    const errorMsg = document.getElementById('modal-error-msg');
+        function confirmPasswordAction() {
+            const pwdInput = document.getElementById('modal-password-input');
+            const pwd = pwdInput.value.trim();
+            const modalCard = document.getElementById('modal-card-container');
+            const errorMsg = document.getElementById('modal-error-msg');
 
-    pwdInput.value = '';
-    pwdInput.classList.remove('border-rose-500', 'bg-rose-50/60');
-    modalCard.classList.remove('animate-shake', 'border-rose-500', 'shadow-rose-500/25');
-    modalCard.classList.add('border-amber-200');
-    errorMsg.classList.add('hidden');
+            if (pwd === ADMIN_PASSWORD) {
+                const actionToRun = pendingAction;
+                closePasswordModal();
+                if (actionToRun) actionToRun();
+            } else {
+                errorMsg.classList.remove('hidden');
+                pwdInput.classList.add('border-rose-500', 'bg-rose-50/60');
+                
+                modalCard.classList.remove('border-amber-200', 'animate-shake');
+                void modalCard.offsetWidth; 
+                modalCard.classList.add('animate-shake', 'border-rose-500', 'shadow-rose-500/25');
 
-    document.getElementById('password-modal').classList.remove('hidden');
-    setTimeout(() => pwdInput.focus(), 50);
-    pendingAction = actionCallback;
-}
+                if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
 
-function confirmPasswordAction() {
-    const pwdInput = document.getElementById('modal-password-input');
-    const pwd = pwdInput.value.trim();
-    const modalCard = document.getElementById('modal-card-container');
-    const errorMsg = document.getElementById('modal-error-msg');
+                pwdInput.focus();
+                pwdInput.select();
 
-    if (pwd === ADMIN_PASSWORD) {
-        const actionToRun = pendingAction;
-        closePasswordModal();
-        if (actionToRun) actionToRun();
-    } else {
-        // Hiện thông báo lỗi
-        errorMsg.classList.remove('hidden');
-        pwdInput.classList.add('border-rose-500', 'bg-rose-50/60');
-        
-        // Kích hoạt hiệu ứng rung lắc toàn bộ khung Popup
-        modalCard.classList.remove('border-amber-200', 'animate-shake');
-        void modalCard.offsetWidth; // DOM reflow để lặp lại hiệu ứng khi bấm sai nhiều lần
-        modalCard.classList.add('animate-shake', 'border-rose-500', 'shadow-rose-500/25');
+                setTimeout(() => {
+                    modalCard.classList.remove('animate-shake');
+                }, 450);
+            }
+        }
 
-        if (navigator.vibrate) navigator.vibrate([100, 50, 100]); // Rung điện thoại
-
-        pwdInput.focus();
-        pwdInput.select();
-
-        setTimeout(() => {
-            modalCard.classList.remove('animate-shake');
-        }, 450);
-    }
-}
         document.getElementById('modal-password-input').addEventListener('keypress', function(e) { 
             if(e.key === 'Enter') confirmPasswordAction(); 
         });
@@ -1310,16 +1238,16 @@ function confirmPasswordAction() {
         }
 
         function renderMatchesSchedule() {
-    document.querySelectorAll('.court-btn').forEach(btn => {
-        const btnVal = btn.textContent.trim();
-        const isActive = (currentCourtFilter === 'ALL' && btnVal === 'Tất cả Sân') || btnVal === currentCourtFilter;
+            document.querySelectorAll('.court-btn').forEach(btn => {
+                const btnVal = btn.textContent.trim();
+                const isActive = (currentCourtFilter === 'ALL' && btnVal === 'Tất cả Sân') || btnVal === currentCourtFilter;
 
-        if (isActive) {
-            btn.className = 'court-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-r from-rose-600 to-orange-600 text-white shadow-sm transition';
-        } else {
-            btn.className = 'court-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold bg-stone-100 text-stone-700 hover:bg-amber-50 border border-stone-200 transition';
-        }
-    });
+                if (isActive) {
+                    btn.className = 'court-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-r from-rose-600 to-orange-600 text-white shadow-sm transition';
+                } else {
+                    btn.className = 'court-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold bg-stone-100 text-stone-700 hover:bg-amber-50 transition border border-stone-200';
+                }
+            });
 
             const allTies = getAllStructuredTies();
             const waveNums = Array.from(new Set(allTies.map(t => t.wave || 1))).sort((a, b) => a - b);
@@ -1419,7 +1347,6 @@ function confirmPasswordAction() {
             }).join('');
         }
 
-        // POPUP CÔ ĐỌNG HIỂN THỊ TRỌN VẸN 5 NỘI DUNG TRONG 1 MÀN HÌNH ĐIỆN THOẠI
         function openCourtDetailModal(courtName, club1Id, club2Id, tieId = null) {
             currentOpenDetailModalCtx = { courtName, club1Id, club2Id, tieId };
             let tieMatches = [];
@@ -1919,7 +1846,7 @@ function confirmPasswordAction() {
             const worksheet = XLSX.utils.json_to_sheet(exportData);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "BangXepHang");
-            XLSX.writeFile(workbook, "KetQua_Pickleball_BinhDan1986.xlsx");
+            XLSX.writeFile(workbook, "KetQua_Pickleball_BínhDần1986.xlsx");
             showToast('📥 Đã xuất kết quả ra Excel!');
         }
 
