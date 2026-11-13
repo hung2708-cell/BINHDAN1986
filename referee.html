@@ -17,7 +17,6 @@
                 extend: {
                     fontFamily: { sans: ['Inter', 'sans-serif'], score: ['Chakra Petch', 'sans-serif'] },
                     colors: {
-                        // Hành Hỏa (Bản mệnh Bính Dần 1986: Đỏ son - Cam lửa - Vàng kim)
                         brand: {
                             50: '#fff1f2',
                             100: '#ffe4e6',
@@ -28,7 +27,6 @@
                             700: '#be123c',
                             900: '#881337'
                         },
-                        // Hành Mộc (Tương sinh: Mộc sinh Hỏa)
                         fengshui: {
                             wood: '#059669',
                             woodLight: '#d1fae5',
@@ -258,7 +256,7 @@
                         <div id="leftPanelPlayerName" class="text-[11px] font-extrabold text-stone-900 truncate leading-tight mt-0.5">---</div>
                     </div>
                     <div class="text-center font-score fluid-score-num font-extrabold text-brand-600 py-0.5" id="leftPanelScore">0</div>
-                    <div class="grid grid-cols-3 gap-1" id="leftPanelActionArea"></div>
+                    <div class="grid grid-cols-4 gap-1" id="leftPanelActionArea"></div>
                 </div>
 
                 <!-- Ô BÊN PHẢI SÂN -->
@@ -270,7 +268,7 @@
                         <div id="rightPanelPlayerName" class="text-[11px] font-extrabold text-stone-900 truncate leading-tight mt-0.5">---</div>
                     </div>
                     <div class="text-center font-score fluid-score-num font-extrabold text-emerald-700 py-0.5" id="rightPanelScore">0</div>
-                    <div class="grid grid-cols-3 gap-1" id="rightPanelActionArea"></div>
+                    <div class="grid grid-cols-4 gap-1" id="rightPanelActionArea"></div>
                 </div>
             </div>
 
@@ -369,12 +367,17 @@
     <script>
         const STORAGE_KEY = 'CAY_COI_TEAM_LINEUP_V28_PERMANENT';
         const ALL_COURTS = ['Sân 1', 'Sân 2', 'Sân 3', 'Sân 4', 'Sân 5', 'Sân 6', 'Sân 7', 'Sân 8'];
-        const WINS_TO_CLINCH_TIE = 3; // Chạm 3 trận thắng kết thúc cặp đấu ngay lập tức
+        const WINS_TO_CLINCH_TIE = 3;
         window.__deviceClientId = 'REF_' + Math.random().toString(36).slice(2, 9);
         window.__currentSyncRoomCode = 'BINHDAN';
         let currentSetupStep = 1;
         let tempTossServeTeam = 1;
         let tempTossSwapped = false;
+
+        // Khóa chống nhảy điểm / chạm đúp & chống dội gói MQTT cũ
+        let __lastScoreTapAt = 0;
+        let __lastLocalMutationAt = 0;
+        let __courtSwapFreezeUntil = 0;
 
         function loadState() {
             try {
@@ -493,11 +496,12 @@
         function showToast(msg) {
             const c = document.getElementById('toastContainer');
             if (!c) return;
+            c.innerHTML = ''; // Chỉ hiện 1 thông báo mới nhất tránh chồng chéo
             const el = document.createElement('div');
             el.className = 'px-3.5 py-2 rounded-xl bg-white/95 border-2 border-brand-300 text-brand-700 text-xs font-extrabold shadow-xl text-center';
             el.textContent = msg;
             c.appendChild(el);
-            setTimeout(() => el.remove(), 2400);
+            setTimeout(() => el.remove(), 2200);
         }
 
         let mqttClient = null;
@@ -513,6 +517,10 @@
                 try {
                     const pkt = JSON.parse(message.toString());
                     if (!pkt || pkt.sender === window.__deviceClientId) return;
+                    // Chặn gói tin dội về trong vòng 2.5s sau khi trọng tài máy này vừa thao tác điểm
+                    if (Date.now() - __lastLocalMutationAt < 2500) return;
+                    if (pkt.updatedAt && state.__updatedAt && pkt.updatedAt < state.__updatedAt) return;
+
                     if (pkt.state) {
                         state = pkt.state;
                         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -524,6 +532,7 @@
 
         window.addEventListener('storage', (e) => {
             if (e.key === STORAGE_KEY && e.newValue) {
+                if (Date.now() - __lastLocalMutationAt < 1000) return;
                 try {
                     state = JSON.parse(e.newValue);
                     renderRefereeApp();
@@ -531,13 +540,25 @@
             }
         });
 
+        let __mqttPublishTimer = null;
         function saveState() {
             try {
+                __lastLocalMutationAt = Date.now();
+                state.__updatedAt = __lastLocalMutationAt;
                 enforceTieClinchRules();
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-                if (mqttClient && mqttClient.connected) {
-                    mqttClient.publish(`caycoi/pickleball/v28/${window.__currentSyncRoomCode}/state`, JSON.stringify({ sender: window.__deviceClientId, state }), { qos: 1, retain: true });
-                }
+
+                // Gom nhóm gửi MQTT sau 200ms để tránh nghẽn hoặc dội gói khi bấm liên tiếp
+                clearTimeout(__mqttPublishTimer);
+                __mqttPublishTimer = setTimeout(() => {
+                    if (mqttClient && mqttClient.connected) {
+                        mqttClient.publish(
+                            `caycoi/pickleball/v28/${window.__currentSyncRoomCode}/state`,
+                            JSON.stringify({ sender: window.__deviceClientId, updatedAt: state.__updatedAt, state }),
+                            { qos: 1, retain: true }
+                        );
+                    }
+                }, 200);
             } catch (e) {}
         }
 
@@ -1108,6 +1129,17 @@
         }
 
         function adjustLiveScore(teamNum, delta) {
+            // 1. Chống chạm đúp / nhảy điểm khi ngón tay chạm rung (220ms)
+            const now = Date.now();
+            if (now - __lastScoreTapAt < 220) return;
+
+            // 2. Chống bấm nhầm vào nút -1 ngay khoảnh khắc 2 ô tự động đổi bên khi chạm 8 hoặc 11 điểm
+            if (now < __courtSwapFreezeUntil) {
+                showToast('⏳ Đang đổi sân, vui lòng chờ 1 giây...');
+                return;
+            }
+            __lastScoreTapAt = now;
+
             const { match: m } = findMatchById(state.activeLiveMatchId);
             if (!m || m.status === 'FINISHED' || m.status === 'SKIPPED' || teamNum !== (m.servingTeam || 1)) return;
             
@@ -1119,16 +1151,20 @@
                 return;
             }
 
+            const curScore = teamNum === 1 ? (parseInt(m.score1) || 0) : (parseInt(m.score2) || 0);
+            if (delta < 0 && curScore <= 0) return;
+
             m.status = 'LIVE';
             if (!m.courtState) syncMatchCourtStateFromLineup(m, false);
             const cs = m.courtState;
 
             if (teamNum === 1) {
-                m.score1 = Math.max(0, (parseInt(m.score1) || 0) + delta);
-                if (cs && !isSingles && delta > 0) { const tmp = cs.t1Left; cs.t1Left = cs.t1Right; cs.t1Right = tmp; }
+                m.score1 = Math.max(0, curScore + delta);
+                // Khi cộng điểm hoặc trừ điểm đều đảo lại vị trí Trái/Phải của đội giao để đồng bộ tuyệt đối
+                if (cs && !isSingles) { const tmp = cs.t1Left; cs.t1Left = cs.t1Right; cs.t1Right = tmp; }
             } else {
-                m.score2 = Math.max(0, (parseInt(m.score2) || 0) + delta);
-                if (cs && !isSingles && delta > 0) { const tmp = cs.t2Left; cs.t2Left = cs.t2Right; cs.t2Right = tmp; }
+                m.score2 = Math.max(0, curScore + delta);
+                if (cs && !isSingles) { const tmp = cs.t2Left; cs.t2Left = cs.t2Right; cs.t2Right = tmp; }
             }
 
             const s1 = parseInt(m.score1) || 0;
@@ -1141,6 +1177,7 @@
             if (maxTeamScore === switchScoreThreshold && !m.swappedAtMid && delta > 0) {
                 cs.swappedEnds = !cs.swappedEnds;
                 m.swappedAtMid = true;
+                __courtSwapFreezeUntil = Date.now() + 1200; // Khóa 1.2s tránh tay bấm nhầm sang ô đối diện vừa đổi
                 showToast(`🔄 Chạm ${switchScoreThreshold} điểm: Hai đội đổi sân!`);
             }
 
@@ -1168,12 +1205,10 @@
             const tieMatches = tie ? (tie.matches || []) : getActiveTieMatchesForCourt(currentAssignedCourt);
             const tieSt = evaluateTieStatus(tieMatches);
 
-            // Nếu 1 đội đã chạm 3 trận thắng -> Kết thúc cặp đấu ngay lập tức
             if (tieSt.isClinched) {
                 const winnerClubName = getClubById(tieSt.winnerSide === 1 ? finishedMatch.club1Id : finishedMatch.club2Id).name;
                 showToast(`🏆 ${winnerClubName} đạt ${WINS_TO_CLINCH_TIE} trận thắng (${tieSt.c1Wins}-${tieSt.c2Wins})! Kết thúc cặp đấu!`);
 
-                // Chuyển sang cặp CLB kế tiếp trên sân nếu có
                 const nextTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
                 const nextTieSt = evaluateTieStatus(nextTieMatches);
                 if (nextTieMatches.length > 0 && !nextTieSt.isCompleted) {
@@ -1197,6 +1232,10 @@
         }
 
         function triggerSideOutOrNextServer() {
+            const now = Date.now();
+            if (now - __lastScoreTapAt < 220) return;
+            __lastScoreTapAt = now;
+
             const { match: m } = findMatchById(state.activeLiveMatchId);
             if (!m) return;
             const isSingles = (m.catKey === 'DON');
@@ -1248,6 +1287,7 @@
             const { match: m } = findMatchById(state.activeLiveMatchId);
             if (!m || !m.courtState) return;
             m.courtState.swappedEnds = !m.courtState.swappedEnds;
+            __courtSwapFreezeUntil = Date.now() + 800;
             saveState();
             renderRefereeApp();
             showToast('🔄 Đã đổi bên sân & đổi vị trí bảng điểm!');
@@ -1374,18 +1414,19 @@
                 scoreEl.className = `text-center font-score fluid-score-num font-extrabold ${isT1 ? 'text-brand-600' : 'text-emerald-700'} py-0.5`;
                 scoreEl.textContent = scoreVal;
 
+                // Tách nút + ĐIỂM chiếm 3/4 chiều rộng, nút -1 thu gọn 1/4 để tránh ngón cái bấm nhầm sang -1
                 if (m.status === 'SKIPPED') {
-                    actionEl.innerHTML = `<div class="col-span-3 ref-score-btn rounded-lg bg-stone-100 border border-stone-200 text-stone-500 font-extrabold text-[11px] flex items-center justify-center">⏭️ Không đấu</div>`;
+                    actionEl.innerHTML = `<div class="col-span-4 ref-score-btn rounded-lg bg-stone-100 border border-stone-200 text-stone-500 font-extrabold text-[11px] flex items-center justify-center">⏭️ Không đấu</div>`;
                 } else if (m.status === 'FINISHED') {
-                    actionEl.innerHTML = `<div class="col-span-3 ref-score-btn rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-800 font-extrabold text-xs flex items-center justify-center">🏆 XONG</div>`;
+                    actionEl.innerHTML = `<div class="col-span-4 ref-score-btn rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-800 font-extrabold text-xs flex items-center justify-center">🏆 XONG</div>`;
                 } else if (isServing) {
                     const btnGradient = isT1 ? 'from-brand-600 to-orange-500 text-white' : 'from-emerald-600 to-teal-500 text-white';
                     actionEl.innerHTML = `
-                        <button type="button" onclick="adjustLiveScore(${teamNum}, -1)" class="col-span-1 ref-score-btn rounded-lg bg-white border border-stone-300 hover:bg-stone-100 text-stone-700 font-extrabold text-base shadow-sm">-1</button>
-                        <button type="button" onclick="adjustLiveScore(${teamNum}, 1)" class="col-span-2 ref-score-btn rounded-lg bg-gradient-to-r ${btnGradient} font-extrabold text-xs uppercase shadow-md">+ ĐIỂM</button>
+                        <button type="button" onclick="adjustLiveScore(${teamNum}, -1)" class="col-span-1 ref-score-btn rounded-lg bg-white border border-stone-300 hover:bg-stone-100 active:scale-95 text-stone-500 font-bold text-xs shadow-sm" title="Giảm 1 điểm">-1</button>
+                        <button type="button" onclick="adjustLiveScore(${teamNum}, 1)" class="col-span-3 ref-score-btn rounded-lg bg-gradient-to-r ${btnGradient} active:scale-95 font-extrabold text-xs uppercase shadow-md">+ ĐIỂM</button>
                     `;
                 } else {
-                    actionEl.innerHTML = `<div class="col-span-3 ref-score-btn rounded-lg bg-stone-100 border border-stone-200 text-stone-400 text-[11px] font-bold flex items-center justify-center">🔒 Khóa</div>`;
+                    actionEl.innerHTML = `<div class="col-span-4 ref-score-btn rounded-lg bg-stone-100 border border-stone-200 text-stone-400 text-[11px] font-bold flex items-center justify-center">🔒 Đang đỡ</div>`;
                 }
             };
 
