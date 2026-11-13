@@ -18,7 +18,6 @@
             theme: {
                 extend: {
                     colors: {
-                        // Hành Hỏa (Bản mệnh Bính Dần 1986: Đỏ son - Cam lửa - Vàng kim)
                         brand: {
                             50: '#fff1f2',
                             100: '#ffe4e6',
@@ -29,7 +28,6 @@
                             700: '#be123c',
                             900: '#881337'
                         },
-                        // Hành Mộc (Tương sinh: Mộc sinh Hỏa)
                         fengshui: {
                             wood: '#059669',
                             woodLight: '#d1fae5',
@@ -51,16 +49,18 @@
         button, input, select {
             touch-action: manipulation;
         }
-        /* Ngăn iOS/Android tự động phóng to màn hình khi chạm vào input trên điện thoại */
+        /* Ngăn trình duyệt điện thoại tự zoom khi chạm vào ô nhập điểm */
         @media (max-width: 640px) {
             input[type="text"],
-            input[type="number"],
             input[type="password"],
             select {
                 font-size: 16px !important;
             }
             .compact-select {
                 font-size: 12px !important;
+            }
+            .popup-score-input {
+                font-size: 16px !important;
             }
         }
         @keyframes shake {
@@ -70,10 +70,10 @@
         }
         .animate-shake { animation: shake 0.4s ease-in-out; }
         @keyframes modalPop {
-            0% { opacity: 0; transform: translateY(14px) scale(0.98); }
-            100% { opacity: 1; transform: translateY(0) scale(1); }
+            0% { opacity: 0; transform: scale(0.95); }
+            100% { opacity: 1; transform: scale(1); }
         }
-        .animate-modal-pop { animation: modalPop 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-modal-pop { animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .pb-safe { padding-bottom: max(0.65rem, env(safe-area-inset-bottom)); }
@@ -146,7 +146,6 @@
 
         <!-- 1. TAB TỔNG QUAN (8 SÂN THI ĐẤU) -->
         <section id="tab-home" class="tab-content space-y-3.5 sm:space-y-6">
-            <!-- BANNER ĐỎ SON - CAM LỬA - VÀNG KIM -->
             <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-rose-700 via-orange-600 to-amber-500 p-4 sm:p-8 shadow-lg shadow-orange-500/20 text-white">
                 <div class="absolute -right-6 -bottom-6 opacity-15 pointer-events-none">
                     <i class="fa-solid fa-table-tennis-paddle-ball text-7xl sm:text-9xl text-white"></i>
@@ -203,11 +202,9 @@
                         <h2 class="text-[15px] sm:text-xl font-extrabold text-stone-900">Lịch thi đấu theo Lượt & Sân</h2>
                         <p class="text-[11px] sm:text-xs text-stone-500">Đội đạt 3 trận thắng trước sẽ kết thúc cặp đấu ngay. Bấm <strong class="text-brand-600">Xem nội dung</strong> để cập nhật tỷ số.</p>
                     </div>
-                    <!-- BỘ LỌC THEO LƯỢT ĐẤU -->
                     <div id="wave-filter-buttons" class="w-full lg:w-auto flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5"></div>
                 </div>
 
-                <!-- BỘ LỌC THEO SÂN -->
                 <div id="court-filter-buttons" class="w-full flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-2 border-t border-stone-100">
                     <button onclick="filterCourt('ALL')" class="court-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold bg-brand-600 text-white transition shadow-sm">Tất cả Sân</button>
                     <button onclick="filterCourt('Sân 1')" class="court-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold bg-stone-100 text-stone-600 hover:bg-amber-50 transition border border-stone-200">Sân 1</button>
@@ -238,10 +235,8 @@
                 </div>
             </div>
 
-            <!-- CONTAINER CHỨA CÁC BẢNG XẾP HẠNG THEO TỪNG BẢNG -->
             <div id="standings-groups-container" class="space-y-3.5 sm:space-y-5"></div>
 
-            <!-- KHU VỰC XEM CHI TIẾT CÁC CẶP ĐẤU ĐÃ KẾT THÚC -->
             <div class="space-y-2.5 pt-1">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                     <h3 class="text-[13px] sm:text-base font-extrabold text-stone-900 flex items-center">
@@ -264,7 +259,6 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-6">
-                <!-- NHÁNH SERIE A -->
                 <div class="bg-white border-2 border-brand-200 p-3.5 sm:p-5 rounded-2xl space-y-3.5 shadow-md">
                     <div class="flex items-center justify-between pb-2.5 border-b border-rose-100 gap-2">
                         <h3 class="font-black text-brand-700 text-xs min-[375px]:text-sm sm:text-base uppercase flex items-center">
@@ -280,7 +274,6 @@
                     </div>
                 </div>
 
-                <!-- NHÁNH SERIE B -->
                 <div class="bg-white border-2 border-emerald-200 p-3.5 sm:p-5 rounded-2xl space-y-3.5 shadow-md">
                     <div class="flex items-center justify-between pb-2.5 border-b border-emerald-100 gap-2">
                         <h3 class="font-black text-emerald-700 text-xs min-[375px]:text-sm sm:text-base uppercase flex items-center">
@@ -314,7 +307,6 @@
                 </button>
             </div>
 
-            <!-- FORM THÊM ĐỘI TUYỂN / CLB MỚI -->
             <div id="add-club-panel" class="hidden bg-white border-2 border-brand-200 p-3.5 sm:p-5 rounded-2xl space-y-3.5 shadow-md animate-modal-pop">
                 <div class="flex items-center justify-between border-b border-rose-100 pb-2.5">
                     <h3 class="font-extrabold text-stone-900 flex items-center text-sm sm:text-base">
@@ -360,7 +352,6 @@
                         </div>
                     </div>
 
-                    <!-- Danh sách VĐV đang chuẩn bị tạo cho CLB -->
                     <div class="lg:col-span-12 flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-stone-100">
                         <div id="draft-players-list" class="flex flex-wrap gap-1.5 min-h-[28px] items-center">
                             <span class="text-xs text-stone-400 italic">Chưa có VĐV nào trong danh sách tạo mới...</span>
@@ -454,39 +445,40 @@
 
     </main>
 
-    <!-- POPUP MODAL XEM CHI TIẾT & CẬP NHẬT TỶ SỐ TRỰC TIẾP (BOTTOM SHEET TRÊN ĐIỆN THOẠI) -->
-    <div id="match-detail-modal" onclick="if(event.target === this) closeMatchDetailModal()" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-stone-900/55 backdrop-blur-sm hidden p-0 sm:p-3">
-        <div class="bg-[#FFFDF9] border-t-2 sm:border-2 border-brand-300 w-full max-w-2xl p-3.5 sm:p-5 rounded-t-3xl sm:rounded-2xl shadow-2xl space-y-2.5 animate-modal-pop max-h-[90dvh] flex flex-col">
-            <!-- Thanh kéo trực quan trên điện thoại -->
-            <div class="w-10 h-1 bg-stone-300 rounded-full mx-auto sm:hidden shrink-0"></div>
-            <div class="flex justify-between items-center border-b border-amber-200/80 pb-2 gap-2 shrink-0">
-                <div class="flex items-center space-x-2 min-w-0">
-                    <div class="w-8 h-8 rounded-lg bg-rose-100 text-brand-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-table-list"></i></div>
+    <!-- POPUP MODAL XEM CHI TIẾT & CẬP NHẬT TỶ SỐ TRỰC TIẾP (Z-60 NỔI LÊN TRÊN BOTTOM NAV, HIỂN THỊ TRỌN VẸN 5 TRẬN) -->
+    <div id="match-detail-modal" onclick="if(event.target === this) closeMatchDetailModal()" class="fixed inset-0 z-[60] flex items-center justify-center bg-stone-900/65 backdrop-blur-sm hidden p-2.5 sm:p-4">
+        <div class="bg-[#FFFDF9] border-2 border-brand-300 w-full max-w-2xl p-3 sm:p-5 rounded-2xl shadow-2xl space-y-2 animate-modal-pop max-h-[92dvh] flex flex-col">
+            <!-- Header Popup -->
+            <div class="flex justify-between items-start gap-2 border-b border-amber-200/80 pb-2 shrink-0">
+                <div class="flex items-start space-x-2 min-w-0">
+                    <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-rose-100 text-brand-600 flex items-center justify-center shrink-0 mt-0.5"><i class="fa-solid fa-table-list text-xs sm:text-sm"></i></div>
                     <div class="min-w-0">
-                        <h3 id="detail-modal-title" class="font-extrabold text-stone-900 text-xs min-[375px]:text-sm sm:text-base truncate">Chi tiết nội dung thi đấu</h3>
-                        <p id="detail-modal-subtitle" class="text-[10px] sm:text-[11px] text-orange-600 font-bold truncate"></p>
+                        <h3 id="detail-modal-title" class="font-extrabold text-stone-900 text-[13px] sm:text-base leading-snug break-words">Chi tiết nội dung thi đấu</h3>
+                        <p id="detail-modal-subtitle" class="text-[10px] sm:text-[11px] text-orange-600 font-bold leading-tight mt-0.5"></p>
                     </div>
                 </div>
-                <button onclick="closeMatchDetailModal()" class="w-9 h-9 rounded-xl bg-stone-100 hover:bg-rose-100 text-stone-500 hover:text-brand-600 flex items-center justify-center transition shrink-0"><i class="fa-solid fa-xmark text-base"></i></button>
+                <button onclick="closeMatchDetailModal()" class="w-8 h-8 rounded-xl bg-stone-100 hover:bg-rose-100 active:scale-95 text-stone-600 hover:text-brand-600 flex items-center justify-center transition shrink-0"><i class="fa-solid fa-xmark text-base"></i></button>
             </div>
             
-            <div id="detail-modal-content" class="space-y-2 overflow-y-auto pr-0.5 flex-1"></div>
+            <!-- Danh sách 5 nội dung cô đọng -->
+            <div id="detail-modal-content" class="space-y-1.5 overflow-y-auto pr-0.5 flex-1"></div>
             
-            <div class="pt-2.5 pb-safe sm:pb-0 border-t border-amber-200/80 flex items-center justify-between gap-2 shrink-0">
-                <a id="detail-modal-referee-link" href="#" target="_blank" class="flex-1 sm:flex-initial justify-center px-3.5 sm:px-4 py-2.5 sm:py-2 rounded-xl bg-gradient-to-r from-brand-600 to-orange-600 hover:from-brand-500 hover:to-orange-500 text-white text-xs font-bold transition shadow-md flex items-center gap-1.5">
+            <!-- Footer Popup luôn hiển thị rõ ràng -->
+            <div class="pt-2 border-t border-amber-200/80 flex items-center justify-between gap-2 shrink-0">
+                <a id="detail-modal-referee-link" href="#" target="_blank" class="flex-1 sm:flex-initial justify-center px-3 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-brand-600 to-orange-600 hover:from-brand-500 hover:to-orange-500 active:scale-95 text-white text-xs font-bold transition shadow-md flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M11 6h9a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-3.5a5.5 5.5 0 1 1-5.5-5Z"/>
                         <circle cx="9.5" cy="12.5" r="1.5" fill="currentColor"/>
                     </svg>
-                    <span>Mở App Trọng Tài Sân Này</span>
+                    <span>App Trọng Tài Sân Này</span>
                 </a>
-                <button onclick="closeMatchDetailModal()" class="px-4 sm:px-5 py-2.5 sm:py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold rounded-xl border border-stone-300 transition shrink-0">Đóng</button>
+                <button onclick="closeMatchDetailModal()" class="px-4 sm:px-5 py-2 bg-stone-100 hover:bg-stone-200 active:scale-95 text-stone-700 text-xs font-bold rounded-xl border border-stone-300 transition shrink-0">Đóng</button>
             </div>
         </div>
     </div>
 
     <!-- MODAL SỬA THÔNG TIN VĐV -->
-    <div id="edit-player-modal" onclick="if(event.target === this) closeEditPlayerModal()" class="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/50 backdrop-blur-sm hidden p-4">
+    <div id="edit-player-modal" onclick="if(event.target === this) closeEditPlayerModal()" class="fixed inset-0 z-[60] flex items-center justify-center bg-stone-900/55 backdrop-blur-sm hidden p-4">
         <div class="bg-white border border-amber-200 w-full max-w-sm p-5 rounded-2xl shadow-2xl space-y-4 animate-modal-pop">
             <div class="flex justify-between items-center border-b border-stone-200 pb-2.5">
                 <h3 class="font-extrabold text-stone-900 text-sm flex items-center gap-2"><i class="fa-solid fa-user-pen text-brand-600"></i> Cập nhật Vận động viên</h3>
@@ -525,7 +517,7 @@
     </div>
 
     <!-- CUSTOM PASSWORD MODAL -->
-    <div id="password-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/50 backdrop-blur-sm hidden p-4">
+    <div id="password-modal" class="fixed inset-0 z-[60] flex items-center justify-center bg-stone-900/55 backdrop-blur-sm hidden p-4">
         <div id="modal-box" class="bg-white border border-amber-200 w-full max-w-md p-5 sm:p-6 rounded-2xl shadow-2xl space-y-4 relative transition-all animate-modal-pop">
             <div class="flex items-center space-x-3 text-brand-600">
                 <div class="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center text-lg shrink-0">
@@ -549,7 +541,7 @@
         </div>
     </div>
 
-    <div id="toastContainer" class="fixed top-16 sm:top-20 right-3 sm:right-4 z-50 flex flex-col gap-2 pointer-events-none max-w-[90vw]"></div>
+    <div id="toastContainer" class="fixed top-16 sm:top-20 right-3 sm:right-4 z-[70] flex flex-col gap-2 pointer-events-none max-w-[90vw]"></div>
 
     <footer class="bg-white/80 border-t border-amber-200/80 py-4 sm:py-5 mt-6 text-center text-[11px] sm:text-xs text-stone-500 font-medium px-3">
         <p>© 2026 Giải Pickleball Đồng Đội Bính Dần 1986 • Mệnh Lư Trung Hỏa & Mộc Tương Sinh</p>
@@ -596,7 +588,7 @@
         const ADMIN_PASSWORD = "1986";
         const STORAGE_KEY = 'CAY_COI_TEAM_LINEUP_V28_PERMANENT';
         const INDEX_ROOM_CODE = 'BINHDAN';
-        const WINS_TO_CLINCH_TIE = 3; // Chạm 3 trận thắng kết thúc cặp đấu ngay lập tức
+        const WINS_TO_CLINCH_TIE = 3;
 
         const COURTS_LIST = ['Sân 1', 'Sân 2', 'Sân 3', 'Sân 4', 'Sân 5', 'Sân 6', 'Sân 7', 'Sân 8'];
 
@@ -1370,6 +1362,7 @@
             }).join('');
         }
 
+        // POPUP CÔ ĐỌNG HIỂN THỊ TRỌN VẸN 5 NỘI DUNG TRONG 1 MÀN HÌNH ĐIỆN THOẠI
         function openCourtDetailModal(courtName, club1Id, club2Id, tieId = null) {
             currentOpenDetailModalCtx = { courtName, club1Id, club2Id, tieId };
             let tieMatches = [];
@@ -1409,8 +1402,8 @@
 
             document.getElementById('detail-modal-title').textContent = `${displayCourt}: ${c1Name} (${tieSt.c1Wins}) - (${tieSt.c2Wins}) ${c2Name}`;
             document.getElementById('detail-modal-subtitle').textContent = tieSt.isClinched 
-                ? `🏆 ${tieSt.winnerSide === 1 ? c1Name : c2Name} thắng chung cuộc (${tieSt.c1Wins}-${tieSt.c2Wins}) • Đã kết thúc cặp đấu`
-                : `Chạm ${WINS_TO_CLINCH_TIE} trận thắng kết thúc • Cập nhật tỷ số trực tiếp`;
+                ? `🏆 ${tieSt.winnerSide === 1 ? c1Name : c2Name} thắng chung cuộc (${tieSt.c1Wins}-${tieSt.c2Wins}) • Đã kết thúc`
+                : `Chạm ${WINS_TO_CLINCH_TIE} trận thắng kết thúc • Nhập tỷ số trực tiếp`;
             document.getElementById('detail-modal-referee-link').href = `referee.html?court=${encodeURIComponent(displayCourt)}`;
 
             document.getElementById('detail-modal-content').innerHTML = tieMatches.length ? tieMatches.map((m, idx) => {
@@ -1426,57 +1419,49 @@
                 const p1Won = isFinished && s1 > s2;
                 const p2Won = isFinished && s2 > s1;
 
-                const side1Html = p1Display 
-                    ? `<div class="text-xs font-extrabold ${p1Won ? 'text-emerald-700' : 'text-stone-900'} truncate">${p1Display}</div>
-                       <div class="text-[10px] text-stone-500 truncate">${c1Name}</div>`
-                    : `<div class="text-xs font-bold ${p1Won ? 'text-emerald-700' : 'text-stone-700'} truncate">${c1Name}</div>
-                       <div class="text-[10px] text-amber-600 italic">${isSkipped ? 'Đã phân thắng thua' : 'Chưa chọn VĐV'}</div>`;
+                const side1Text = p1Display ? p1Display : c1Name;
+                const side1Sub = p1Display ? c1Name : (isSkipped ? 'Không đấu' : 'Chưa chọn VĐV');
 
-                const side2Html = p2Display 
-                    ? `<div class="text-xs font-extrabold ${p2Won ? 'text-emerald-700' : 'text-stone-900'} truncate">${p2Display}</div>
-                       <div class="text-[10px] text-stone-500 truncate">${c2Name}</div>`
-                    : `<div class="text-xs font-bold ${p2Won ? 'text-emerald-700' : 'text-stone-700'} truncate">${c2Name}</div>
-                       <div class="text-[10px] text-amber-600 italic">${isSkipped ? 'Đã phân thắng thua' : 'Chưa chọn VĐV'}</div>`;
+                const side2Text = p2Display ? p2Display : c2Name;
+                const side2Sub = p2Display ? c2Name : (isSkipped ? 'Không đấu' : 'Chưa chọn VĐV');
 
                 const isMatchLive = m.status === 'LIVE' || (!isFinished && !isSkipped && (s1 > 0 || s2 > 0));
 
                 let statusBadge = isFinished 
-                    ? `<span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-100 text-emerald-700 shrink-0">Xong</span>` 
+                    ? `<span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-emerald-100 text-emerald-700 shrink-0">Xong</span>` 
                     : (isSkipped 
-                        ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-stone-200 text-stone-600 shrink-0">Không đấu</span>`
+                        ? `<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-stone-200 text-stone-600 shrink-0">Bỏ qua</span>`
                         : (isMatchLive 
-                            ? `<span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-rose-100 text-brand-700 animate-pulse shrink-0">LIVE</span>` 
-                            : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-stone-100 text-stone-500 shrink-0">Chờ</span>`));
+                            ? `<span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-rose-100 text-brand-700 animate-pulse shrink-0">LIVE</span>` 
+                            : `<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-stone-100 text-stone-500 shrink-0">Chờ</span>`));
 
                 return `
-                    <div class="${isSkipped ? 'bg-stone-50/70 opacity-65' : 'bg-white'} px-3 py-2.5 rounded-xl border ${isMatchLive ? 'border-brand-400 shadow-sm' : 'border-stone-200'} space-y-2">
-                        <div class="flex items-center justify-between gap-2 border-b border-stone-100 pb-1">
-                            <div class="flex items-center gap-1.5 min-w-0">
-                                <span class="text-[11px] text-orange-700 font-extrabold truncate">${cleanLabel}</span>
-                                <span class="text-[10px] text-stone-400 shrink-0">(${m.targetPoints || 15}đ)</span>
+                    <div class="${isSkipped ? 'bg-stone-50/70 opacity-65' : 'bg-white'} px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl border ${isMatchLive ? 'border-brand-400 shadow-xs' : 'border-stone-200'} space-y-1">
+                        <div class="flex items-center justify-between gap-2 border-b border-stone-100 pb-0.5">
+                            <div class="flex items-center gap-1 min-w-0">
+                                <span class="text-[10.5px] sm:text-[11px] text-orange-700 font-extrabold truncate">${cleanLabel}</span>
+                                <span class="text-[9.5px] text-stone-400 shrink-0">(${m.targetPoints || 15}đ)</span>
                             </div>
-                            <div class="flex items-center gap-1.5 shrink-0">
-                                ${statusBadge}
-                            </div>
+                            ${statusBadge}
                         </div>
-                        <div class="flex flex-col sm:grid sm:grid-cols-12 items-stretch sm:items-center gap-2 sm:gap-1">
-                            <div class="flex items-center justify-between sm:block sm:col-span-4 sm:text-right min-w-0">
-                                <div class="min-w-0 flex-1 pr-2 sm:pr-0">${side1Html}</div>
-                                <span class="sm:hidden text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded shrink-0">Đội 1</span>
+                        <div class="grid grid-cols-12 items-center gap-1">
+                            <div class="col-span-4 text-left sm:text-right min-w-0 leading-tight">
+                                <div class="text-[11px] sm:text-xs font-extrabold ${p1Won ? 'text-emerald-700' : 'text-stone-900'} truncate">${side1Text}</div>
+                                <div class="text-[9px] sm:text-[10px] ${p1Display ? 'text-stone-500' : 'text-amber-600 italic'} truncate">${side1Sub}</div>
                             </div>
-                            <div class="sm:col-span-4 flex justify-center items-center gap-2 sm:gap-1 bg-stone-50 sm:bg-transparent py-1.5 sm:py-0 rounded-xl">
+                            <div class="col-span-4 flex justify-center items-center gap-1">
                                 ${isSkipped ? `
-                                    <span class="text-[11px] font-bold text-stone-400 italic py-1">Đã đủ 3 trận thắng</span>
+                                    <span class="text-[10px] font-bold text-stone-400 italic">Đã đủ 3 thắng</span>
                                 ` : `
-                                    <input type="number" min="0" inputmode="numeric" id="popup-s1-${m.id}" value="${s1}" class="w-12 sm:w-10 bg-white sm:bg-rose-50/60 border border-rose-300 focus:border-brand-500 rounded-lg text-center font-score font-black text-brand-600 text-base sm:text-xs py-1.5 sm:py-1 focus:outline-none">
-                                    <span class="text-stone-400 font-bold text-sm">-</span>
-                                    <input type="number" min="0" inputmode="numeric" id="popup-s2-${m.id}" value="${s2}" class="w-12 sm:w-10 bg-white sm:bg-emerald-50/60 border border-emerald-300 focus:border-emerald-500 rounded-lg text-center font-score font-black text-emerald-700 text-base sm:text-xs py-1.5 sm:py-1 focus:outline-none">
-                                    <button type="button" onclick="savePopupMatchScore('${m.id}')" class="px-3.5 sm:px-2 py-2 sm:py-1 rounded-lg bg-brand-600 hover:bg-brand-500 active:scale-95 text-white text-xs sm:text-[10px] font-bold transition shadow-sm" title="Cập nhật tỷ số">Lưu</button>
+                                    <input type="number" min="0" inputmode="numeric" id="popup-s1-${m.id}" value="${s1}" class="popup-score-input w-9 sm:w-10 bg-rose-50/70 border border-rose-300 focus:border-brand-500 rounded-lg text-center font-score font-black text-brand-600 text-sm sm:text-xs py-1 focus:outline-none">
+                                    <span class="text-stone-400 font-bold text-xs">-</span>
+                                    <input type="number" min="0" inputmode="numeric" id="popup-s2-${m.id}" value="${s2}" class="popup-score-input w-9 sm:w-10 bg-emerald-50/70 border border-emerald-300 focus:border-emerald-500 rounded-lg text-center font-score font-black text-emerald-700 text-sm sm:text-xs py-1 focus:outline-none">
+                                    <button type="button" onclick="savePopupMatchScore('${m.id}')" class="px-2 py-1 rounded-lg bg-brand-600 hover:bg-brand-500 active:scale-95 text-white text-[10px] font-bold transition shadow-xs shrink-0">Lưu</button>
                                 `}
                             </div>
-                            <div class="flex items-center justify-between sm:block sm:col-span-4 sm:text-left min-w-0">
-                                <div class="min-w-0 flex-1 pr-2 sm:pr-0">${side2Html}</div>
-                                <span class="sm:hidden text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded shrink-0">Đội 2</span>
+                            <div class="col-span-4 text-right sm:text-left min-w-0 leading-tight">
+                                <div class="text-[11px] sm:text-xs font-extrabold ${p2Won ? 'text-emerald-700' : 'text-stone-900'} truncate">${side2Text}</div>
+                                <div class="text-[9px] sm:text-[10px] ${p2Display ? 'text-stone-500' : 'text-amber-600 italic'} truncate">${side2Sub}</div>
                             </div>
                         </div>
                     </div>
