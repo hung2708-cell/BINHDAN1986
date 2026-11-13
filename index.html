@@ -780,17 +780,25 @@ function confirmPasswordAction() {
     } else {
         errorMsg.classList.remove('hidden');
         pwdInput.classList.add('border-rose-500', 'bg-rose-50/60');
-        modalBox.classList.remove('border-amber-200', 'animate-shake');
         
-        // Dòng lệnh cốt lõi giúp kích hoạt lại hiệu ứng DOM reflow khi gõ sai liên tiếp nhiều lần
+        // Gỡ bỏ class cũ trước để reset animation
+        modalBox.classList.remove('animate-shake', 'border-rose-500', 'shadow-rose-500/25');
+        
+        // Ép trình duyệt vẽ lại giao diện (DOM reflow) để nhận diện lệnh rung mới ngay cả khi bấm sai lần 2, lần 3
         void modalBox.offsetWidth; 
         
+        // Thêm lại hiệu ứng rung và viền đỏ cảnh báo
         modalBox.classList.add('animate-shake', 'border-rose-500', 'shadow-rose-500/25');
 
-        if (navigator.vibrate) navigator.vibrate([80, 40, 80]); // Rung điện thoại nếu thiết bị hỗ trợ
+        // Rung thiết bị (nếu điện thoại của bạn hỗ trợ tính năng rung phần cứng)
+        if (navigator.vibrate) {
+            navigator.vibrate([100, 50, 100]);
+        }
+
         pwdInput.focus();
         pwdInput.select();
 
+        // Tự động gỡ class hiệu ứng sau khi animation chạy xong để sẵn sàng cho lần sai tiếp theo
         setTimeout(() => {
             modalBox.classList.remove('animate-shake');
         }, 450);
