@@ -767,9 +767,7 @@
     pendingAction = actionCallback;
 }
 
-        function closePasswordModal() { document.getElementById('password-modal').classList.add('hidden'); pendingAction = null; }
-
-        function confirmPasswordAction() {
+function confirmPasswordAction() {
     const pwdInput = document.getElementById('modal-password-input');
     const pwd = pwdInput.value.trim();
     const modalBox = document.getElementById('modal-box');
@@ -783,10 +781,13 @@
         errorMsg.classList.remove('hidden');
         pwdInput.classList.add('border-rose-500', 'bg-rose-50/60');
         modalBox.classList.remove('border-amber-200', 'animate-shake');
-        void modalBox.offsetWidth; // Kích hoạt lại hiệu ứng rung ngay cả khi bấm sai liên tiếp
+        
+        // Dòng lệnh cốt lõi giúp kích hoạt lại hiệu ứng DOM reflow khi gõ sai liên tiếp nhiều lần
+        void modalBox.offsetWidth; 
+        
         modalBox.classList.add('animate-shake', 'border-rose-500', 'shadow-rose-500/25');
 
-        if (navigator.vibrate) navigator.vibrate([80, 40, 80]); // Rung nhẹ trên điện thoại
+        if (navigator.vibrate) navigator.vibrate([80, 40, 80]); // Rung điện thoại nếu thiết bị hỗ trợ
         pwdInput.focus();
         pwdInput.select();
 
@@ -795,7 +796,6 @@
         }, 450);
     }
 }
-
         document.getElementById('modal-password-input').addEventListener('keypress', function(e) { 
             if(e.key === 'Enter') confirmPasswordAction(); 
         });
