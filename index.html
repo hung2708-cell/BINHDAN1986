@@ -64,17 +64,16 @@
                 font-size: 16px !important;
             }
         }
-        @keyframes iosShakeJump {
-            0% { transform: translateY(0) translateX(0); }
-            15% { transform: translateY(-8px) translateX(-6px); }
-            30% { transform: translateY(0) translateX(6px); }
-            45% { transform: translateY(-5px) translateX(-5px); }
-            60% { transform: translateY(0) translateX(5px); }
-            75% { transform: translateY(-2px) translateX(-2px); }
-            100% { transform: translateY(0) translateX(0); }
+        @keyframes shake {
+            0%, 100% { transform: translateY(0) translateX(0); }
+            15% { transform: translateY(-8px) translateX(-10px); }
+            30% { transform: translateY(0) translateX(10px); }
+            45% { transform: translateY(-5px) translateX(-8px); }
+            60% { transform: translateY(0) translateX(8px); }
+            75% { transform: translateY(-2px) translateX(-4px); }
         }
-        .animate-ios-shake {
-            animation: iosShakeJump 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+        .animate-shake {
+            animation: shake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
         }
         @keyframes modalPop {
             0% { opacity: 0; transform: scale(0.95); }
