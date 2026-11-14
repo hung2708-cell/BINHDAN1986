@@ -886,27 +886,31 @@
     }
 
     function confirmPasswordAction() {
-        const pwdInput = document.getElementById('modal-password-input');
-        const pwd = pwdInput.value.trim();
-        const modalCard = document.getElementById('modal-card-container');
-        const errorMsg = document.getElementById('modal-error-msg');
+    const pwdInput = document.getElementById('modal-password-input');
+    const pwd = pwdInput.value.trim();
+    const modalCard = document.getElementById('modal-card-container');
+    const errorMsg = document.getElementById('modal-error-msg');
 
-        if (pwd === ADMIN_PASSWORD) {
-            const actionToRun = pendingAction;
-            closePasswordModal();
-            if (actionToRun) actionToRun();
-        } else {
-            errorMsg.classList.remove('hidden');
-            pwdInput.classList.add('border-rose-500', 'bg-rose-50/60');
-            modalCard.classList.remove('border-amber-200', 'animate-shake');
-            void modalCard.offsetWidth; 
-            modalCard.classList.add('animate-shake', 'border-rose-500', 'shadow-rose-500/25');
-            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-            pwdInput.focus();
-            pwdInput.select();
-            setTimeout(() => modalCard.classList.remove('animate-shake'), 450);
-        }
+    if (pwd === ADMIN_PASSWORD) {
+        const actionToRun = pendingAction;
+        closePasswordModal();
+        if (actionToRun) actionToRun();
+    } else {
+        errorMsg.classList.remove('hidden');
+        pwdInput.classList.add('border-rose-500', 'bg-rose-50/60');
+        modalCard.classList.remove('border-amber-200', 'animate-shake');
+        void modalCard.offsetWidth; // Kích hoạt lại hiệu ứng animation
+        modalCard.classList.add('animate-shake', 'border-rose-500', 'shadow-rose-500/25');
+
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100]); // Rung điện thoại nếu hỗ trợ
+
+        pwdInput.focus();
+        pwdInput.select();
+        setTimeout(() => {
+            modalCard.classList.remove('animate-shake');
+        }, 400);
     }
+}
 
     document.getElementById('modal-password-input').addEventListener('keypress', function(e) { 
         if(e.key === 'Enter') confirmPasswordAction(); 
