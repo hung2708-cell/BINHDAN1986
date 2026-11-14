@@ -776,31 +776,30 @@
         }
 
         function confirmPasswordAction() {
-            const pwdInput = document.getElementById('modal-password-input');
-            const pwd = pwdInput.value.trim();
-            const modalCard = document.getElementById('modal-card-container');
-            const errorMsg = document.getElementById('modal-error-msg');
+        const pwdInput = document.getElementById('modal-password-input');
+        const pwd = pwdInput.value.trim();
+        const modalCard = document.getElementById('modal-card-container');
+        const errorMsg = document.getElementById('modal-error-msg');
 
-            if (pwd === ADMIN_PASSWORD) {
-                const actionToRun = pendingAction;
-                closePasswordModal();
-                if (actionToRun) actionToRun();
-            } else {
-                errorMsg.classList.remove('hidden');
-                pwdInput.classList.remove('animate-shake');
-                void pwdInput.offsetWidth;
-                pwdInput.classList.add('border-rose-500', 'bg-rose-50/60', 'animate-shake');
-                modalCard.classList.remove('border-amber-200');
-                modalCard.classList.add('border-rose-400');
+        if (pwd === ADMIN_PASSWORD) {
+            const actionToRun = pendingAction;
+            closePasswordModal();
+            if (actionToRun) actionToRun();
+        } else {
+            errorMsg.classList.remove('hidden');
+            pwdInput.classList.remove('animate-shake');
+            void pwdInput.offsetWidth;
+            pwdInput.classList.add('border-rose-500', 'bg-rose-50/60', 'animate-shake');
+            modalCard.classList.remove('border-amber-200');
+            modalCard.classList.add('border-rose-400');
 
-                if (navigator.vibrate) navigator.vibrate(35);
+            if (navigator.vibrate) navigator.vibrate(35);
 
-                pwdInput.focus();
-                pwdInput.select();
-                setTimeout(() => pwdInput.classList.remove('animate-shake'), 300);
-            }
+            pwdInput.focus();
+            pwdInput.select();
+            setTimeout(() => pwdInput.classList.remove('animate-shake'), 300);
         }
-
+    }
         document.getElementById('modal-password-input').addEventListener('keypress', function(e) { 
             if(e.key === 'Enter') confirmPasswordAction(); 
         });
