@@ -249,37 +249,70 @@
             </div>
         </section>
 
-        <!-- 4. TAB CHIA NHÁNH & VINH DANH NHÀ VÔ ĐỊCH -->
+        <!-- 4. TAB CHIA NHÁNH & SƠ ĐỒ CÂY TRỰC QUAN -->
         <section id="tab-bracket" class="tab-content hidden space-y-3.5 sm:space-y-6">
             <div id="bracket-champion-banner" class="hidden"></div>
 
             <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-amber-200/80 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div class="min-w-0">
-                    <h2 class="text-[15px] sm:text-xl font-extrabold text-stone-900 flex items-center truncate"><i class="fa-solid fa-sitemap text-brand-600 mr-2 shrink-0"></i> Vòng Knock-out: Serie A & B</h2>
-                    <p id="bracket-structure-subtitle" class="text-[11px] sm:text-xs text-stone-500 mt-0.5">Tự động chia Tứ kết / Bán kết / Chung kết theo số lượng đội tham dự.</p>
+                    <h2 class="text-[15px] sm:text-xl font-extrabold text-stone-900 flex items-center truncate"><i class="fa-solid fa-sitemap text-brand-600 mr-2 shrink-0"></i> Sơ Đồ Cây Thi Đấu: Vòng Knock-out (Serie A & B)</h2>
+                    <p id="bracket-structure-subtitle" class="text-[11px] sm:text-xs text-stone-500 mt-0.5">Bấm vào tên bất kỳ đội nào trên sơ đồ cây để xem toàn bộ các trận đã đấu của đội đó trong sơ đồ.</p>
                 </div>
                 <div id="bracket-action-toolbar" class="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
                     <button onclick="renderBracket()" class="shrink-0 px-3 py-2 sm:py-1.5 rounded-xl bg-stone-100 hover:bg-amber-50 active:scale-95 text-stone-700 font-semibold transition text-xs border border-stone-200"><i class="fa-solid fa-rotate mr-1"></i> Làm mới</button>
                 </div>
             </div>
 
+            <!-- SƠ ĐỒ CÂY TRỰC QUAN (VISUAL TREE BRACKET) -->
+            <div class="bg-white border-2 border-brand-200 p-4 sm:p-6 rounded-2xl shadow-md space-y-4">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-rose-100 pb-3 gap-2">
+                    <h3 class="font-black text-brand-700 text-sm sm:text-base uppercase flex items-center">
+                        <i class="fa-solid fa-trophy mr-2 text-amber-500"></i> Cây Sơ Đồ Cúp Vàng (Serie A)
+                    </h3>
+                    <div class="flex items-center gap-2">
+                        <span id="bracket-filter-status" class="hidden text-[11px] font-extrabold text-brand-700 bg-rose-50 px-3 py-1 rounded-full border border-rose-200">
+                            Đang lọc đội: <span id="bracket-filter-team-name"></span> <button onclick="clearTeamBracketFilter()" class="ml-1 text-rose-600 hover:text-rose-800 font-black">×</button>
+                        </span>
+                        <span class="text-[11px] font-bold text-brand-700 bg-rose-50 px-3 py-1 rounded-full border border-rose-200">
+                            <i class="fa-solid fa-hand-pointer mr-1"></i> Bấm tên đội để lọc trận
+                        </span>
+                    </div>
+                </div>
+                <div id="visual-tree-container" class="overflow-x-auto py-3 no-scrollbar">
+                    <!-- Rendered dynamically -->
+                </div>
+            </div>
+
+            <!-- KHU VỰC HIỂN THỊ CÁC TRẬN ĐÃ ĐẤU CỦA ĐỘI ĐƯỢC CHỌN -->
+            <div id="team-bracket-history-section" class="hidden bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 border-2 border-amber-300 p-4 rounded-2xl space-y-3 shadow-sm">
+                <div class="flex items-center justify-between border-b border-amber-200 pb-2">
+                    <h3 class="font-black text-stone-900 text-xs sm:text-sm uppercase flex items-center">
+                        <i class="fa-solid fa-history mr-2 text-brand-600"></i> Lịch Sử Trận Đấu Knock-out Của: <span id="history-team-title" class="text-brand-700 ml-1"></span>
+                    </h3>
+                    <button onclick="clearTeamBracketFilter()" class="text-xs font-bold text-stone-500 hover:text-stone-800 px-2 py-1 bg-white rounded-lg border border-stone-300">Đóng bộ lọc</button>
+                </div>
+                <div id="team-bracket-history-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <!-- Dynamic history cards -->
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-6">
-                <!-- NHÁNH SERIE A -->
+                <!-- NHÁNH SERIE A CHI TIẾT -->
                 <div class="bg-white border-2 border-brand-200 p-3.5 sm:p-5 rounded-2xl space-y-4 shadow-md">
                     <div class="flex items-center justify-between pb-2.5 border-b border-rose-100 gap-2">
                         <h3 class="font-black text-brand-700 text-xs sm:text-base uppercase flex items-center">
-                            <i class="fa-solid fa-trophy mr-2 text-amber-500"></i> Nhánh Serie A (Vô Địch)
+                            <i class="fa-solid fa-list-check mr-2 text-amber-500"></i> Chi Tiết Nhánh Serie A
                         </h3>
                         <span id="serie-a-badge" class="text-[10px] bg-rose-100 text-brand-700 px-2 py-0.5 rounded-full font-extrabold shrink-0">Top 1 & 2</span>
                     </div>
                     <div id="serie-a-stages-container" class="space-y-4"></div>
                 </div>
 
-                <!-- NHÁNH SERIE B -->
+                <!-- NHÁNH SERIE B CHI TIẾT -->
                 <div class="bg-white border-2 border-emerald-200 p-3.5 sm:p-5 rounded-2xl space-y-4 shadow-md">
                     <div class="flex items-center justify-between pb-2.5 border-b border-emerald-100 gap-2">
                         <h3 class="font-black text-emerald-700 text-xs sm:text-base uppercase flex items-center">
-                            <i class="fa-solid fa-medal mr-2 text-emerald-500"></i> Nhánh Serie B (Hạng Phụ)
+                            <i class="fa-solid fa-medal mr-2 text-emerald-500"></i> Chi Tiết Nhánh Serie B (Hạng Phụ)
                         </h3>
                         <span id="serie-b-badge" class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-extrabold shrink-0">Top 3 & 4</span>
                     </div>
@@ -2071,7 +2104,7 @@
                         c1Pts = 2; c2Pts = 0;
                     } else if (tieSt.c2Wins > tieSt.c1Wins) {
                         statsMap[c2Id].won += 1; statsMap[c2Id].points += 2; statsMap[c1Id].lost += 1;
-                        statsMap[c2Id].headToHead[c1Id] = 1; statsMap[c1Id].headToHead[c2Id] = -1;
+                        statsMap[c2Id].headToHead[c1Id] = 1; statsMap[c2Id].headToHead[c2Id] = -1;
                         c1Pts = 0; c2Pts = 2;
                     } else {
                         statsMap[c1Id].draw += 1; statsMap[c1Id].points += 1;
@@ -2372,7 +2405,176 @@
             showToast(`🏆 Đã kích hoạt ${newKoTies.length} cặp đấu Knock-out! Trọng tài có thể bắt điểm ngay.`);
         }
 
+        
+        let selectedTeamFilterForBracket = null;
+
+        function filterBracketByTeam(teamId, teamName) {
+            selectedTeamFilterForBracket = teamId;
+            const statusEl = document.getElementById('bracket-filter-status');
+            const nameEl = document.getElementById('bracket-filter-team-name');
+            const historySec = document.getElementById('team-bracket-history-section');
+            const historyTitle = document.getElementById('history-team-title');
+            const historyList = document.getElementById('team-bracket-history-list');
+
+            if (statusEl) statusEl.classList.remove('hidden');
+            if (nameEl) nameEl.textContent = teamName;
+            if (historySec) historySec.classList.remove('hidden');
+            if (historyTitle) historyTitle.textContent = teamName;
+
+            // Render all matches involving this team in knockout stage
+            const allTies = getAllStructuredTies();
+            const teamKoTies = allTies.filter(t => t.knockoutRound && (t.club1Id === teamId || t.club2Id === teamId));
+
+            if (historyList) {
+                if (teamKoTies.length === 0) {
+                    historyList.innerHTML = `<div class="col-span-full text-center py-4 text-xs text-stone-500 italic">Đội ${teamName} chưa có trận đấu nào trong vòng Knock-out.</div>`;
+                } else {
+                    historyList.innerHTML = teamKoTies.map(tie => {
+                        const st = evaluateTieStatus(tie.matches);
+                        const isC1 = tie.club1Id === teamId;
+                        const oppName = getClubName(isC1 ? tie.club2Id : tie.club1Id);
+                        const teamWins = isC1 ? st.c1Wins : st.c2Wins;
+                        const oppWins = isC1 ? st.c2Wins : st.c1Wins;
+                        const wonTie = st.isCompleted && teamWins > oppWins;
+
+                        return `
+                            <div onclick="openCourtDetailModal('${tie.court}', '${tie.club1Id}', '${tie.club2Id}', '${tie.id}')" class="cursor-pointer bg-white hover:bg-amber-50 border border-amber-300 rounded-xl p-3 space-y-2 shadow-2xs transition">
+                                <div class="flex justify-between items-center text-[10px] font-bold text-stone-500 border-b border-stone-100 pb-1">
+                                    <span class="text-amber-800"><i class="fa-solid fa-location-dot mr-1 text-orange-500"></i>${tie.group} • ${tie.court}</span>
+                                    <span class="px-2 py-0.5 rounded text-[9px] font-black ${wonTie ? 'bg-emerald-100 text-emerald-700' : 'bg-stone-100 text-stone-600'}">${wonTie ? 'Thắng Cặp' : (st.isCompleted ? 'Thua Cặp' : 'Đang đấu')}</span>
+                                </div>
+                                <div class="flex items-center justify-between text-xs font-extrabold text-stone-900">
+                                    <span class="truncate pr-1">${teamName} vs ${oppName}</span>
+                                    <span class="font-score font-black text-sm text-brand-600 shrink-0">${teamWins} - ${oppWins}</span>
+                                </div>
+                                <div class="text-[10px] text-brand-600 font-bold text-right">Bấm xem chi tiết 5 trận →</div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+
+            renderVisualBracketTree();
+            showToast(`🔍 Đã lọc các trận Knock-out của ${teamName}!`);
+        }
+
+        function clearTeamBracketFilter() {
+            selectedTeamFilterForBracket = null;
+            const statusEl = document.getElementById('bracket-filter-status');
+            const historySec = document.getElementById('team-bracket-history-section');
+            if (statusEl) statusEl.classList.add('hidden');
+            if (historySec) historySec.classList.add('hidden');
+            renderVisualBracketTree();
+        }
+
+        function renderVisualBracketTree() {
+            const container = document.getElementById('visual-tree-container');
+            if (!container) return;
+
+            const allTies = getAllStructuredTies();
+            const koA = allTies.filter(t => t.knockoutRound && t.series === 'A');
+
+            if (koA.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-10 text-stone-400 text-xs italic bg-amber-50/50 rounded-xl border border-dashed border-amber-200">
+                        <i class="fa-solid fa-sitemap mr-1"></i> Sơ đồ cây trực quan sẽ xuất hiện khi vòng bảng hoàn thành và vòng Knock-out Serie A được kích hoạt.
+                    </div>
+                `;
+                return;
+            }
+
+            const qf = koA.filter(t => t.stage === 'QF').sort((a, b) => a.slotIndex - b.slotIndex);
+            const sf = koA.filter(t => t.stage === 'SF').sort((a, b) => a.slotIndex - b.slotIndex);
+            const final = koA.find(t => t.stage === 'F');
+
+            const renderNodeCard = (tieObj, titlePlaceholder) => {
+                if (!tieObj) {
+                    return `
+                        <div class="bg-stone-50/80 border border-stone-200 rounded-xl p-3 w-56 opacity-70 space-y-1 shadow-2xs">
+                            <div class="text-[10px] font-bold text-stone-400 uppercase tracking-wide">${titlePlaceholder}</div>
+                            <div class="text-xs font-semibold text-stone-500 py-1">Chờ xác định đội</div>
+                        </div>
+                    `;
+                }
+
+                const st = evaluateTieStatus(tieObj.matches);
+                const name1 = getClubName(tieObj.club1Id);
+                const name2 = getClubName(tieObj.club2Id);
+                const isFinished = st.isCompleted;
+
+                const isTeam1Selected = selectedTeamFilterForBracket === tieObj.club1Id;
+                const isTeam2Selected = selectedTeamFilterForBracket === tieObj.club2Id;
+
+                return `
+                    <div class="bg-white border-2 ${isFinished ? 'border-emerald-400' : 'border-brand-300'} rounded-xl p-3 w-60 space-y-2 shadow-md transition">
+                        <div class="flex justify-between items-center text-[10px] font-black text-stone-500 border-b border-stone-100 pb-1">
+                            <span class="text-amber-800 cursor-pointer hover:underline" onclick="openCourtDetailModal('${tieObj.court}', '${tieObj.club1Id}', '${tieObj.club2Id}', '${tieObj.id}')"><i class="fa-solid fa-location-dot mr-0.5 text-orange-500"></i>${tieObj.court} (Xem 5 trận)</span>
+                            <span class="${isFinished ? 'text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded' : 'text-brand-600 animate-pulse'}">${isFinished ? 'Đã xong' : 'Đang LIVE'}</span>
+                        </div>
+                        <div class="space-y-1.5">
+                            <div onclick="filterBracketByTeam('${tieObj.club1Id}', '${name1}')" class="cursor-pointer flex justify-between items-center font-extrabold text-xs p-1.5 rounded-lg transition ${isTeam1Selected ? 'bg-brand-600 text-white' : (st.winnerSide === 1 ? 'text-emerald-800 bg-emerald-50 hover:bg-emerald-100' : 'text-stone-900 bg-stone-50 hover:bg-amber-50')}">
+                                <span class="truncate pr-1"><i class="fa-solid fa-hand-pointer text-[9px] mr-1 opacity-70"></i>${name1} ${st.winnerSide === 1 ? '🏆' : ''}</span>
+                                <span class="font-score font-black text-sm shrink-0 ${isTeam1Selected ? 'text-white' : 'text-brand-600'}">${st.c1Wins}</span>
+                            </div>
+                            <div onclick="filterBracketByTeam('${tieObj.club2Id}', '${name2}')" class="cursor-pointer flex justify-between items-center font-extrabold text-xs p-1.5 rounded-lg transition ${isTeam2Selected ? 'bg-brand-600 text-white' : (st.winnerSide === 2 ? 'text-emerald-800 bg-emerald-50 hover:bg-emerald-100' : 'text-stone-900 bg-stone-50 hover:bg-amber-50')}">
+                                <span class="truncate pr-1"><i class="fa-solid fa-hand-pointer text-[9px] mr-1 opacity-70"></i>${name2} ${st.winnerSide === 2 ? '🏆' : ''}</span>
+                                <span class="font-score font-black text-sm shrink-0 ${isTeam2Selected ? 'text-white' : 'text-emerald-700'}">${st.c2Wins}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            };
+
+            container.innerHTML = `
+                <div class="flex items-center justify-between gap-6 min-w-[780px] px-2 py-4">
+                    <!-- Cột Tứ Kết -->
+                    <div class="space-y-4 flex flex-col justify-around">
+                        <div class="text-xs font-black text-stone-600 uppercase tracking-wider text-center bg-stone-100 py-1 rounded-lg">1. Tứ Kết (QF)</div>
+                        <div class="space-y-3">
+                            ${qf.length > 0 ? qf.map((t, i) => renderNodeCard(t, `Tứ kết ${i+1}`)).join('') : `
+                                ${renderNodeCard(null, 'Tứ kết 1')}
+                                ${renderNodeCard(null, 'Tứ kết 2')}
+                                ${renderNodeCard(null, 'Tứ kết 3')}
+                                ${renderNodeCard(null, 'Tứ kết 4')}
+                            `}
+                        </div>
+                    </div>
+
+                    <!-- Mũi tên kết nối 1 -->
+                    <div class="flex flex-col justify-around h-72 text-stone-300 font-bold items-center">
+                        <i class="fa-solid fa-chevron-right text-lg"></i>
+                        <i class="fa-solid fa-chevron-right text-lg"></i>
+                    </div>
+
+                    <!-- Cột Bán Kết -->
+                    <div class="space-y-4 flex flex-col justify-around">
+                        <div class="text-xs font-black text-stone-600 uppercase tracking-wider text-center bg-stone-100 py-1 rounded-lg">2. Bán Kết (SF)</div>
+                        <div class="space-y-6">
+                            ${sf.length > 0 ? sf.map((t, i) => renderNodeCard(t, `Bán kết ${i+1}`)).join('') : `
+                                ${renderNodeCard(null, 'Bán kết 1')}
+                                ${renderNodeCard(null, 'Bán kết 2')}
+                            `}
+                        </div>
+                    </div>
+
+                    <!-- Mũi tên kết nối 2 -->
+                    <div class="flex flex-col justify-center h-72 text-stone-300 font-bold items-center">
+                        <i class="fa-solid fa-chevron-right text-xl"></i>
+                    </div>
+
+                    <!-- Cột Chung Kết -->
+                    <div class="space-y-4 flex flex-col justify-center">
+                        <div class="text-xs font-black text-brand-700 uppercase tracking-wider text-center bg-rose-50 py-1 rounded-lg border border-rose-200">🏆 Chung Kết (Final)</div>
+                        <div class="flex items-center justify-center py-2">
+                            ${renderNodeCard(final, 'Trận Vô Địch')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    
         function renderBracket() {
+            renderVisualBracketTree();
             const allTies = getAllStructuredTies();
             const groupTies = allTies.filter(t => !t.knockoutRound);
             const koTies = allTies.filter(t => t.knockoutRound);
