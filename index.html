@@ -23,14 +23,11 @@
     </script>
     <style>
         body { background-color: #FFFBF5; color: #1c1917; }
-        /* Hiệu ứng chiều sâu giúp thác Bản Giốc trông hùng vĩ và có chiều sâu hơn */
         .hero-overlay { 
             background: linear-gradient(180deg, rgba(4, 47, 46, 0.35) 0%, rgba(6, 78, 59, 0.65) 50%, rgba(12, 10, 9, 0.85) 100%); 
         }
         .card-hover { transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1); }
         .card-hover:hover { transform: translateY(-4px); box-shadow: 0 16px 32px -8px rgba(6, 78, 59, 0.14); }
-        @keyframes modalPop { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
-        .animate-modal-pop { animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     </style>
 </head>
 <body class="antialiased selection:bg-emerald-700 selection:text-white">
@@ -39,7 +36,7 @@
     <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-stone-200/80 shadow-xs">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16 sm:h-20">
-                <a href="#" class="flex items-center gap-3 group">
+                <a href="trang-chu.html" class="flex items-center gap-3 group">
                     <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-emerald-800 to-emerald-600 text-white flex items-center justify-center shadow-md border border-emerald-400/40 group-hover:scale-105 transition">
                         <i class="fa-solid fa-mountain-sun text-lg sm:text-xl text-amber-300"></i>
                     </div>
@@ -49,9 +46,10 @@
                     </div>
                 </a>
 
+                <!-- MENU: CHỮ "Giải đấu" ĐÃ ĐƯỢC GẮN LINK SANG index.html -->
                 <nav class="hidden lg:flex items-center space-x-7 text-sm font-bold text-stone-600">
-                    <a href="#trang-chu" class="text-emerald-800 border-b-2 border-emerald-700 py-1">Trang chủ</a>
-                    <a href="#giai-dau" class="hover:text-emerald-800 transition">Giải đấu</a>
+                    <a href="trang-chu.html" class="text-emerald-800 border-b-2 border-emerald-700 py-1">Trang chủ</a>
+                    <a href="index.html" class="hover:text-emerald-800 transition">Giải đấu & Live</a>
                     <a href="#bang-xep-hang" class="hover:text-emerald-800 transition">Bảng xếp hạng</a>
                     <a href="#kham-pha" class="hover:text-emerald-800 transition">Khám phá Cao Bằng</a>
                 </nav>
@@ -66,10 +64,9 @@
         </div>
     </header>
 
-    <!-- HERO BANNER (MỞ RỘNG KHUNG NHÌN ĐỂ THÁC BẢN GIỐC HÙNG VĨ HƠN) -->
+    <!-- HERO BANNER -->
     <section id="trang-chu" class="relative overflow-hidden">
         <div class="relative min-h-[580px] sm:min-h-[660px] flex items-center">
-            <!-- Ảnh chất lượng cao phóng to khung nhìn -->
             <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Ban_Gioc_Waterfall_-_Trung_Kanh_District_-_Cao_Bang_Province_-_Vietnam_-_11_(48119809353).jpg" alt="Thác Bản Giốc Hùng Vĩ Cao Bằng" class="absolute inset-0 w-full h-full object-cover object-[center_60%] scale-105 transform">
             <div class="hero-overlay absolute inset-0"></div>
 
