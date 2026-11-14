@@ -710,18 +710,31 @@
     }
 
     function openLoginModal() {
-        const currentRole = getCurrentUserRole();
-        if (currentRole === 'admin') {
-            localStorage.setItem('PICKLEBALL_USER_ROLE', 'guest');
-            showToast('🔒 Đã đăng xuất khỏi hệ thống quản trị!');
-            applyRoleUI();
-            initApp();
-            return;
-        }
-        document.getElementById('role-login-modal').classList.remove('hidden');
-        document.getElementById('role-login-modal').classList.add('flex');
-        setTimeout(() => document.getElementById('login-password-input').focus(), 50);
+    const currentRole = getCurrentUserRole();
+    if (currentRole === 'admin') {
+        localStorage.setItem('PICKLEBALL_USER_ROLE', 'guest');
+        showToast('🔒 Đã đăng xuất khỏi hệ thống quản trị!');
+        applyRoleUI();
+        initApp();
+        return;
     }
+    
+    // Hiển thị modal đăng nhập
+    document.getElementById('role-login-modal').classList.remove('hidden');
+    document.getElementById('role-login-modal').classList.add('flex');
+    
+    // Xóa trống ô mật khẩu cũ và loại bỏ trạng thái lỗi nếu có
+    const pwdInput = document.getElementById('login-password-input');
+    if (pwdInput) {
+        pwdInput.value = '';
+        pwdInput.classList.remove('border-rose-500', 'bg-rose-50/60');
+        
+        // Tự động focus vào ô mật khẩu ngay lập tức
+        setTimeout(() => {
+            pwdInput.focus();
+        }, 50);
+    }
+}
 
     function closeLoginModal() {
         document.getElementById('role-login-modal').classList.add('hidden');
