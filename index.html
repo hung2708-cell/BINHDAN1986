@@ -16,26 +16,52 @@
                 extend: {
                     fontFamily: {
                         sans: ['"Be Vietnam Pro"', 'sans-serif'],
+                    },
+                    colors: {
+                        cb: {
+                            forest: '#064e3b',
+                            emerald: '#059669',
+                            emeraldLight: '#d1fae5',
+                            orange: '#ea580c',
+                            amber: '#d97706',
+                            cream: '#FFFBF5'
+                        }
                     }
                 }
             }
         }
     </script>
     <style>
-        body { background-color: #FFFBF5; color: #1c1917; }
-        .hero-overlay { background: linear-gradient(180deg, rgba(6, 78, 59, 0.45) 0%, rgba(12, 10, 9, 0.75) 100%); }
-        .card-hover { transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1); }
-        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 16px 32px -8px rgba(6, 78, 59, 0.14); }
-        @keyframes modalPop { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
-        .animate-modal-pop { animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        body {
+            background-color: #FFFBF5;
+            color: #1c1917;
+        }
+        .hero-overlay {
+            background: linear-gradient(180deg, rgba(6, 78, 59, 0.45) 0%, rgba(12, 10, 9, 0.75) 100%);
+        }
+        .card-hover {
+            transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 32px -8px rgba(6, 78, 59, 0.14);
+        }
+        @keyframes modalPop {
+            0% { opacity: 0; transform: scale(0.95); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .animate-modal-pop {
+            animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
     </style>
 </head>
 <body class="antialiased selection:bg-emerald-700 selection:text-white">
 
-    <!-- THANH ĐIỀU HƯỚNG -->
+    <!-- 1. THANH ĐIỀU HƯỚNG (STICKY NAVBAR) -->
     <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-stone-200/80 shadow-xs">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16 sm:h-20">
+                <!-- Logo & Thương hiệu -->
                 <a href="#" class="flex items-center gap-3 group">
                     <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-emerald-800 to-emerald-600 text-white flex items-center justify-center shadow-md border border-emerald-400/40 group-hover:scale-105 transition">
                         <i class="fa-solid fa-mountain-sun text-lg sm:text-xl text-amber-300"></i>
@@ -46,6 +72,7 @@
                     </div>
                 </a>
 
+                <!-- Menu Desktop -->
                 <nav class="hidden lg:flex items-center space-x-7 text-sm font-bold text-stone-600">
                     <a href="#trang-chu" class="text-emerald-800 border-b-2 border-emerald-700 py-1">Trang chủ</a>
                     <a href="#giai-dau" class="hover:text-emerald-800 transition">Giải đấu</a>
@@ -54,17 +81,39 @@
                     <a href="#cong-dong" class="hover:text-emerald-800 transition">Cộng đồng</a>
                 </nav>
 
+                <!-- Nút hành động phải (ĐÃ GẮN LINK SANG index.html) -->
                 <div class="flex items-center gap-2 sm:gap-3">
-                    <a href="index.html" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-extrabold transition shadow-2xs">
-                        <i class="fa-solid fa-trophy text-orange-600"></i>
-                        <span>Quản Lý Giải Đấu</span>
+                    <a href="index.html" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 text-white text-xs font-extrabold transition shadow-md">
+                        <i class="fa-solid fa-trophy"></i>
+                        <span>Quản Lý Giải Đấu & Live</span>
                     </a>
+                    <button onclick="openRegisterModal('Thành viên CLB')" class="hidden sm:inline-flex px-4 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 active:scale-95 text-white text-xs font-extrabold transition shadow-md items-center gap-1.5">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>Tham gia CLB</span>
+                    </button>
+                    <!-- Mobile Menu Toggle -->
+                    <button onclick="toggleMobileMenu()" class="lg:hidden w-10 h-10 rounded-xl bg-stone-100 text-stone-700 flex items-center justify-center">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Mobile Dropdown Menu -->
+        <div id="mobile-menu" class="hidden lg:hidden bg-white border-t border-stone-100 px-4 py-3 space-y-2 shadow-lg">
+            <a href="#trang-chu" onclick="toggleMobileMenu()" class="block py-2 text-sm font-bold text-emerald-800">Trang chủ</a>
+            <a href="#giai-dau" onclick="toggleMobileMenu()" class="block py-2 text-sm font-semibold text-stone-700">Giải đấu sắp diễn ra</a>
+            <a href="#bang-xep-hang" onclick="toggleMobileMenu()" class="block py-2 text-sm font-semibold text-stone-700">Bảng xếp hạng CLB 1986</a>
+            <a href="#kham-pha" onclick="toggleMobileMenu()" class="block py-2 text-sm font-semibold text-stone-700">Khám phá Cao Bằng</a>
+            <div class="pt-2 border-t border-stone-100">
+                <a href="index.html" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-orange-600 to-rose-600 text-white text-xs font-extrabold flex items-center justify-center gap-2 shadow">
+                    <i class="fa-solid fa-table-tennis-paddle-ball"></i> Vào Quản Lý & Bảng Điểm Trực Tiếp
+                </a>
             </div>
         </div>
     </header>
 
-    <!-- HERO BANNER (THÁC BẢN GIỐC THỰC TẾ) -->
+    <!-- 2. HERO BANNER (THÁC BẢN GIỐC THỰC TẾ) -->
     <section id="trang-chu" class="relative overflow-hidden">
         <div class="relative min-h-[500px] sm:min-h-[580px] flex items-center">
             <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Ban_Gioc_Waterfall_-_Trung_Kanh_District_-_Cao_Bang_Province_-_Vietnam_-_11_(48119809353).jpg" alt="Thác Bản Giốc Cao Bằng" class="absolute inset-0 w-full h-full object-cover object-center">
@@ -89,11 +138,16 @@
                         Đánh thức đam mê thể thao giữa miền non nước Cao Bằng. Kết nối cộng đồng yêu thích Pickleball và khám phá những danh thắng tuyệt mỹ.
                     </p>
 
+                    <!-- NÚT GẮN LINK TRỰC TIẾP SANG INDEX.HTML -->
                     <div class="flex flex-wrap items-center gap-3.5 pt-2">
                         <a href="index.html" class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 active:scale-95 text-white font-extrabold text-sm shadow-xl transition flex items-center gap-2">
-                            <span>Vào Xem Tỷ Số & Lịch Thi Đấu Live</span>
+                            <span>Quản Lý Giải & Tỷ Số Live</span>
                             <i class="fa-solid fa-arrow-right"></i>
                         </a>
+                        <button onclick="openRegisterModal('Thành viên CLB')" class="px-6 py-3.5 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/40 text-white font-extrabold text-sm transition flex items-center gap-2">
+                            <i class="fa-solid fa-users"></i>
+                            <span>Đăng Ký Tham Gia CLB</span>
+                        </button>
                     </div>
 
                     <div class="pt-3 flex items-center gap-2 text-xs text-emerald-200 font-semibold">
@@ -103,15 +157,102 @@
                 </div>
             </div>
         </div>
+
+        <!-- 4 THẺ TÍNH NĂNG NỔI BẬT -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 sm:-mt-10 relative z-20">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+                <a href="index.html" class="bg-white rounded-2xl p-4 sm:p-5 border border-stone-200/80 shadow-lg card-hover flex items-center gap-3.5">
+                    <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-lg sm:text-xl shrink-0">
+                        <i class="fa-solid fa-calendar-check"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-stone-900 text-xs sm:text-sm">Lịch Thi Đấu</h3>
+                        <p class="text-[11px] text-stone-500 mt-0.5">Xếp sân tự động, rõ ràng</p>
+                    </div>
+                </a>
+
+                <a href="index.html" class="bg-white rounded-2xl p-4 sm:p-5 border border-stone-200/80 shadow-lg card-hover flex items-center gap-3.5">
+                    <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center text-lg sm:text-xl shrink-0">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-stone-900 text-xs sm:text-sm">Giải Đấu Live</h3>
+                        <p class="text-[11px] text-stone-500 mt-0.5">Cập nhật tỷ số trực tiếp</p>
+                    </div>
+                </a>
+
+                <a href="#bang-xep-hang" class="bg-white rounded-2xl p-4 sm:p-5 border border-stone-200/80 shadow-lg card-hover flex items-center gap-3.5">
+                    <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-lg sm:text-xl shrink-0">
+                        <i class="fa-solid fa-ranking-star"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-stone-900 text-xs sm:text-sm">Bảng Xếp Hạng</h3>
+                        <p class="text-[11px] text-stone-500 mt-0.5">Minh bạch, chính xác</p>
+                    </div>
+                </a>
+
+                <a href="#cong-dong" class="bg-white rounded-2xl p-4 sm:p-5 border border-stone-200/80 shadow-lg card-hover flex items-center gap-3.5">
+                    <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center text-lg sm:text-xl shrink-0">
+                        <i class="fa-solid fa-people-group"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-stone-900 text-xs sm:text-sm">Cộng Đồng</h3>
+                        <p class="text-[11px] text-stone-500 mt-0.5">Kết nối đam mê 1986</p>
+                    </div>
+                </a>
+            </div>
+        </div>
     </section>
 
-    <!-- BẢNG XẾP HẠNG CLB 1986 -->
+    <!-- 3. GIẢI ĐẤU SẮP DIỄN RA -->
+    <section id="giai-dau" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 sm:pt-20">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-2 mb-6">
+            <div>
+                <span class="text-xs font-extrabold uppercase tracking-wider text-orange-600">Sự kiện thể thao</span>
+                <h2 class="text-2xl sm:text-3xl font-black text-stone-900 mt-0.5">Giải Đấu Sắp Diễn Ra</h2>
+            </div>
+            <a href="index.html" class="text-xs sm:text-sm font-extrabold text-emerald-800 hover:text-emerald-600 flex items-center gap-1">
+                <span>Mở hệ thống quản lý giải đấu</span>
+                <i class="fa-solid fa-arrow-right text-xs"></i>
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            <div class="lg:col-span-12 relative overflow-hidden rounded-3xl bg-stone-900 text-white p-6 sm:p-8 flex flex-col justify-between min-h-[260px] shadow-xl card-hover">
+                <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Ban_Gioc_Waterfall_-_Trung_Kanh_District_-_Cao_Bang_Province_-_Vietnam_-_11_(48119809353).jpg" alt="Giải Pickleball" class="absolute inset-0 w-full h-full object-cover opacity-35">
+                <div class="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/60 to-transparent"></div>
+                
+                <div class="relative z-10 flex items-center justify-between">
+                    <span class="px-3 py-1 rounded-full bg-rose-600 text-white text-[11px] font-extrabold uppercase tracking-wide animate-pulse">
+                        Đang diễn ra • Live 8 Sân
+                    </span>
+                    <span class="text-xs font-bold text-amber-300 bg-black/40 px-3 py-1 rounded-full backdrop-blur-xs">Best of 5</span>
+                </div>
+
+                <div class="relative z-10 space-y-3 mt-10">
+                    <h3 class="text-xl sm:text-3xl font-black text-white leading-snug">Giải Pickleball Đồng Đội Bính Dần 1986</h3>
+                    <div class="flex flex-wrap items-center gap-4 text-xs text-stone-200 font-medium">
+                        <span><i class="fa-regular fa-calendar mr-1.5 text-amber-400"></i>Tháng 11/2026</span>
+                        <span><i class="fa-solid fa-location-dot mr-1.5 text-orange-400"></i>Cụm Sân Pickleball TP. Cao Bằng</span>
+                    </div>
+                    <div class="pt-2 flex flex-wrap gap-2.5">
+                        <a href="index.html" class="px-6 py-3 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-extrabold transition shadow-md flex items-center gap-1.5">
+                            <span>Vào Xem Tỷ Số Trực Tiếp & Lịch Đấu</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. BẢNG XẾP HẠNG CLB 1986 -->
     <section id="bang-xep-hang" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 sm:pt-20">
         <div class="bg-white rounded-3xl border border-stone-200/90 p-5 sm:p-8 shadow-md">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-stone-100">
                 <div>
                     <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-700">Vinh danh thành tích</span>
-                    <h2 class="text-xl sm:text-2xl font-black text-stone-900 mt-0.5">Bảng Xếp Hạng CLB 1986</h2>
+                    <h2 class="text-xl sm:text-2xl font-black text-stone-900 mt-0.5">Bảng Xếp Hạng Vận Động Viên CLB 1986</h2>
                 </div>
             </div>
 
@@ -133,7 +274,7 @@
         </div>
     </section>
 
-    <!-- KHÁM PHÁ CAO BẰNG (ẢNH THỰC TẾ) -->
+    <!-- 5. KHÁM PHÁ CAO BẰNG -->
     <section id="kham-pha" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 sm:pt-20 pb-16">
         <div class="mb-6">
             <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-700">Du lịch & Trải nghiệm</span>
@@ -178,8 +319,75 @@
         </div>
     </footer>
 
+    <!-- POPUP ĐĂNG KÝ -->
+    <div id="register-modal" onclick="if(event.target === this) closeRegisterModal()" class="fixed inset-0 z-50 bg-stone-950/70 backdrop-blur-xs hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-stone-200 space-y-4 animate-modal-pop">
+            <div class="flex items-center justify-between border-b border-stone-100 pb-3">
+                <div>
+                    <span class="text-[10px] font-extrabold uppercase tracking-wider text-orange-600">Đăng ký trực tuyến</span>
+                    <h3 id="register-modal-title" class="font-black text-stone-900 text-base">Tham Gia CLB Pickleball 1986</h3>
+                </div>
+                <button onclick="closeRegisterModal()" class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form onsubmit="submitRegistration(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-stone-700 mb-1">Họ và tên VĐV *</label>
+                    <input type="text" id="reg-name" required placeholder="Nhập họ tên đầy đủ..." class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-emerald-700">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-stone-700 mb-1">Số điện thoại / Zalo *</label>
+                        <input type="tel" id="reg-phone" required placeholder="09xx..." class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-emerald-700">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-stone-700 mb-1">Năm sinh</label>
+                        <input type="text" id="reg-year" value="1986" class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-emerald-700">
+                    </div>
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeRegisterModal()" class="px-4 py-2.5 rounded-xl bg-stone-100 text-stone-700 text-xs font-bold">Hủy</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-extrabold shadow-md">Gửi Đăng Ký</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast-box" class="fixed bottom-5 right-5 z-50 hidden bg-emerald-900 text-white px-4 py-3 rounded-xl shadow-xl text-xs font-bold flex items-center gap-2"></div>
+
     <script>
         const STORAGE_KEY = 'CAY_COI_TEAM_LINEUP_V28_PERMANENT';
+
+        function toggleMobileMenu() {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        }
+
+        function openRegisterModal(targetTitle) {
+            document.getElementById('register-modal-title').textContent = 'Đăng Ký: ' + targetTitle;
+            const m = document.getElementById('register-modal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        function closeRegisterModal() {
+            const m = document.getElementById('register-modal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        function submitRegistration(e) {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
+            closeRegisterModal();
+            const toast = document.getElementById('toast-box');
+            toast.innerHTML = `<i class="fa-solid fa-circle-check text-amber-300"></i> <span>Đã ghi nhận đăng ký của <strong>${name}</strong> (${phone}). Ban chủ nhiệm sẽ liên hệ qua Zalo!</span>`;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 4000);
+            e.target.reset();
+        }
 
         function renderLandingRankings() {
             const tbody = document.getElementById('landing-ranking-body');
