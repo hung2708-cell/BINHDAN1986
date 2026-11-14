@@ -140,7 +140,7 @@
 
         <!-- 1. TAB TỔNG QUAN -->
         <section id="tab-home" class="tab-content space-y-3.5 sm:space-y-6">
-            <!-- BANNER CHÚC MỪNG NHÀ VÔ ĐỊCH (TỰ ĐỘNG HIỆN KHI CÓ ĐỘI VÔ ĐỊCH CHUNG KẾT) -->
+            <!-- BANNER CHÚC MỪNG NHÀ VÔ ĐỊCH -->
             <div id="home-champion-banner" class="hidden"></div>
 
             <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-rose-700 via-orange-600 to-amber-500 p-4 sm:p-8 shadow-lg shadow-orange-500/20 text-white">
@@ -547,37 +547,43 @@
         <p>© 2026 Giải Pickleball Đồng Đội Bính Dần 1986 • Mệnh Lư Trung Hỏa & Mộc Tương Sinh</p>
     </footer>
 
-    <!-- THANH ĐIỀU HƯỚNG DƯỚI ĐÁY -->
-    <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-50 px-1.5 min-[375px]:px-2.5 pt-1.5 pb-safe bg-gradient-to-t from-[#FFFBF5] via-[#FFFBF5]/95 to-transparent pointer-events-none">
-        <div class="max-w-lg mx-auto flex items-center gap-1 min-[375px]:gap-1.5 pointer-events-auto">
-            <div class="flex-1 min-w-0 bg-white/95 backdrop-blur-xl border border-amber-200 rounded-full shadow-[0_8px_25px_rgba(217,119,6,0.18)] px-1 py-1 grid grid-cols-5 items-center">
-                <button onclick="switchTab('home')" data-tab="home" class="bottom-nav-btn min-w-0 flex flex-col items-center justify-center py-1 px-0.5 rounded-full transition-all text-brand-600 bg-rose-50">
-                    <i class="fa-solid fa-house text-[13px] min-[375px]:text-sm sm:text-base mb-0.5"></i>
+    <!-- THANH ĐIỀU HƯỚNG DƯỚI ĐÁY KIỂU IPHONE SLIDING PILL (VUỐT TRƯỢT MƯỢT MÀ) -->
+    <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-50 px-2 min-[375px]:px-3 pt-2 pb-safe bg-gradient-to-t from-[#FFFBF5] via-[#FFFBF5]/95 to-transparent pointer-events-none select-none">
+        <div class="max-w-lg mx-auto flex items-center gap-1.5 min-[375px]:gap-2 pointer-events-auto">
+            <!-- Khung thanh 5 tab chính có viên thuốc trượt theo ngón tay -->
+            <div id="iphone-bottom-dock" class="relative flex-1 min-w-0 bg-white/95 backdrop-blur-xl border border-amber-200/90 rounded-full shadow-[0_8px_28px_rgba(217,119,6,0.2)] p-1 grid grid-cols-5 items-center overflow-hidden touch-pan-y">
+                
+                <!-- Viên thuốc nền trượt kiểu iPhone (Liquid Pill) -->
+                <div id="iphone-nav-pill" class="absolute top-1 bottom-1 left-1 rounded-full bg-gradient-to-b from-rose-50 to-rose-100/90 border border-brand-200/80 shadow-xs pointer-events-none z-0" style="width: calc(20% - 2px); transition: transform 0.36s cubic-bezier(0.32, 1.15, 0.4, 1);"></div>
+
+                <button type="button" onclick="switchTab('home')" data-tab="home" data-idx="0" class="bottom-nav-btn relative z-10 min-w-0 flex flex-col items-center justify-center py-1 px-0.5 rounded-full transition-transform duration-150 text-brand-600">
+                    <i class="fa-solid fa-house text-[13px] min-[375px]:text-sm sm:text-base mb-0.5 transition-transform duration-200"></i>
                     <span class="w-full text-center text-[9px] min-[375px]:text-[10px] sm:text-[11px] font-extrabold tracking-tight leading-none truncate">Tổng quan</span>
                 </button>
 
-                <button onclick="switchTab('matches')" data-tab="matches" class="bottom-nav-btn min-w-0 flex flex-col items-center justify-center py-1 px-0.5 rounded-full transition-all text-stone-500 hover:text-stone-800">
-                    <i class="fa-solid fa-calendar-days text-[13px] min-[375px]:text-sm sm:text-base mb-0.5"></i>
+                <button type="button" onclick="switchTab('matches')" data-tab="matches" data-idx="1" class="bottom-nav-btn relative z-10 min-w-0 flex flex-col items-center justify-center py-1 px-0.5 rounded-full transition-transform duration-150 text-stone-500">
+                    <i class="fa-solid fa-calendar-days text-[13px] min-[375px]:text-sm sm:text-base mb-0.5 transition-transform duration-200"></i>
                     <span class="w-full text-center text-[9px] min-[375px]:text-[10px] sm:text-[11px] font-semibold tracking-tight leading-none truncate">Lịch đấu</span>
                 </button>
 
-                <button onclick="switchTab('standings')" data-tab="standings" class="bottom-nav-btn min-w-0 flex flex-col items-center justify-center py-1 px-0.5 rounded-full transition-all text-stone-500 hover:text-stone-800">
-                    <i class="fa-solid fa-trophy text-[13px] min-[375px]:text-sm sm:text-base mb-0.5"></i>
+                <button type="button" onclick="switchTab('standings')" data-tab="standings" data-idx="2" class="bottom-nav-btn relative z-10 min-w-0 flex flex-col items-center justify-center py-1 px-0.5 rounded-full transition-transform duration-150 text-stone-500">
+                    <i class="fa-solid fa-trophy text-[13px] min-[375px]:text-sm sm:text-base mb-0.5 transition-transform duration-200"></i>
                     <span class="w-full text-center text-[9px] min-[375px]:text-[10px] sm:text-[11px] font-semibold tracking-tight leading-none truncate">Vòng bảng</span>
                 </button>
 
-                <button onclick="switchTab('bracket')" data-tab="bracket" class="bottom-nav-btn min-w-0 flex flex-col items-center justify-center py-1 px-0.5 rounded-full transition-all text-stone-500 hover:text-stone-800">
-                    <i class="fa-solid fa-sitemap text-[13px] min-[375px]:text-sm sm:text-base mb-0.5"></i>
+                <button type="button" onclick="switchTab('bracket')" data-tab="bracket" data-idx="3" class="bottom-nav-btn relative z-10 min-w-0 flex flex-col items-center justify-center py-1 px-0.5 rounded-full transition-transform duration-150 text-stone-500">
+                    <i class="fa-solid fa-sitemap text-[13px] min-[375px]:text-sm sm:text-base mb-0.5 transition-transform duration-200"></i>
                     <span class="w-full text-center text-[9px] min-[375px]:text-[10px] sm:text-[11px] font-semibold tracking-tight leading-none truncate">Chia nhánh</span>
                 </button>
 
-                <button onclick="switchTab('teams')" data-tab="teams" class="bottom-nav-btn min-w-0 flex flex-col items-center justify-center py-1 px-0.5 rounded-full transition-all text-stone-500 hover:text-stone-800">
-                    <i class="fa-solid fa-users text-[13px] min-[375px]:text-sm sm:text-base mb-0.5"></i>
+                <button type="button" onclick="switchTab('teams')" data-tab="teams" data-idx="4" class="bottom-nav-btn relative z-10 min-w-0 flex flex-col items-center justify-center py-1 px-0.5 rounded-full transition-transform duration-150 text-stone-500">
+                    <i class="fa-solid fa-users text-[13px] min-[375px]:text-sm sm:text-base mb-0.5 transition-transform duration-200"></i>
                     <span class="w-full text-center text-[9px] min-[375px]:text-[10px] sm:text-[11px] font-semibold tracking-tight leading-none truncate">Đội tuyển</span>
                 </button>
             </div>
 
-            <button onclick="switchTab('admin')" data-tab="admin" title="Quản trị giải đấu" class="bottom-admin-btn w-[46px] h-[46px] min-[375px]:w-[52px] min-[375px]:h-[52px] rounded-full bg-white/95 backdrop-blur-xl border border-amber-300 shadow-[0_8px_25px_rgba(217,119,6,0.2)] flex flex-col items-center justify-center text-amber-600 hover:bg-amber-50 transition-all shrink-0">
+            <!-- Nút Quản trị tách rời bên phải kiểu iOS -->
+            <button type="button" onclick="switchTab('admin')" data-tab="admin" title="Quản trị giải đấu" class="bottom-admin-btn w-[48px] h-[48px] min-[375px]:w-[52px] min-[375px]:h-[52px] rounded-full bg-white/95 backdrop-blur-xl border border-amber-300 shadow-[0_8px_25px_rgba(217,119,6,0.2)] flex flex-col items-center justify-center text-amber-600 hover:bg-amber-50 active:scale-95 transition-all shrink-0">
                 <i class="fa-solid fa-gear text-sm min-[375px]:text-base"></i>
                 <span class="text-[8px] min-[375px]:text-[9px] font-extrabold leading-none mt-0.5">Quản trị</span>
             </button>
@@ -1121,6 +1127,119 @@
             });
         }
 
+        // =========================================================================
+        // THANH ĐIỀU HƯỚNG DƯỚI ĐÁY KIỂU IPHONE SLIDING PILL (VUỐT TRƯỢT MƯỢT MÀ)
+        // =========================================================================
+        const DOCK_TABS = ['home', 'matches', 'standings', 'bracket', 'teams'];
+
+        function updateIphoneDockVisual(activeIdx, customTranslatePx = null, isDragging = false) {
+            const dock = document.getElementById('iphone-bottom-dock');
+            const pill = document.getElementById('iphone-nav-pill');
+            const btns = document.querySelectorAll('.bottom-nav-btn');
+            if (!dock || !pill) return;
+
+            if (activeIdx < 0 || activeIdx >= DOCK_TABS.length) {
+                pill.style.opacity = '0';
+            } else {
+                pill.style.opacity = '1';
+                const innerWidth = Math.max(0, dock.clientWidth - 8);
+                if (innerWidth > 0) {
+                    const slotWidth = innerWidth / DOCK_TABS.length;
+                    pill.style.width = `${slotWidth}px`;
+                    pill.style.transition = isDragging ? 'none' : 'transform 0.36s cubic-bezier(0.32, 1.15, 0.4, 1), opacity 0.2s ease';
+                    const targetX = customTranslatePx !== null ? customTranslatePx : (activeIdx * slotWidth);
+                    pill.style.transform = `translateX(${targetX}px) ${isDragging ? 'scale(1.06)' : 'scale(1)'}`;
+                }
+            }
+
+            btns.forEach((btn, idx) => {
+                const isTarget = idx === activeIdx;
+                const icon = btn.querySelector('i');
+                const label = btn.querySelector('span');
+                if (isTarget) {
+                    btn.classList.remove('text-stone-500');
+                    btn.classList.add('text-brand-600');
+                    if (icon) icon.style.transform = 'scale(1.12) translateY(-1px)';
+                    if (label) {
+                        label.classList.remove('font-semibold');
+                        label.classList.add('font-extrabold');
+                    }
+                } else {
+                    btn.classList.remove('text-brand-600');
+                    btn.classList.add('text-stone-500');
+                    if (icon) icon.style.transform = 'scale(1)';
+                    if (label) {
+                        label.classList.remove('font-extrabold');
+                        label.classList.add('font-semibold');
+                    }
+                }
+            });
+        }
+
+        function initIphoneBottomDockSwipe() {
+            const dock = document.getElementById('iphone-bottom-dock');
+            if (!dock || dock.dataset.swipeBound === '1') return;
+            dock.dataset.swipeBound = '1';
+
+            let isTouching = false;
+            let hasDragged = false;
+            let startX = 0;
+            let lastHoveredIdx = 0;
+
+            const getIdxFromClientX = (clientX) => {
+                const rect = dock.getBoundingClientRect();
+                const relX = Math.max(0, Math.min(rect.width - 1, clientX - rect.left));
+                return Math.floor((relX / rect.width) * DOCK_TABS.length);
+            };
+
+            const getPillXFromClientX = (clientX) => {
+                const rect = dock.getBoundingClientRect();
+                const innerWidth = rect.width - 8;
+                const slotWidth = innerWidth / DOCK_TABS.length;
+                const rawX = clientX - rect.left - 4 - (slotWidth / 2);
+                return Math.max(0, Math.min(innerWidth - slotWidth, rawX));
+            };
+
+            dock.addEventListener('touchstart', (e) => {
+                if (!e.touches || e.touches.length === 0) return;
+                isTouching = true;
+                hasDragged = false;
+                startX = e.touches[0].clientX;
+                lastHoveredIdx = getIdxFromClientX(startX);
+            }, { passive: true });
+
+            dock.addEventListener('touchmove', (e) => {
+                if (!isTouching || !e.touches || e.touches.length === 0) return;
+                const curX = e.touches[0].clientX;
+                if (Math.abs(curX - startX) > 6) {
+                    hasDragged = true;
+                }
+                if (hasDragged) {
+                    const idx = getIdxFromClientX(curX);
+                    const pillX = getPillXFromClientX(curX);
+                    updateIphoneDockVisual(idx, pillX, true);
+                    if (idx !== lastHoveredIdx) {
+                        lastHoveredIdx = idx;
+                        if (navigator.vibrate) navigator.vibrate(8);
+                    }
+                }
+            }, { passive: true });
+
+            dock.addEventListener('touchend', () => {
+                if (!isTouching) return;
+                isTouching = false;
+                if (hasDragged) {
+                    const targetTab = DOCK_TABS[lastHoveredIdx] || 'home';
+                    switchTab(targetTab);
+                }
+            }, { passive: true });
+
+            window.addEventListener('resize', () => {
+                const curTab = localStorage.getItem('CAY_COI_ACTIVE_TAB') || 'home';
+                updateIphoneDockVisual(DOCK_TABS.indexOf(curTab), null, false);
+            });
+        }
+
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             const targetEl = document.getElementById(`tab-${tabId}`);
@@ -1138,18 +1257,8 @@
                 }
             });
 
-            document.querySelectorAll('.bottom-nav-btn').forEach(btn => {
-                const isTarget = btn.getAttribute('data-tab') === tabId;
-                if (isTarget) {
-                    btn.classList.remove('text-stone-500', 'hover:text-stone-800');
-                    btn.classList.add('text-brand-600', 'bg-rose-50');
-                    btn.querySelector('span')?.classList.add('font-extrabold');
-                } else {
-                    btn.classList.remove('text-brand-600', 'bg-rose-50');
-                    btn.classList.add('text-stone-500', 'hover:text-stone-800');
-                    btn.querySelector('span')?.classList.remove('font-extrabold');
-                }
-            });
+            const dockIdx = DOCK_TABS.indexOf(tabId);
+            updateIphoneDockVisual(dockIdx, null, false);
 
             const adminBtn = document.querySelector('.bottom-admin-btn');
             if (adminBtn) {
@@ -2735,6 +2844,7 @@
 
         window.onload = () => { 
             initRealtimeSyncIndex(); 
+            initIphoneBottomDockSwipe();
             initApp(); 
             const lastTab = localStorage.getItem('CAY_COI_ACTIVE_TAB') || 'home';
             switchTab(lastTab);
