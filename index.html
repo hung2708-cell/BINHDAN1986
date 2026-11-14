@@ -125,12 +125,12 @@
                         <i class="fa-solid fa-trophy mr-1.5"></i>Vòng bảng
                     </button>
                     <button onclick="switchTab('bracket')" data-tab="bracket" class="desktop-nav-btn px-3.5 py-2 rounded-xl text-xs font-semibold transition text-stone-600 hover:text-stone-900 hover:bg-amber-50/70">
-                        <i class="fa-solid fa-sitemap mr-1.5"></i>Chia nhánh
+                        <i class="fa-solid fa-sitemap mr-1.5"></i>Sơ đồ thi đấu
                     </button>
-                    <button onclick="switchTab('teams')" data-tab="teams" class="desktop-nav-btn px-3.5 py-2 rounded-xl text-xs font-semibold transition text-stone-600 hover:text-stone-900 hover:bg-amber-50/70">
+                    <button id="nav-btn-teams" onclick="switchTab('teams')" data-tab="teams" class="desktop-nav-btn hidden px-3.5 py-2 rounded-xl text-xs font-semibold transition text-stone-600 hover:text-stone-900 hover:bg-amber-50/70">
                         <i class="fa-solid fa-users mr-1.5"></i>Đội tuyển
                     </button>
-                    <button onclick="switchTab('admin')" data-tab="admin" class="desktop-nav-btn px-3.5 py-2 rounded-xl text-xs font-semibold transition text-amber-700 hover:bg-amber-50">
+                    <button id="nav-btn-admin" onclick="switchTab('admin')" data-tab="admin" class="desktop-nav-btn hidden px-3.5 py-2 rounded-xl text-xs font-semibold transition text-amber-700 hover:bg-amber-50">
                         <i class="fa-solid fa-gear mr-1.5"></i>Quản trị
                     </button>
                     <!-- NÚT ĐĂNG NHẬP / ĐĂNG XUẤT HỆ THỐNG -->
@@ -233,10 +233,7 @@
                     <h2 class="text-[15px] sm:text-xl font-extrabold text-stone-900">Bảng xếp hạng Vòng bảng & Kết quả</h2>
                     <p class="text-[11px] sm:text-xs text-stone-500">Thắng tổng: <strong class="text-emerald-600">2đ</strong> • Hòa: <strong class="text-amber-600">1đ</strong> • Thua: <strong class="text-rose-600">0đ</strong>.</p>
                 </div>
-                <div class="flex gap-2 w-full sm:w-auto justify-end">
-                    <button onclick="exportResultToExcel()" class="flex-1 sm:flex-initial justify-center px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold text-xs transition shadow-sm flex items-center">
-                        <i class="fa-solid fa-file-excel mr-1.5"></i> Xuất Excel
-                    </button>
+                <div id="standings-toolbar-actions" class="flex gap-2 w-full sm:w-auto justify-end">
                     <button onclick="renderStandings()" class="px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-amber-50 active:scale-95 text-stone-600 transition text-xs font-bold border border-stone-200" title="Làm mới"><i class="fa-solid fa-rotate"></i></button>
                 </div>
             </div>
@@ -249,70 +246,72 @@
             </div>
         </section>
 
-        <!-- 4. TAB CHIA NHÁNH & SƠ ĐỒ CÂY TRỰC QUAN -->
+        <!-- 4. TAB SƠ ĐỒ THI ĐẤU (TỪ VÒNG BẢNG ĐẾN CHUNG KẾT) -->
         <section id="tab-bracket" class="tab-content hidden space-y-3.5 sm:space-y-6">
             <div id="bracket-champion-banner" class="hidden"></div>
 
             <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-amber-200/80 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div class="min-w-0">
-                    <h2 class="text-[15px] sm:text-xl font-extrabold text-stone-900 flex items-center truncate"><i class="fa-solid fa-sitemap text-brand-600 mr-2 shrink-0"></i> Sơ Đồ Cây Thi Đấu: Vòng Knock-out (Serie A & B)</h2>
-                    <p id="bracket-structure-subtitle" class="text-[11px] sm:text-xs text-stone-500 mt-0.5">Bấm vào tên bất kỳ đội nào trên sơ đồ cây để xem toàn bộ các trận đã đấu của đội đó trong sơ đồ.</p>
+                    <h2 class="text-[15px] sm:text-xl font-extrabold text-stone-900 flex items-center truncate"><i class="fa-solid fa-sitemap text-brand-600 mr-2 shrink-0"></i> Sơ Đồ Thi Đấu Toàn Giải (Vòng Bảng → Chung Kết)</h2>
+                    <p id="bracket-structure-subtitle" class="text-[11px] sm:text-xs text-stone-500 mt-0.5">Bấm vào tên bất kỳ đội nào trên sơ đồ để xem toàn bộ lịch sử các trận đã đấu của đội đó.</p>
                 </div>
                 <div id="bracket-action-toolbar" class="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
                     <button onclick="renderBracket()" class="shrink-0 px-3 py-2 sm:py-1.5 rounded-xl bg-stone-100 hover:bg-amber-50 active:scale-95 text-stone-700 font-semibold transition text-xs border border-stone-200"><i class="fa-solid fa-rotate mr-1"></i> Làm mới</button>
                 </div>
             </div>
 
-            <!-- SƠ ĐỒ CÂY TRỰC QUAN (VISUAL TREE BRACKET) -->
+            <!-- SƠ ĐỒ CÂY TRỰC QUAN TOÀN GIẢI (VÒNG BẢNG -> TỨ KẾT -> BÁN KẾT -> CHUNG KẾT) -->
             <div class="bg-white border-2 border-brand-200 p-4 sm:p-6 rounded-2xl shadow-md space-y-4">
                 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-rose-100 pb-3 gap-2">
-                    <h3 class="font-black text-brand-700 text-sm sm:text-base uppercase flex items-center">
-                        <i class="fa-solid fa-trophy mr-2 text-amber-500"></i> Cây Sơ Đồ Cúp Vàng (Serie A)
-                    </h3>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h3 class="font-black text-brand-700 text-sm sm:text-base uppercase flex items-center">
+                            <i class="fa-solid fa-diagram-project mr-2 text-amber-500"></i> Sơ Đồ Cây Trực Quan Từ Vòng Bảng
+                        </h3>
+                        <div class="flex items-center gap-1 bg-stone-100 p-1 rounded-xl border border-stone-200">
+                            <button type="button" id="tree-series-btn-A" onclick="switchTreeSeries('A')" class="px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-brand-600 text-white shadow-2xs transition">Nhánh Serie A</button>
+                            <button type="button" id="tree-series-btn-B" onclick="switchTreeSeries('B')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold text-stone-600 hover:text-stone-900 transition">Nhánh Serie B</button>
+                        </div>
+                    </div>
                     <div class="flex items-center gap-2">
                         <span id="bracket-filter-status" class="hidden text-[11px] font-extrabold text-brand-700 bg-rose-50 px-3 py-1 rounded-full border border-rose-200">
-                            Đang lọc đội: <span id="bracket-filter-team-name"></span> <button onclick="clearTeamBracketFilter()" class="ml-1 text-rose-600 hover:text-rose-800 font-black">×</button>
+                            Đang xem đội: <span id="bracket-filter-team-name"></span> <button onclick="clearTeamBracketFilter()" class="ml-1 text-rose-600 hover:text-rose-800 font-black">×</button>
                         </span>
                         <span class="text-[11px] font-bold text-brand-700 bg-rose-50 px-3 py-1 rounded-full border border-rose-200">
-                            <i class="fa-solid fa-hand-pointer mr-1"></i> Bấm tên đội để lọc trận
+                            <i class="fa-solid fa-hand-pointer mr-1"></i> Bấm tên đội để xem các trận đã đấu
                         </span>
                     </div>
                 </div>
-                <div id="visual-tree-container" class="overflow-x-auto py-3 no-scrollbar">
-                    <!-- Rendered dynamically -->
-                </div>
+                <div id="visual-tree-container" class="overflow-x-auto py-2 no-scrollbar"></div>
             </div>
 
-            <!-- KHU VỰC HIỂN THỊ CÁC TRẬN ĐÃ ĐẤU CỦA ĐỘI ĐƯỢC CHỌN -->
-            <div id="team-bracket-history-section" class="hidden bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 border-2 border-amber-300 p-4 rounded-2xl space-y-3 shadow-sm">
+            <!-- KHU VỰC HIỂN THỊ TẤT CẢ CÁC TRẬN ĐÃ ĐẤU CỦA ĐỘI ĐƯỢC CHỌN -->
+            <div id="team-bracket-history-section" class="hidden bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 border-2 border-amber-300 p-4 rounded-2xl space-y-3 shadow-sm animate-modal-pop">
                 <div class="flex items-center justify-between border-b border-amber-200 pb-2">
                     <h3 class="font-black text-stone-900 text-xs sm:text-sm uppercase flex items-center">
-                        <i class="fa-solid fa-history mr-2 text-brand-600"></i> Lịch Sử Trận Đấu Knock-out Của: <span id="history-team-title" class="text-brand-700 ml-1"></span>
+                        <i class="fa-solid fa-clock-rotate-left mr-2 text-brand-600"></i> Tất Cả Các Trận Đấu Của: <span id="history-team-title" class="text-brand-700 ml-1"></span>
                     </h3>
-                    <button onclick="clearTeamBracketFilter()" class="text-xs font-bold text-stone-500 hover:text-stone-800 px-2 py-1 bg-white rounded-lg border border-stone-300">Đóng bộ lọc</button>
+                    <button onclick="clearTeamBracketFilter()" class="text-xs font-bold text-stone-600 hover:text-stone-900 px-2.5 py-1 bg-white rounded-lg border border-stone-300 shadow-2xs">Đóng</button>
                 </div>
-                <div id="team-bracket-history-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    <!-- Dynamic history cards -->
-                </div>
+                <div id="team-bracket-history-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-6">
-                <!-- NHÁNH SERIE A CHI TIẾT -->
+                <!-- NHÁNH SERIE A -->
                 <div class="bg-white border-2 border-brand-200 p-3.5 sm:p-5 rounded-2xl space-y-4 shadow-md">
                     <div class="flex items-center justify-between pb-2.5 border-b border-rose-100 gap-2">
                         <h3 class="font-black text-brand-700 text-xs sm:text-base uppercase flex items-center">
-                            <i class="fa-solid fa-list-check mr-2 text-amber-500"></i> Chi Tiết Nhánh Serie A
+                            <i class="fa-solid fa-trophy mr-2 text-amber-500"></i> Nhánh Serie A (Vô Địch)
                         </h3>
                         <span id="serie-a-badge" class="text-[10px] bg-rose-100 text-brand-700 px-2 py-0.5 rounded-full font-extrabold shrink-0">Top 1 & 2</span>
                     </div>
                     <div id="serie-a-stages-container" class="space-y-4"></div>
                 </div>
 
-                <!-- NHÁNH SERIE B CHI TIẾT -->
+                <!-- NHÁNH SERIE B -->
                 <div class="bg-white border-2 border-emerald-200 p-3.5 sm:p-5 rounded-2xl space-y-4 shadow-md">
                     <div class="flex items-center justify-between pb-2.5 border-b border-emerald-100 gap-2">
                         <h3 class="font-black text-emerald-700 text-xs sm:text-base uppercase flex items-center">
-                            <i class="fa-solid fa-medal mr-2 text-emerald-500"></i> Chi Tiết Nhánh Serie B (Hạng Phụ)
+                            <i class="fa-solid fa-medal mr-2 text-emerald-500"></i> Nhánh Serie B (Hạng Phụ)
                         </h3>
                         <span id="serie-b-badge" class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-extrabold shrink-0">Top 3 & 4</span>
                     </div>
@@ -455,64 +454,63 @@
     </main>
 
     <!-- POPUP MODAL ĐĂNG NHẬP PHÂN QUYỀN (ADMIN vs TRỌNG TÀI) -->
-    <!-- POPUP MODAL ĐĂNG NHẬP PHÂN QUYỀN (ADMIN vs TRỌNG TÀI) -->
-<div id="role-login-modal" onclick="if(event.target === this) closeLoginModal()" class="fixed inset-0 z-[80] flex items-center justify-center bg-stone-900/65 backdrop-blur-sm hidden p-4">
-    <div id="login-modal-card-container" class="bg-white border-2 border-brand-300 w-full max-w-sm p-5 sm:p-6 rounded-2xl shadow-2xl space-y-4 animate-modal-pop transition-colors duration-200">
-        <div class="flex justify-between items-center border-b border-stone-200 pb-2.5">
-            <h3 class="font-extrabold text-stone-900 text-sm sm:text-base flex items-center gap-2">
-                <i class="fa-solid fa-user-shield text-brand-600"></i> Đăng Nhập Hệ Thống
-            </h3>
-            <button type="button" onclick="closeLoginModal()" class="w-8 h-8 rounded-lg text-stone-400 hover:text-stone-700 flex items-center justify-center">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-        
-        <form onsubmit="handleRoleLogin(event)" class="space-y-3" autocomplete="off">
-            <div>
-                <label class="block text-xs font-bold text-stone-600 mb-1">Chọn Vai Trò</label>
-                <select id="login-role-select" class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3 py-2.5 text-xs font-bold text-stone-800 focus:outline-none focus:border-brand-500">
-                    <option value="admin">Quản trị viên (Ban Tổ Chức)</option>
-                    <option value="referee">Trọng tài bắt chính</option>
-                </select>
+    <div id="role-login-modal" onclick="if(event.target === this) closeLoginModal()" class="fixed inset-0 z-[80] flex items-center justify-center bg-stone-900/65 backdrop-blur-sm hidden p-4">
+        <div id="login-modal-card-container" class="bg-white border-2 border-brand-300 w-full max-w-sm p-5 sm:p-6 rounded-2xl shadow-2xl space-y-4 animate-modal-pop transition-colors duration-200">
+            <div class="flex justify-between items-center border-b border-stone-200 pb-2.5">
+                <h3 class="font-extrabold text-stone-900 text-sm sm:text-base flex items-center gap-2">
+                    <i class="fa-solid fa-user-shield text-brand-600"></i> Đăng Nhập Hệ Thống
+                </h3>
+                <button type="button" onclick="closeLoginModal()" class="w-8 h-8 rounded-lg text-stone-400 hover:text-stone-700 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
             
-            <div id="referee-court-wrapper" class="hidden">
-                <label class="block text-xs font-bold text-stone-600 mb-1">Chọn Sân Phụ Trách</label>
-                <select id="login-court-select" class="w-full bg-amber-50 border border-amber-300 rounded-xl px-3 py-2.5 text-xs font-extrabold text-amber-900 focus:outline-none focus:border-brand-500">
-                    <option value="Sân 1">Sân 1</option>
-                    <option value="Sân 2">Sân 2</option>
-                    <option value="Sân 3">Sân 3</option>
-                    <option value="Sân 4">Sân 4</option>
-                    <option value="Sân 5">Sân 5</option>
-                    <option value="Sân 6">Sân 6</option>
-                    <option value="Sân 7">Sân 7</option>
-                    <option value="Sân 8">Sân 8</option>
-                </select>
-            </div>
-
-            <div>
-                <label class="block text-xs font-bold text-stone-600 mb-1">Mật khẩu truy cập</label>
-                <div class="relative">
-                    <input type="password" id="login-password-input" autocomplete="new-password" required placeholder="Nhập mật khẩu..." class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2.5 pr-10 text-sm text-stone-900 focus:outline-none focus:border-brand-500 font-mono tracking-widest transition-colors">
-                    <button type="button" onclick="toggleLoginPasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 p-1" title="Hiện/Ẩn mật khẩu">
-                        <i id="login-eye-icon" class="fa-solid fa-eye text-xs"></i>
-                    </button>
+            <form onsubmit="handleRoleLogin(event)" class="space-y-3" autocomplete="off">
+                <div>
+                    <label class="block text-xs font-bold text-stone-600 mb-1">Chọn Vai Trò</label>
+                    <select id="login-role-select" class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3 py-2.5 text-xs font-bold text-stone-800 focus:outline-none focus:border-brand-500">
+                        <option value="admin">Quản trị viên (Ban Tổ Chức)</option>
+                        <option value="referee">Trọng tài bắt chính</option>
+                    </select>
                 </div>
-                <div class="min-h-[20px] flex items-center mt-1">
-                    <p id="login-error-msg" class="text-xs text-rose-600 font-bold hidden flex items-center gap-1.5">
-                        <i class="fa-solid fa-circle-exclamation"></i>
-                        <span id="login-error-text">Sai mật khẩu! Vui lòng thử lại.</span>
-                    </p>
+                
+                <div id="referee-court-wrapper" class="hidden">
+                    <label class="block text-xs font-bold text-stone-600 mb-1">Chọn Sân Phụ Trách</label>
+                    <select id="login-court-select" class="w-full bg-amber-50 border border-amber-300 rounded-xl px-3 py-2.5 text-xs font-extrabold text-amber-900 focus:outline-none focus:border-brand-500">
+                        <option value="Sân 1">Sân 1</option>
+                        <option value="Sân 2">Sân 2</option>
+                        <option value="Sân 3">Sân 3</option>
+                        <option value="Sân 4">Sân 4</option>
+                        <option value="Sân 5">Sân 5</option>
+                        <option value="Sân 6">Sân 6</option>
+                        <option value="Sân 7">Sân 7</option>
+                        <option value="Sân 8">Sân 8</option>
+                    </select>
                 </div>
-            </div>
 
-            <div class="flex justify-end gap-2 pt-2 border-t border-stone-200">
-                <button type="button" onclick="closeLoginModal()" class="px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold">Hủy</button>
-                <button type="submit" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold shadow-md">Xác Nhận</button>
-            </div>
-        </form>
+                <div>
+                    <label class="block text-xs font-bold text-stone-600 mb-1">Mật khẩu truy cập</label>
+                    <div class="relative">
+                        <input type="password" id="login-password-input" autocomplete="new-password" required placeholder="Nhập mật khẩu..." class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2.5 pr-10 text-sm text-stone-900 focus:outline-none focus:border-brand-500 font-mono tracking-widest transition-colors">
+                        <button type="button" onclick="toggleLoginPasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 p-1" title="Hiện/Ẩn mật khẩu">
+                            <i id="login-eye-icon" class="fa-solid fa-eye text-xs"></i>
+                        </button>
+                    </div>
+                    <div class="min-h-[20px] flex items-center mt-1">
+                        <p id="login-error-msg" class="text-xs text-rose-600 font-bold hidden flex items-center gap-1.5">
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                            <span id="login-error-text">Sai mật khẩu! Vui lòng thử lại.</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2 border-t border-stone-200">
+                    <button type="button" onclick="closeLoginModal()" class="px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold">Hủy</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold shadow-md">Xác Nhận</button>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
 
     <!-- POPUP MODAL THIỆP VINH DANH & CHÚC MỪNG NHÀ VÔ ĐỊCH -->
     <div id="champion-celebration-modal" onclick="if(event.target === this) closeChampionModal()" class="fixed inset-0 z-[65] flex items-center justify-center bg-stone-950/75 backdrop-blur-sm hidden p-3 sm:p-5">
@@ -553,15 +551,7 @@
             </div>
             <div id="detail-modal-content" class="space-y-1.5 overflow-y-auto pr-0.5 flex-1"></div>
             <div class="pt-2 border-t border-amber-200/80 flex items-center justify-between gap-2 shrink-0">
-                <a id="detail-modal-referee-link" href="#" target="_blank" class="flex-1 sm:flex-initial justify-center px-3 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-brand-600 to-orange-600 hover:from-brand-500 hover:to-orange-500 active:scale-95 text-white text-xs font-bold transition shadow-md flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M11 6h9a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-3.5a5.5 5.5 0 1 1-5.5-5Z"/>
-                        <circle cx="9.5" cy="12.5" r="1.5" fill="currentColor"/>
-                        <path d="M4 9.5 2.5 8"/>
-                        <path d="M6.5 6.5 5.5 4.5"/>
-                    </svg>
-                    <span>App Trọng Tài Sân Này</span>
-                </a>
+                <div id="detail-modal-referee-action-wrap" class="flex-1 sm:flex-initial"></div>
                 <button onclick="closeMatchDetailModal()" class="px-4 sm:px-5 py-2 bg-stone-100 hover:bg-stone-200 active:scale-95 text-stone-700 text-xs font-bold rounded-xl border border-stone-300 transition shrink-0">Đóng</button>
             </div>
         </div>
@@ -643,9 +633,9 @@
     <!-- THANH ĐIỀU HƯỚNG DƯỚI ĐÁY KIỂU IPHONE SLIDING PILL -->
     <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-50 px-2 min-[375px]:px-3 pt-2 pb-safe bg-gradient-to-t from-[#FFFBF5] via-[#FFFBF5]/95 to-transparent pointer-events-none select-none">
         <div class="max-w-lg mx-auto flex items-center gap-1.5 min-[375px]:gap-2 pointer-events-auto">
-            <div id="iphone-bottom-dock" class="relative flex-1 min-w-0 bg-white/95 backdrop-blur-xl border border-amber-200/90 rounded-full shadow-[0_8px_28px_rgba(217,119,6,0.2)] p-1 grid grid-cols-5 items-center overflow-hidden touch-pan-y">
+            <div id="iphone-bottom-dock" class="relative flex-1 min-w-0 bg-white/95 backdrop-blur-xl border border-amber-200/90 rounded-full shadow-[0_8px_28px_rgba(217,119,6,0.2)] p-1 grid grid-cols-4 items-center overflow-hidden touch-pan-y">
                 
-                <div id="iphone-nav-pill" class="absolute top-1 bottom-1 left-1 rounded-full bg-gradient-to-b from-rose-50 to-rose-100/90 border border-brand-200/80 shadow-xs pointer-events-none z-0" style="width: calc(20% - 2px); transition: transform 0.36s cubic-bezier(0.32, 1.15, 0.4, 1);"></div>
+                <div id="iphone-nav-pill" class="absolute top-1 bottom-1 left-1 rounded-full bg-gradient-to-b from-rose-50 to-rose-100/90 border border-brand-200/80 shadow-xs pointer-events-none z-0" style="width: calc(25% - 2px); transition: transform 0.36s cubic-bezier(0.32, 1.15, 0.4, 1);"></div>
 
                 <button type="button" onclick="switchTab('home')" data-tab="home" data-idx="0" class="bottom-nav-btn relative z-10 min-w-0 flex flex-col items-center justify-center py-1 px-0.5 rounded-full transition-transform duration-150 text-brand-600">
                     <i class="fa-solid fa-house text-[13px] min-[375px]:text-sm sm:text-base mb-0.5 transition-transform duration-200"></i>
@@ -664,18 +654,17 @@
 
                 <button type="button" onclick="switchTab('bracket')" data-tab="bracket" data-idx="3" class="bottom-nav-btn relative z-10 min-w-0 flex flex-col items-center justify-center py-1 px-0.5 rounded-full transition-transform duration-150 text-stone-500">
                     <i class="fa-solid fa-sitemap text-[13px] min-[375px]:text-sm sm:text-base mb-0.5 transition-transform duration-200"></i>
-                    <span class="w-full text-center text-[9px] min-[375px]:text-[10px] sm:text-[11px] font-semibold tracking-tight leading-none truncate">Chia nhánh</span>
+                    <span class="w-full text-center text-[9px] min-[375px]:text-[10px] sm:text-[11px] font-semibold tracking-tight leading-none truncate">Sơ đồ đấu</span>
                 </button>
 
-                <!-- TAB ĐỘI TUYỂN VẪN HIỆN NHƯNG BẢO MẬT BÊN TRONG -->
-                <button type="button" onclick="switchTab('teams')" data-tab="teams" data-idx="4" class="bottom-nav-btn relative z-10 min-w-0 flex flex-col items-center justify-center py-1 px-0.5 rounded-full transition-transform duration-150 text-stone-500">
+                <button id="bottom-nav-teams" type="button" onclick="switchTab('teams')" data-tab="teams" data-idx="4" class="bottom-nav-btn hidden relative z-10 min-w-0 flex flex-col items-center justify-center py-1 px-0.5 rounded-full transition-transform duration-150 text-stone-500">
                     <i class="fa-solid fa-users text-[13px] min-[375px]:text-sm sm:text-base mb-0.5 transition-transform duration-200"></i>
                     <span class="w-full text-center text-[9px] min-[375px]:text-[10px] sm:text-[11px] font-semibold tracking-tight leading-none truncate">Đội tuyển</span>
                 </button>
             </div>
 
-            <!-- NÚT QUẢN TRỊ DƯỚI ĐÁY -->
-            <button type="button" onclick="switchTab('admin')" data-tab="admin" title="Quản trị giải đấu" class="bottom-admin-btn w-[48px] h-[48px] min-[375px]:w-[52px] min-[375px]:h-[52px] rounded-full bg-white/95 backdrop-blur-xl border border-amber-300 shadow-[0_8px_25px_rgba(217,119,6,0.2)] flex flex-col items-center justify-center text-amber-600 hover:bg-amber-50 active:scale-95 transition-all shrink-0">
+            <!-- NÚT QUẢN TRỊ DƯỚI ĐÁY (CHỈ HIỆN KHI ĐĂNG NHẬP ADMIN) -->
+            <button id="bottom-admin-btn" type="button" onclick="switchTab('admin')" data-tab="admin" title="Quản trị giải đấu" class="bottom-admin-btn hidden w-[48px] h-[48px] min-[375px]:w-[52px] min-[375px]:h-[52px] rounded-full bg-white/95 backdrop-blur-xl border border-amber-300 shadow-[0_8px_25px_rgba(217,119,6,0.2)] flex flex-col items-center justify-center text-amber-600 hover:bg-amber-50 active:scale-95 transition-all shrink-0">
                 <i class="fa-solid fa-gear text-sm min-[375px]:text-base"></i>
                 <span class="text-[8px] min-[375px]:text-[9px] font-extrabold leading-none mt-0.5">Quản trị</span>
             </button>
@@ -735,144 +724,228 @@
 
         let currentOpenDetailModalCtx = null;
         let __celebratedChampionKey = '';
+        let selectedTeamFilterForBracket = null;
+        let currentTreeSeries = 'A';
 
         // =========================================================================
-        // QUẢN LÝ PHÂN QUYỀN ĐĂNG NHẬP (BẢO MẬT DANH SÁCH CLB & VĐV)
+        // QUẢN LÝ PHÂN QUYỀN ĐĂNG NHẬP & KHÓA CHỨC NĂNG KHI CHƯA ĐĂNG NHẬP
         // =========================================================================
         function getCurrentUserRole() {
             return localStorage.getItem('PICKLEBALL_USER_ROLE') || 'guest';
         }
 
+        function isAdminLoggedIn() {
+            return getCurrentUserRole() === 'admin';
+        }
+
+        function getActiveDockTabs() {
+            return isAdminLoggedIn()
+                ? ['home', 'matches', 'standings', 'bracket', 'teams']
+                : ['home', 'matches', 'standings', 'bracket'];
+        }
+
         function applyRoleUI() {
-            const role = getCurrentUserRole();
+            const isAdmin = isAdminLoggedIn();
             const authNavBtn = document.getElementById('auth-nav-btn');
             const authMobileBtnText = document.getElementById('auth-mobile-btn-text');
 
-            if (role === 'admin') {
+            if (isAdmin) {
                 if (authNavBtn) authNavBtn.innerHTML = `<i class="fa-solid fa-right-from-bracket mr-1.5 text-rose-600"></i>Đăng xuất Admin`;
                 if (authMobileBtnText) authMobileBtnText.textContent = `Đăng xuất Admin`;
             } else {
                 if (authNavBtn) authNavBtn.innerHTML = `<i class="fa-solid fa-right-to-bracket mr-1.5"></i>Đăng nhập`;
                 if (authMobileBtnText) authMobileBtnText.textContent = `Đăng nhập Admin / Trọng tài`;
             }
+
+            // Ẩn/hiện các tab quản lý (Đội tuyển & Quản trị)
+            document.getElementById('nav-btn-teams')?.classList.toggle('hidden', !isAdmin);
+            document.getElementById('nav-btn-admin')?.classList.toggle('hidden', !isAdmin);
+            document.getElementById('bottom-nav-teams')?.classList.toggle('hidden', !isAdmin);
+            document.getElementById('bottom-admin-btn')?.classList.toggle('hidden', !isAdmin);
+
+            // Điều chỉnh số cột thanh dock dưới đáy trên mobile
+            const dock = document.getElementById('iphone-bottom-dock');
+            if (dock) {
+                dock.classList.remove('grid-cols-4', 'grid-cols-5');
+                dock.classList.add(isAdmin ? 'grid-cols-5' : 'grid-cols-4');
+            }
+
+            // Chỉ hiện nút Xuất Excel khi đã đăng nhập Admin
+            const standingsToolbar = document.getElementById('standings-toolbar-actions');
+            if (standingsToolbar) {
+                standingsToolbar.innerHTML = `
+                    ${isAdmin ? `
+                        <button onclick="exportResultToExcel()" class="flex-1 sm:flex-initial justify-center px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold text-xs transition shadow-sm flex items-center">
+                            <i class="fa-solid fa-file-excel mr-1.5"></i> Xuất Excel
+                        </button>
+                    ` : ''}
+                    <button onclick="renderStandings()" class="px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-amber-50 active:scale-95 text-stone-600 transition text-xs font-bold border border-stone-200" title="Làm mới"><i class="fa-solid fa-rotate"></i></button>
+                `;
+            }
+        }
+
+        function renderRefereeAccessAction(courtName, variant = 'inline') {
+            if (isAdminLoggedIn()) {
+                if (variant === 'modal') {
+                    return `
+                        <a href="referee.html?court=${encodeURIComponent(courtName)}" target="_blank" class="w-full sm:w-auto justify-center px-3 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-brand-600 to-orange-600 hover:from-brand-500 hover:to-orange-500 active:scale-95 text-white text-xs font-bold transition shadow-md flex items-center gap-1.5">
+                            <i class="fa-solid fa-whistle"></i>
+                            <span>Mở App Trọng Tài (${courtName})</span>
+                        </a>
+                    `;
+                }
+                if (variant === 'icon-btn') {
+                    return `
+                        <a href="referee.html?court=${encodeURIComponent(courtName)}" target="_blank" class="py-2.5 sm:py-2 px-3.5 rounded-xl bg-brand-600 hover:bg-brand-500 active:scale-95 text-white text-xs font-bold transition flex items-center justify-center shadow-sm" title="Mở bảng điểm Trọng Tài">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        </a>
+                    `;
+                }
+                return `<a href="referee.html?court=${encodeURIComponent(courtName)}" target="_blank" class="font-extrabold text-brand-600 hover:text-brand-700 py-1 px-2 -mr-2 rounded-lg active:bg-rose-50 shrink-0">Trọng Tài <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i></a>`;
+            }
+
+            // Nếu chưa đăng nhập -> Khóa app trọng tài, bấm vào yêu cầu đăng nhập
+            if (variant === 'modal') {
+                return `
+                    <button type="button" onclick="openRefereeLoginForCourt('${courtName}')" class="w-full sm:w-auto justify-center px-3 sm:px-4 py-2 rounded-xl bg-stone-100 hover:bg-amber-50 active:scale-95 text-stone-700 border border-stone-300 text-xs font-extrabold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-lock text-amber-600"></i>
+                        <span>Khóa App Trọng Tài (Đăng nhập)</span>
+                    </button>
+                `;
+            }
+            if (variant === 'icon-btn') {
+                return `
+                    <button type="button" onclick="openRefereeLoginForCourt('${courtName}')" class="py-2.5 sm:py-2 px-3.5 rounded-xl bg-stone-100 hover:bg-amber-50 active:scale-95 text-stone-600 border border-stone-300 text-xs font-bold transition flex items-center justify-center" title="App Trọng Tài đã khóa - Bấm để đăng nhập">
+                        <i class="fa-solid fa-lock text-amber-600"></i>
+                    </button>
+                `;
+            }
+            return `<button type="button" onclick="openRefereeLoginForCourt('${courtName}')" class="font-bold text-stone-400 hover:text-amber-700 py-1 px-2 -mr-2 rounded-lg shrink-0 flex items-center gap-1" title="Khóa App Trọng Tài"><i class="fa-solid fa-lock text-[10px] text-amber-600"></i> Trọng Tài</button>`;
+        }
+
+        function openRefereeLoginForCourt(courtName) {
+            openLoginModal();
+            const roleSel = document.getElementById('login-role-select');
+            const courtWrapper = document.getElementById('referee-court-wrapper');
+            const courtSel = document.getElementById('login-court-select');
+            if (roleSel) roleSel.value = 'referee';
+            if (courtWrapper) courtWrapper.classList.remove('hidden');
+            if (courtSel && courtName) courtSel.value = courtName;
         }
 
         function openLoginModal() {
-        const currentRole = getCurrentUserRole();
-        if (currentRole === 'admin') {
-            localStorage.setItem('PICKLEBALL_USER_ROLE', 'guest');
-            showToast('🔒 Đã đăng xuất khỏi hệ thống quản trị!');
-            applyRoleUI();
-            initApp();
-            return;
-        }
-        
-        document.getElementById('role-login-modal').classList.remove('hidden');
-        document.getElementById('role-login-modal').classList.add('flex');
-        
-        const pwdInput = document.getElementById('login-password-input');
-        const errorMsg = document.getElementById('login-error-msg');
-        const modalCard = document.getElementById('login-modal-card-container');
-        const eyeIcon = document.getElementById('login-eye-icon');
-
-        if (errorMsg) errorMsg.classList.add('hidden');
-        if (modalCard) {
-            modalCard.classList.remove('animate-shake', 'border-rose-500', 'shadow-rose-500/25');
-            modalCard.classList.add('border-brand-300');
-        }
-        if (eyeIcon) eyeIcon.className = 'fa-solid fa-eye text-xs';
-
-        if (pwdInput) {
-            pwdInput.value = '';
-            pwdInput.type = 'password';
-            pwdInput.classList.remove('border-rose-500', 'bg-rose-50/60');
-            setTimeout(() => {
-                pwdInput.focus();
-            }, 50);
-        }
-    }
-
-    function closeLoginModal() {
-        document.getElementById('role-login-modal').classList.add('hidden');
-        document.getElementById('role-login-modal').classList.remove('flex');
-    }
-
-    function toggleLoginPasswordVisibility() {
-        const pwdInput = document.getElementById('login-password-input');
-        const eyeIcon = document.getElementById('login-eye-icon');
-        if (!pwdInput || !eyeIcon) return;
-
-        if (pwdInput.type === 'password') {
-            pwdInput.type = 'text';
-            eyeIcon.className = 'fa-solid fa-eye-slash text-xs text-brand-600';
-        } else {
-            pwdInput.type = 'password';
-            eyeIcon.className = 'fa-solid fa-eye text-xs';
-        }
-        pwdInput.focus();
-    }
-
-    document.getElementById('login-role-select').addEventListener('change', function() {
-        const courtWrapper = document.getElementById('referee-court-wrapper');
-        if (this.value === 'referee') {
-            courtWrapper.classList.remove('hidden');
-        } else {
-            courtWrapper.classList.add('hidden');
-        }
-    });
-
-    function triggerLoginErrorShake(msgText) {
-        const pwdInput = document.getElementById('login-password-input');
-        const modalCard = document.getElementById('login-modal-card-container');
-        const errorMsg = document.getElementById('login-error-msg');
-        const errorText = document.getElementById('login-error-text');
-
-        if (errorText) errorText.textContent = msgText;
-        if (errorMsg) errorMsg.classList.remove('hidden');
-        if (pwdInput) pwdInput.classList.add('border-rose-500', 'bg-rose-50/60');
-
-        if (modalCard) {
-            modalCard.classList.remove('border-brand-300', 'animate-shake');
-            void modalCard.offsetWidth; // Reset animation
-            modalCard.classList.add('animate-shake', 'border-rose-500', 'shadow-rose-500/25');
-            setTimeout(() => {
-                modalCard.classList.remove('animate-shake');
-            }, 450);
-        }
-
-        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-        if (pwdInput) {
-            pwdInput.focus();
-            pwdInput.select();
-        }
-    }
-
-    function handleRoleLogin(event) {
-        event.preventDefault();
-        const role = document.getElementById('login-role-select').value;
-        const pwdInput = document.getElementById('login-password-input');
-        const pwd = pwdInput ? pwdInput.value.trim() : '';
-        const court = document.getElementById('login-court-select').value;
-
-        if (role === 'admin') {
-            if (pwd === ADMIN_PASSWORD) {
-                localStorage.setItem('PICKLEBALL_USER_ROLE', 'admin');
-                closeLoginModal();
+            if (isAdminLoggedIn()) {
+                localStorage.setItem('PICKLEBALL_USER_ROLE', 'guest');
+                showToast('🔒 Đã đăng xuất khỏi hệ thống quản trị!');
                 applyRoleUI();
+                const curTab = localStorage.getItem('CAY_COI_ACTIVE_TAB') || 'home';
+                if (curTab === 'admin' || curTab === 'teams') {
+                    switchTab('home');
+                }
                 initApp();
-                showToast('🔓 Đăng nhập thành công quyền Quản trị viên!');
-            } else {
-                triggerLoginErrorShake('Sai mật khẩu Quản trị viên!');
+                return;
             }
-        } else if (role === 'referee') {
-            if (pwd === REFEREE_PASSWORD || pwd === ADMIN_PASSWORD) {
-                closeLoginModal();
-                window.location.href = `referee.html?court=${encodeURIComponent(court)}`;
-            } else {
-                triggerLoginErrorShake('Sai mật khẩu Trọng tài!');
+            
+            document.getElementById('role-login-modal').classList.remove('hidden');
+            document.getElementById('role-login-modal').classList.add('flex');
+            
+            const pwdInput = document.getElementById('login-password-input');
+            const errorMsg = document.getElementById('login-error-msg');
+            const modalCard = document.getElementById('login-modal-card-container');
+            const eyeIcon = document.getElementById('login-eye-icon');
+
+            if (errorMsg) errorMsg.classList.add('hidden');
+            if (modalCard) {
+                modalCard.classList.remove('animate-shake', 'border-rose-500', 'shadow-rose-500/25');
+                modalCard.classList.add('border-brand-300');
+            }
+            if (eyeIcon) eyeIcon.className = 'fa-solid fa-eye text-xs';
+
+            if (pwdInput) {
+                pwdInput.value = '';
+                pwdInput.type = 'password';
+                pwdInput.classList.remove('border-rose-500', 'bg-rose-50/60');
+                setTimeout(() => { pwdInput.focus(); }, 50);
             }
         }
-    }
+
+        function closeLoginModal() {
+            document.getElementById('role-login-modal').classList.add('hidden');
+            document.getElementById('role-login-modal').classList.remove('flex');
+        }
+
+        function toggleLoginPasswordVisibility() {
+            const pwdInput = document.getElementById('login-password-input');
+            const eyeIcon = document.getElementById('login-eye-icon');
+            if (!pwdInput || !eyeIcon) return;
+
+            if (pwdInput.type === 'password') {
+                pwdInput.type = 'text';
+                eyeIcon.className = 'fa-solid fa-eye-slash text-xs text-brand-600';
+            } else {
+                pwdInput.type = 'password';
+                eyeIcon.className = 'fa-solid fa-eye text-xs';
+            }
+            pwdInput.focus();
+        }
+
+        document.getElementById('login-role-select').addEventListener('change', function() {
+            const courtWrapper = document.getElementById('referee-court-wrapper');
+            if (this.value === 'referee') {
+                courtWrapper.classList.remove('hidden');
+            } else {
+                courtWrapper.classList.add('hidden');
+            }
+        });
+
+        function triggerLoginErrorShake(msgText) {
+            const pwdInput = document.getElementById('login-password-input');
+            const modalCard = document.getElementById('login-modal-card-container');
+            const errorMsg = document.getElementById('login-error-msg');
+            const errorText = document.getElementById('login-error-text');
+
+            if (errorText) errorText.textContent = msgText;
+            if (errorMsg) errorMsg.classList.remove('hidden');
+            if (pwdInput) pwdInput.classList.add('border-rose-500', 'bg-rose-50/60');
+
+            if (modalCard) {
+                modalCard.classList.remove('border-brand-300', 'animate-shake');
+                void modalCard.offsetWidth;
+                modalCard.classList.add('animate-shake', 'border-rose-500', 'shadow-rose-500/25');
+                setTimeout(() => { modalCard.classList.remove('animate-shake'); }, 450);
+            }
+
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            if (pwdInput) { pwdInput.focus(); pwdInput.select(); }
+        }
+
+        function handleRoleLogin(event) {
+            event.preventDefault();
+            const role = document.getElementById('login-role-select').value;
+            const pwdInput = document.getElementById('login-password-input');
+            const pwd = pwdInput ? pwdInput.value.trim() : '';
+            const court = document.getElementById('login-court-select').value;
+
+            if (role === 'admin') {
+                if (pwd === ADMIN_PASSWORD) {
+                    localStorage.setItem('PICKLEBALL_USER_ROLE', 'admin');
+                    closeLoginModal();
+                    applyRoleUI();
+                    initApp();
+                    showToast('🔓 Đăng nhập thành công quyền Quản trị viên!');
+                } else {
+                    triggerLoginErrorShake('Sai mật khẩu Quản trị viên!');
+                }
+            } else if (role === 'referee') {
+                if (pwd === REFEREE_PASSWORD || pwd === ADMIN_PASSWORD) {
+                    closeLoginModal();
+                    window.location.href = `referee.html?court=${encodeURIComponent(court)}`;
+                } else {
+                    triggerLoginErrorShake('Sai mật khẩu Trọng tài!');
+                }
+            }
+        }
+
         function evaluateTieStatus(tieMatches) {
             let c1Wins = 0;
             let c2Wins = 0;
@@ -915,16 +988,12 @@
                 if (st.isClinched) {
                     tie.status = 'FINISHED';
                     tMatches.forEach(m => {
-                        if (m.status !== 'FINISHED') {
-                            m.status = 'SKIPPED';
-                        }
+                        if (m.status !== 'FINISHED') m.status = 'SKIPPED';
                     });
                 } else {
                     tie.status = st.isCompleted ? 'FINISHED' : (st.isLive ? 'LIVE' : 'UPCOMING');
                     tMatches.forEach(m => {
-                        if (m.status === 'SKIPPED') {
-                            m.status = 'UPCOMING';
-                        }
+                        if (m.status === 'SKIPPED') m.status = 'UPCOMING';
                     });
                 }
             });
@@ -983,7 +1052,7 @@
 
         let pendingAction = null;
         function openPasswordModal(title, actionCallback) {
-            if (getCurrentUserRole() === 'admin') {
+            if (isAdminLoggedIn()) {
                 actionCallback();
                 return;
             }
@@ -1048,14 +1117,8 @@
         }
 
         function autoBalanceGroupsAndSchedule() {
-            if (getCurrentUserRole() !== 'admin') {
-                openLoginModal();
-                return;
-            }
-            if (teams.length < 2) {
-                showToast('Cần ít nhất 2 đội tuyển để chia bảng & xếp lịch!', true);
-                return;
-            }
+            if (!isAdminLoggedIn()) { openLoginModal(); return; }
+            if (teams.length < 2) { showToast('Cần ít nhất 2 đội tuyển để chia bảng & xếp lịch!', true); return; }
 
             const modeVal = document.getElementById('auto-group-count-select')?.value || 'AUTO';
             let numGroups = modeVal === 'AUTO' ? suggestOptimalGroupCount(teams.length) : parseInt(modeVal, 10);
@@ -1080,10 +1143,7 @@
 
         function handleAddCustomGroup(e) {
             e.preventDefault();
-            if (getCurrentUserRole() !== 'admin') {
-                openLoginModal();
-                return;
-            }
+            if (!isAdminLoggedIn()) { openLoginModal(); return; }
             const input = document.getElementById('custom-group-name-input');
             if (!input) return;
             const gName = input.value.trim();
@@ -1101,10 +1161,7 @@
         }
 
         function assignTeamToGroup(teamId, newGroupName) {
-            if (getCurrentUserRole() !== 'admin') {
-                openLoginModal();
-                return;
-            }
+            if (!isAdminLoggedIn()) { openLoginModal(); return; }
             const team = teams.find(t => t.id === teamId);
             if (!team) return;
             team.group = newGroupName;
@@ -1117,21 +1174,11 @@
         }
 
         function removeCustomGroup(groupName) {
-            if (getCurrentUserRole() !== 'admin') {
-                openLoginModal();
-                return;
-            }
+            if (!isAdminLoggedIn()) { openLoginModal(); return; }
             const allGroups = getAllGroupNames();
-            if (allGroups.length <= 1) {
-                showToast('Phải giữ lại ít nhất 1 bảng đấu!', true);
-                return;
-            }
+            if (allGroups.length <= 1) { showToast('Phải giữ lại ít nhất 1 bảng đấu!', true); return; }
             const fallbackGroup = allGroups.find(g => g !== groupName) || 'Bảng A';
-            teams.forEach(t => {
-                if ((t.group || 'Bảng A') === groupName) {
-                    t.group = fallbackGroup;
-                }
-            });
+            teams.forEach(t => { if ((t.group || 'Bảng A') === groupName) t.group = fallbackGroup; });
             appState.customGroups = allGroups.filter(g => g !== groupName);
             saveAppState();
             showToast(`🗑️ Đã xóa ${groupName} (các đội được chuyển sang ${fallbackGroup})`);
@@ -1166,14 +1213,8 @@
         }
 
         function generateScheduleByGroups(fromAutoBalance = false) {
-            if (getCurrentUserRole() !== 'admin') {
-                openLoginModal();
-                return;
-            }
-            if (teams.length < 2) {
-                showToast('Cần ít nhất 2 đội tuyển để xếp lịch!', true);
-                return;
-            }
+            if (!isAdminLoggedIn()) { openLoginModal(); return; }
+            if (teams.length < 2) { showToast('Cần ít nhất 2 đội tuyển để xếp lịch!', true); return; }
 
             const groupNames = getAllGroupNames();
             let rawPairingsPool = [];
@@ -1183,9 +1224,7 @@
                 if (groupTeams.length < 2) return;
 
                 let list = [...groupTeams];
-                if (list.length % 2 !== 0) {
-                    list.push({ id: 'dummy_bye', name: 'BYE (Nghỉ)' });
-                }
+                if (list.length % 2 !== 0) list.push({ id: 'dummy_bye', name: 'BYE (Nghỉ)' });
 
                 const numTeams = list.length;
                 const rounds = numTeams - 1;
@@ -1196,13 +1235,7 @@
                         let teamA = list[i];
                         let teamB = list[numTeams - 1 - i];
                         if (teamA.id !== 'dummy_bye' && teamB.id !== 'dummy_bye') {
-                            rawPairingsPool.push({
-                                group: gName,
-                                groupOrder: gIdx,
-                                roundNum: round + 1,
-                                home: teamA,
-                                away: teamB
-                            });
+                            rawPairingsPool.push({ group: gName, groupOrder: gIdx, roundNum: round + 1, home: teamA, away: teamB });
                         }
                     }
                     let temp = list.pop();
@@ -1210,15 +1243,9 @@
                 }
             });
 
-            if (rawPairingsPool.length === 0) {
-                showToast('Mỗi bảng cần ít nhất 2 CLB để tạo cặp đấu!', true);
-                return;
-            }
+            if (rawPairingsPool.length === 0) { showToast('Mỗi bảng cần ít nhất 2 CLB để tạo cặp đấu!', true); return; }
 
-            rawPairingsPool.sort((a, b) => {
-                if (a.roundNum !== b.roundNum) return a.roundNum - b.roundNum;
-                return a.groupOrder - b.groupOrder;
-            });
+            rawPairingsPool.sort((a, b) => (a.roundNum !== b.roundNum) ? a.roundNum - b.roundNum : a.groupOrder - b.groupOrder);
 
             const maxCourtsPerWave = COURTS_LIST.length;
             const waves = [];
@@ -1228,15 +1255,10 @@
                 for (const w of waves) {
                     if (w.pairings.length >= maxCourtsPerWave) continue;
                     const isClubBusy = w.pairings.some(p =>
-                        p.home.id === pair.home.id ||
-                        p.away.id === pair.home.id ||
-                        p.home.id === pair.away.id ||
-                        p.away.id === pair.away.id
+                        p.home.id === pair.home.id || p.away.id === pair.home.id ||
+                        p.home.id === pair.away.id || p.away.id === pair.away.id
                     );
-                    if (!isClubBusy) {
-                        placedWave = w;
-                        break;
-                    }
+                    if (!isClubBusy) { placedWave = w; break; }
                 }
 
                 if (!placedWave) {
@@ -1253,24 +1275,11 @@
                 w.pairings.forEach((pair, slotIdx) => {
                     const assignedCourt = COURTS_LIST[slotIdx % COURTS_LIST.length];
                     const tieId = `tie_grp_${tieCounter++}_${Math.random().toString(36).slice(2, 6)}`;
-                    const tieMatches = buildFiveMatchesForTie(
-                        tieId,
-                        `${pair.group} • Lượt ${w.waveNum}`,
-                        w.waveNum,
-                        assignedCourt,
-                        pair.home.id,
-                        pair.away.id,
-                        null
-                    );
+                    const tieMatches = buildFiveMatchesForTie(tieId, `${pair.group} • Lượt ${w.waveNum}`, w.waveNum, assignedCourt, pair.home.id, pair.away.id, null);
 
                     generatedTies.push({
-                        id: tieId,
-                        group: pair.group,
-                        wave: w.waveNum,
-                        court: assignedCourt,
-                        club1Id: pair.home.id,
-                        club2Id: pair.away.id,
-                        matches: tieMatches
+                        id: tieId, group: pair.group, wave: w.waveNum, court: assignedCourt,
+                        club1Id: pair.home.id, club2Id: pair.away.id, matches: tieMatches
                     });
                 });
             });
@@ -1288,7 +1297,7 @@
             const boardEl = document.getElementById('admin-groups-board');
             if (!boardEl) return;
 
-            if (getCurrentUserRole() !== 'admin') {
+            if (!isAdminLoggedIn()) {
                 boardEl.innerHTML = `<div class="col-span-full text-center py-6 text-stone-400 text-xs italic">🔒 Vui lòng đăng nhập quyền Quản trị viên để cấu hình bảng đấu.</div>`;
                 return;
             }
@@ -1352,10 +1361,7 @@
         }
 
         function confirmResetDefault() {
-            if (getCurrentUserRole() !== 'admin') {
-                openLoginModal();
-                return;
-            }
+            if (!isAdminLoggedIn()) { openLoginModal(); return; }
             openPasswordModal("Khôi phục dữ liệu mẫu ban đầu", () => {
                 appState = { ties: JSON.parse(JSON.stringify(DEFAULT_TIES)), clubs: JSON.parse(JSON.stringify(DEFAULT_TEAMS)), customGroups: ['Bảng A', 'Bảng B'], activeLiveMatchId: 'm1' };
                 teams = appState.clubs;
@@ -1367,10 +1373,7 @@
         }
 
         function promptDeleteMatch(matchId) {
-            if (getCurrentUserRole() !== 'admin') {
-                openLoginModal();
-                return;
-            }
+            if (!isAdminLoggedIn()) { openLoginModal(); return; }
             openPasswordModal("Xác nhận xóa trận đấu", () => {
                 if (appState.ties) {
                     appState.ties.forEach(t => { if (t.matches) t.matches = t.matches.filter(m => m.id !== matchId); });
@@ -1382,23 +1385,22 @@
         }
 
         // =========================================================================
-        // THANH ĐIỀU HƯỚNG DƯỚI ĐÁY KIỂU IPHONE SLIDING PILL (VUỐT TRƯỢT MƯỢT MÀ)
+        // THANH ĐIỀU HƯỚNG DƯỚI ĐÁY KIỂU IPHONE SLIDING PILL (TỰ CO GIÃN THEO QUYỀN)
         // =========================================================================
-        const DOCK_TABS = ['home', 'matches', 'standings', 'bracket', 'teams'];
-
         function updateIphoneDockVisual(activeIdx, customTranslatePx = null, isDragging = false) {
             const dock = document.getElementById('iphone-bottom-dock');
             const pill = document.getElementById('iphone-nav-pill');
-            const btns = document.querySelectorAll('.bottom-nav-btn');
+            const activeTabs = getActiveDockTabs();
+            const btns = Array.from(document.querySelectorAll('.bottom-nav-btn')).filter(b => activeTabs.includes(b.getAttribute('data-tab')));
             if (!dock || !pill) return;
 
-            if (activeIdx < 0 || activeIdx >= DOCK_TABS.length) {
+            if (activeIdx < 0 || activeIdx >= activeTabs.length) {
                 pill.style.opacity = '0';
             } else {
                 pill.style.opacity = '1';
                 const innerWidth = Math.max(0, dock.clientWidth - 8);
                 if (innerWidth > 0) {
-                    const slotWidth = innerWidth / DOCK_TABS.length;
+                    const slotWidth = innerWidth / activeTabs.length;
                     pill.style.width = `${slotWidth}px`;
                     pill.style.transition = isDragging ? 'none' : 'transform 0.36s cubic-bezier(0.32, 1.15, 0.4, 1), opacity 0.2s ease';
                     const targetX = customTranslatePx !== null ? customTranslatePx : (activeIdx * slotWidth);
@@ -1414,18 +1416,12 @@
                     btn.classList.remove('text-stone-500');
                     btn.classList.add('text-brand-600');
                     if (icon) icon.style.transform = 'scale(1.12) translateY(-1px)';
-                    if (label) {
-                        label.classList.remove('font-semibold');
-                        label.classList.add('font-extrabold');
-                    }
+                    if (label) { label.classList.remove('font-semibold'); label.classList.add('font-extrabold'); }
                 } else {
                     btn.classList.remove('text-brand-600');
                     btn.classList.add('text-stone-500');
                     if (icon) icon.style.transform = 'scale(1)';
-                    if (label) {
-                        label.classList.remove('font-extrabold');
-                        label.classList.add('font-semibold');
-                    }
+                    if (label) { label.classList.remove('font-extrabold'); label.classList.add('font-semibold'); }
                 }
             });
         }
@@ -1441,15 +1437,17 @@
             let lastHoveredIdx = 0;
 
             const getIdxFromClientX = (clientX) => {
+                const tabs = getActiveDockTabs();
                 const rect = dock.getBoundingClientRect();
                 const relX = Math.max(0, Math.min(rect.width - 1, clientX - rect.left));
-                return Math.floor((relX / rect.width) * DOCK_TABS.length);
+                return Math.floor((relX / rect.width) * tabs.length);
             };
 
             const getPillXFromClientX = (clientX) => {
+                const tabs = getActiveDockTabs();
                 const rect = dock.getBoundingClientRect();
                 const innerWidth = rect.width - 8;
-                const slotWidth = innerWidth / DOCK_TABS.length;
+                const slotWidth = innerWidth / tabs.length;
                 const rawX = clientX - rect.left - 4 - (slotWidth / 2);
                 return Math.max(0, Math.min(innerWidth - slotWidth, rawX));
             };
@@ -1465,9 +1463,7 @@
             dock.addEventListener('touchmove', (e) => {
                 if (!isTouching || !e.touches || e.touches.length === 0) return;
                 const curX = e.touches[0].clientX;
-                if (Math.abs(curX - startX) > 6) {
-                    hasDragged = true;
-                }
+                if (Math.abs(curX - startX) > 6) hasDragged = true;
                 if (hasDragged) {
                     const idx = getIdxFromClientX(curX);
                     const pillX = getPillXFromClientX(curX);
@@ -1483,19 +1479,20 @@
                 if (!isTouching) return;
                 isTouching = false;
                 if (hasDragged) {
-                    const targetTab = DOCK_TABS[lastHoveredIdx] || 'home';
+                    const tabs = getActiveDockTabs();
+                    const targetTab = tabs[lastHoveredIdx] || 'home';
                     switchTab(targetTab);
                 }
             }, { passive: true });
 
             window.addEventListener('resize', () => {
                 const curTab = localStorage.getItem('CAY_COI_ACTIVE_TAB') || 'home';
-                updateIphoneDockVisual(DOCK_TABS.indexOf(curTab), null, false);
+                updateIphoneDockVisual(getActiveDockTabs().indexOf(curTab), null, false);
             });
         }
 
         function switchTab(tabId) {
-            if ((tabId === 'admin' || tabId === 'teams') && getCurrentUserRole() !== 'admin') {
+            if ((tabId === 'admin' || tabId === 'teams') && !isAdminLoggedIn()) {
                 openLoginModal();
                 return;
             }
@@ -1516,7 +1513,7 @@
                 }
             });
 
-            const dockIdx = DOCK_TABS.indexOf(tabId);
+            const dockIdx = getActiveDockTabs().indexOf(tabId);
             updateIphoneDockVisual(dockIdx, null, false);
 
             const adminBtn = document.querySelector('.bottom-admin-btn');
@@ -1596,9 +1593,9 @@
             let html = '';
 
             if (champs.serieA) {
-                const playersHtml = (champs.serieA.champion.players || []).map(p => 
+                const playersHtml = isAdminLoggedIn() ? (champs.serieA.champion.players || []).map(p => 
                     `<span class="px-2 py-0.5 rounded-full bg-white/90 border border-amber-300 text-stone-800 text-[11px] font-bold">${p.name}</span>`
-                ).join('');
+                ).join('') : '';
 
                 html += `
                     <div class="bg-gradient-to-br from-amber-100/90 via-yellow-50 to-rose-100/80 border-2 border-amber-400 rounded-2xl p-4 space-y-2 shadow-inner">
@@ -1698,9 +1695,7 @@
                 bracketBanner.classList.remove('hidden');
             }
         }
-// =========================================================================
-        // CÁC HÀM HIỂN THỊ & XỬ LÝ DỮ LIỆU (DÁN VÀO NGAY TRƯỚC HÀM initApp)
-        // =========================================================================
+
         function renderStats() {
             const allTies = getAllStructuredTies();
             const liveCount = allTies.filter(t => evaluateTieStatus(t.matches).isLive).length;
@@ -1758,7 +1753,7 @@
                             </div>
                             <div class="py-1.5 text-center text-xs text-stone-400 italic">Chưa có lịch thi đấu</div>
                             <div class="pt-2 border-t border-stone-100 flex justify-end text-[11px]">
-                                <a href="referee.html?court=${encodeURIComponent(courtName)}" target="_blank" class="text-brand-600 hover:text-brand-700 font-bold">Mở Trọng Tài <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i></a>
+                                ${renderRefereeAccessAction(courtName, 'inline')}
                             </div>
                         </div>
                     `;
@@ -1799,7 +1794,7 @@
                             </div>
                             <div class="flex justify-between items-center pt-2 border-t border-stone-100 text-xs gap-2">
                                 <button onclick="openCourtDetailModal('${courtName}', '${activeTie.club1Id}', '${activeTie.club2Id}', '${activeTie.id}')" class="font-extrabold text-emerald-700 hover:text-emerald-600 py-1 px-2 -ml-2 rounded-lg active:bg-emerald-50"><i class="fa-solid fa-eye mr-1"></i> Xem nội dung</button>
-                                <a href="referee.html?court=${encodeURIComponent(courtName)}" target="_blank" class="font-extrabold text-brand-600 hover:text-brand-700 py-1 px-2 -mr-2 rounded-lg active:bg-rose-50 shrink-0">Trọng Tài <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i></a>
+                                ${renderRefereeAccessAction(courtName, 'inline')}
                             </div>
                         </div>
                     `;
@@ -1906,12 +1901,7 @@
                                 <button onclick="openCourtDetailModal('${tie.court}', '${tie.club1Id}', '${tie.club2Id}', '${tie.id}')" class="flex-1 py-2.5 sm:py-2 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 active:scale-95 text-amber-900 border border-amber-200 text-xs font-extrabold transition flex items-center justify-center">
                                     <i class="fa-solid fa-eye mr-1.5 text-orange-600"></i> Xem nội dung (${tieMatches.length})
                                 </button>
-                                <a href="referee.html?court=${encodeURIComponent(tie.court)}" target="_blank" class="py-2.5 sm:py-2 px-3.5 rounded-xl bg-brand-600 hover:bg-brand-500 active:scale-95 text-white text-xs font-bold transition flex items-center justify-center shadow-sm" title="Mở bảng điểm Trọng Tài">
-                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M11 6h9a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-3.5a5.5 5.5 0 1 1-5.5-5Z"/>
-                                        <circle cx="9.5" cy="12.5" r="1.5" fill="currentColor"/>
-                                    </svg>
-                                </a>
+                                ${renderRefereeAccessAction(tie.court, 'icon-btn')}
                             </div>
                         </div>
                     `;
@@ -1951,6 +1941,7 @@
             const c1Name = club1Obj ? club1Obj.name : 'CLB 1';
             const c2Name = club2Obj ? club2Obj.name : 'CLB 2';
             const displayCourt = courtName || (tieMatches[0]?.court || 'Sân 1');
+            const isAdmin = isAdminLoggedIn();
 
             const tieSt = evaluateTieStatus(tieMatches);
 
@@ -1973,8 +1964,10 @@
             document.getElementById('detail-modal-title').textContent = `${displayCourt}: ${c1Name} (${tieSt.c1Wins}) - (${tieSt.c2Wins}) ${c2Name}`;
             document.getElementById('detail-modal-subtitle').textContent = tieSt.isClinched 
                 ? `🏆 ${tieSt.winnerSide === 1 ? c1Name : c2Name} thắng chung cuộc (${tieSt.c1Wins}-${tieSt.c2Wins}) • Đã kết thúc`
-                : `Chạm ${WINS_TO_CLINCH_TIE} trận thắng kết thúc • Nhập tỷ số trực tiếp`;
-            document.getElementById('detail-modal-referee-link').href = `referee.html?court=${encodeURIComponent(displayCourt)}`;
+                : (isAdmin ? `Chạm ${WINS_TO_CLINCH_TIE} trận thắng kết thúc • Quản trị viên có thể nhập tỷ số trực tiếp` : `Chế độ xem trực tuyến • Đăng nhập để mở App Trọng Tài hoặc chỉnh sửa điểm`);
+
+            const refWrap = document.getElementById('detail-modal-referee-action-wrap');
+            if (refWrap) refWrap.innerHTML = renderRefereeAccessAction(displayCourt, 'modal');
 
             document.getElementById('detail-modal-content').innerHTML = tieMatches.length ? tieMatches.map((m, idx) => {
                 const cleanLabel = (m.catLabel || `Trận ${idx + 1}`).replace(/^.*•\s*(Trận \d+:)/i, '$1');
@@ -1989,9 +1982,9 @@
                 const p2Won = isFinished && s2 > s1;
 
                 const side1Text = p1Display ? p1Display : c1Name;
-                const side1Sub = p1Display ? c1Name : (isSkipped ? 'Không đấu' : 'Chưa chọn VĐV');
+                const side1Sub = p1Display ? c1Name : (isSkipped ? 'Không đấu' : 'Đội hình thi đấu');
                 const side2Text = p2Display ? p2Display : c2Name;
-                const side2Sub = p2Display ? c2Name : (isSkipped ? 'Không đấu' : 'Chưa chọn VĐV');
+                const side2Sub = p2Display ? c2Name : (isSkipped ? 'Không đấu' : 'Đội hình thi đấu');
                 const isMatchLive = m.status === 'LIVE' || (!isFinished && !isSkipped && (s1 > 0 || s2 > 0));
 
                 let statusBadge = isFinished 
@@ -2001,6 +1994,21 @@
                         : (isMatchLive 
                             ? `<span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-rose-100 text-brand-700 animate-pulse shrink-0">LIVE</span>` 
                             : `<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-stone-100 text-stone-500 shrink-0">Chờ</span>`));
+
+                const scoreControlsHtml = isSkipped
+                    ? `<span class="text-[10px] font-bold text-stone-400 italic">Đã đủ 3 thắng</span>`
+                    : (isAdmin
+                        ? `
+                            <input type="number" min="0" inputmode="numeric" id="popup-s1-${m.id}" value="${s1}" class="popup-score-input w-9 sm:w-10 bg-rose-50/70 border border-rose-300 focus:border-brand-500 rounded-lg text-center font-score font-black text-brand-600 text-sm sm:text-xs py-1 focus:outline-none">
+                            <span class="text-stone-400 font-bold text-xs">-</span>
+                            <input type="number" min="0" inputmode="numeric" id="popup-s2-${m.id}" value="${s2}" class="popup-score-input w-9 sm:w-10 bg-emerald-50/70 border border-emerald-300 focus:border-emerald-500 rounded-lg text-center font-score font-black text-emerald-700 text-sm sm:text-xs py-1 focus:outline-none">
+                            <button type="button" onclick="savePopupMatchScore('${m.id}')" class="px-2 py-1 rounded-lg bg-brand-600 hover:bg-brand-500 active:scale-95 text-white text-[10px] font-bold transition shadow-xs shrink-0">Lưu</button>
+                          `
+                        : `
+                            <span class="px-2.5 py-1 rounded-lg bg-rose-50 border border-rose-200 font-score font-black text-brand-600 text-sm">${s1}</span>
+                            <span class="text-stone-400 font-bold text-xs">-</span>
+                            <span class="px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 font-score font-black text-emerald-700 text-sm">${s2}</span>
+                          `);
 
                 return `
                     <div class="${isSkipped ? 'bg-stone-50/70 opacity-65' : 'bg-white'} px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl border ${isMatchLive ? 'border-brand-400 shadow-xs' : 'border-stone-200'} space-y-1">
@@ -2014,21 +2022,14 @@
                         <div class="grid grid-cols-12 items-center gap-1">
                             <div class="col-span-4 text-left sm:text-right min-w-0 leading-tight">
                                 <div class="text-[11px] sm:text-xs font-extrabold ${p1Won ? 'text-emerald-700' : 'text-stone-900'} truncate">${side1Text}</div>
-                                <div class="text-[9px] sm:text-[10px] ${p1Display ? 'text-stone-500' : 'text-amber-600 italic'} truncate">${side1Sub}</div>
+                                <div class="text-[9px] sm:text-[10px] ${p1Display ? 'text-stone-500' : 'text-stone-400 italic'} truncate">${side1Sub}</div>
                             </div>
                             <div class="col-span-4 flex justify-center items-center gap-1">
-                                ${isSkipped ? `
-                                    <span class="text-[10px] font-bold text-stone-400 italic">Đã đủ 3 thắng</span>
-                                ` : `
-                                    <input type="number" min="0" inputmode="numeric" id="popup-s1-${m.id}" value="${s1}" class="popup-score-input w-9 sm:w-10 bg-rose-50/70 border border-rose-300 focus:border-brand-500 rounded-lg text-center font-score font-black text-brand-600 text-sm sm:text-xs py-1 focus:outline-none">
-                                    <span class="text-stone-400 font-bold text-xs">-</span>
-                                    <input type="number" min="0" inputmode="numeric" id="popup-s2-${m.id}" value="${s2}" class="popup-score-input w-9 sm:w-10 bg-emerald-50/70 border border-emerald-300 focus:border-emerald-500 rounded-lg text-center font-score font-black text-emerald-700 text-sm sm:text-xs py-1 focus:outline-none">
-                                    <button type="button" onclick="savePopupMatchScore('${m.id}')" class="px-2 py-1 rounded-lg bg-brand-600 hover:bg-brand-500 active:scale-95 text-white text-[10px] font-bold transition shadow-xs shrink-0">Lưu</button>
-                                `}
+                                ${scoreControlsHtml}
                             </div>
                             <div class="col-span-4 text-right sm:text-left min-w-0 leading-tight">
                                 <div class="text-[11px] sm:text-xs font-extrabold ${p2Won ? 'text-emerald-700' : 'text-stone-900'} truncate">${side2Text}</div>
-                                <div class="text-[9px] sm:text-[10px] ${p2Display ? 'text-stone-500' : 'text-amber-600 italic'} truncate">${side2Sub}</div>
+                                <div class="text-[9px] sm:text-[10px] ${p2Display ? 'text-stone-500' : 'text-stone-400 italic'} truncate">${side2Sub}</div>
                             </div>
                         </div>
                     </div>
@@ -2040,6 +2041,7 @@
         }
 
         function savePopupMatchScore(matchId) {
+            if (!isAdminLoggedIn()) { openLoginModal(); return; }
             const s1El = document.getElementById(`popup-s1-${matchId}`);
             const s2El = document.getElementById(`popup-s2-${matchId}`);
             if (!s1El || !s2El) return;
@@ -2104,7 +2106,7 @@
                         c1Pts = 2; c2Pts = 0;
                     } else if (tieSt.c2Wins > tieSt.c1Wins) {
                         statsMap[c2Id].won += 1; statsMap[c2Id].points += 2; statsMap[c1Id].lost += 1;
-                        statsMap[c2Id].headToHead[c1Id] = 1; statsMap[c2Id].headToHead[c2Id] = -1;
+                        statsMap[c2Id].headToHead[c1Id] = 1; statsMap[c1Id].headToHead[c2Id] = -1;
                         c1Pts = 0; c2Pts = 2;
                     } else {
                         statsMap[c1Id].draw += 1; statsMap[c1Id].points += 1;
@@ -2240,7 +2242,7 @@
                                     </div>
                                 </div>
                                 <div class="pt-1.5 border-t border-stone-100 text-center text-[11px] font-extrabold text-orange-600">
-                                    <i class="fa-solid fa-eye mr-1"></i> Bấm xem chi tiết tỷ số & VĐV
+                                    <i class="fa-solid fa-eye mr-1"></i> Bấm xem chi tiết tỷ số
                                 </div>
                             </div>
                         `;
@@ -2334,7 +2336,7 @@
         }
 
         function activateKnockoutRound(stageToCreate) {
-            if (getCurrentUserRole() !== 'admin') { openLoginModal(); return; }
+            if (!isAdminLoggedIn()) { openLoginModal(); return; }
             const allTies = getAllStructuredTies();
             const groupTies = allTies.filter(t => !t.knockoutRound);
             const maxGroupWave = groupTies.reduce((mx, t) => Math.max(mx, t.wave || 1), 1);
@@ -2402,11 +2404,27 @@
             if (newKoTies.length === 0) { showToast('Chưa đủ đội thắng ở vòng trước để tạo vòng tiếp theo!', true); return; }
             appState.ties = [...(appState.ties || []), ...newKoTies];
             saveAppState();
-            showToast(`🏆 Đã kích hoạt ${newKoTies.length} cặp đấu Knock-out! Trọng tài có thể bắt điểm ngay.`);
+            showToast(`🏆 Đã kích hoạt ${newKoTies.length} cặp đấu Knock-out!`);
         }
 
-        
-        let selectedTeamFilterForBracket = null;
+        // =========================================================================
+        // SƠ ĐỒ CÂY TRỰC QUAN TỪ VÒNG BẢNG ĐẾN CHUNG KẾT & BẤM CHỌN ĐỘI XEM LỊCH SỬ
+        // =========================================================================
+        function switchTreeSeries(ser) {
+            currentTreeSeries = ser;
+            const btnA = document.getElementById('tree-series-btn-A');
+            const btnB = document.getElementById('tree-series-btn-B');
+            if (btnA && btnB) {
+                if (ser === 'A') {
+                    btnA.className = 'px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-brand-600 text-white shadow-2xs transition';
+                    btnB.className = 'px-2.5 py-1 rounded-lg text-[11px] font-bold text-stone-600 hover:text-stone-900 transition';
+                } else {
+                    btnB.className = 'px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-emerald-600 text-white shadow-2xs transition';
+                    btnA.className = 'px-2.5 py-1 rounded-lg text-[11px] font-bold text-stone-600 hover:text-stone-900 transition';
+                }
+            }
+            renderVisualBracketTree();
+        }
 
         function filterBracketByTeam(teamId, teamName) {
             selectedTeamFilterForBracket = teamId;
@@ -2421,33 +2439,42 @@
             if (historySec) historySec.classList.remove('hidden');
             if (historyTitle) historyTitle.textContent = teamName;
 
-            // Render all matches involving this team in knockout stage
+            // Lọc TOÀN BỘ các trận của đội từ Vòng Bảng đến Knock-out
             const allTies = getAllStructuredTies();
-            const teamKoTies = allTies.filter(t => t.knockoutRound && (t.club1Id === teamId || t.club2Id === teamId));
+            const teamTies = allTies.filter(t => t.club1Id === teamId || t.club2Id === teamId);
 
             if (historyList) {
-                if (teamKoTies.length === 0) {
-                    historyList.innerHTML = `<div class="col-span-full text-center py-4 text-xs text-stone-500 italic">Đội ${teamName} chưa có trận đấu nào trong vòng Knock-out.</div>`;
+                if (teamTies.length === 0) {
+                    historyList.innerHTML = `<div class="col-span-full text-center py-4 text-xs text-stone-500 italic">Đội ${teamName} chưa có trận đấu nào.</div>`;
                 } else {
-                    historyList.innerHTML = teamKoTies.map(tie => {
+                    historyList.innerHTML = teamTies.map(tie => {
                         const st = evaluateTieStatus(tie.matches);
                         const isC1 = tie.club1Id === teamId;
                         const oppName = getClubName(isC1 ? tie.club2Id : tie.club1Id);
                         const teamWins = isC1 ? st.c1Wins : st.c2Wins;
                         const oppWins = isC1 ? st.c2Wins : st.c1Wins;
                         const wonTie = st.isCompleted && teamWins > oppWins;
+                        const lostTie = st.isCompleted && teamWins < oppWins;
+                        const stageBadge = tie.knockoutRound
+                            ? `<span class="px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 text-[9px] font-black">Knock-out</span>`
+                            : `<span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[9px] font-black">Vòng Bảng</span>`;
 
                         return `
                             <div onclick="openCourtDetailModal('${tie.court}', '${tie.club1Id}', '${tie.club2Id}', '${tie.id}')" class="cursor-pointer bg-white hover:bg-amber-50 border border-amber-300 rounded-xl p-3 space-y-2 shadow-2xs transition">
-                                <div class="flex justify-between items-center text-[10px] font-bold text-stone-500 border-b border-stone-100 pb-1">
-                                    <span class="text-amber-800"><i class="fa-solid fa-location-dot mr-1 text-orange-500"></i>${tie.group} • ${tie.court}</span>
-                                    <span class="px-2 py-0.5 rounded text-[9px] font-black ${wonTie ? 'bg-emerald-100 text-emerald-700' : 'bg-stone-100 text-stone-600'}">${wonTie ? 'Thắng Cặp' : (st.isCompleted ? 'Thua Cặp' : 'Đang đấu')}</span>
+                                <div class="flex justify-between items-center text-[10px] font-bold text-stone-500 border-b border-stone-100 pb-1 gap-1">
+                                    <span class="text-amber-800 truncate"><i class="fa-solid fa-location-dot mr-1 text-orange-500"></i>${tie.group} • ${tie.court}</span>
+                                    <div class="flex items-center gap-1 shrink-0">
+                                        ${stageBadge}
+                                        <span class="px-2 py-0.5 rounded text-[9px] font-black ${wonTie ? 'bg-emerald-100 text-emerald-700' : (lostTie ? 'bg-rose-100 text-rose-700' : 'bg-stone-100 text-stone-600')}">
+                                            ${wonTie ? 'Thắng' : (lostTie ? 'Thua' : (st.isLive ? 'Đang đấu' : 'Chờ đấu'))}
+                                        </span>
+                                    </div>
                                 </div>
                                 <div class="flex items-center justify-between text-xs font-extrabold text-stone-900">
-                                    <span class="truncate pr-1">${teamName} vs ${oppName}</span>
+                                    <span class="truncate pr-1">${teamName} <span class="text-stone-400 font-normal">vs</span> ${oppName}</span>
                                     <span class="font-score font-black text-sm text-brand-600 shrink-0">${teamWins} - ${oppWins}</span>
                                 </div>
-                                <div class="text-[10px] text-brand-600 font-bold text-right">Bấm xem chi tiết 5 trận →</div>
+                                <div class="text-[10px] text-brand-600 font-bold text-right">Bấm xem chi tiết 5 nội dung →</div>
                             </div>
                         `;
                     }).join('');
@@ -2455,15 +2482,14 @@
             }
 
             renderVisualBracketTree();
-            showToast(`🔍 Đã lọc các trận Knock-out của ${teamName}!`);
+            historySec?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            showToast(`🔍 Đã hiển thị toàn bộ trận đấu của ${teamName}!`);
         }
 
         function clearTeamBracketFilter() {
             selectedTeamFilterForBracket = null;
-            const statusEl = document.getElementById('bracket-filter-status');
-            const historySec = document.getElementById('team-bracket-history-section');
-            if (statusEl) statusEl.classList.add('hidden');
-            if (historySec) historySec.classList.add('hidden');
+            document.getElementById('bracket-filter-status')?.classList.add('hidden');
+            document.getElementById('team-bracket-history-section')?.classList.add('hidden');
             renderVisualBracketTree();
         }
 
@@ -2472,113 +2498,171 @@
             if (!container) return;
 
             const allTies = getAllStructuredTies();
-            const koA = allTies.filter(t => t.knockoutRound && t.series === 'A');
+            const groupTies = allTies.filter(t => !t.knockoutRound);
+            const koTies = allTies.filter(t => t.knockoutRound && t.series === currentTreeSeries);
+            const plan = buildKnockoutSeedPlan();
+            const seedItems = currentTreeSeries === 'A' ? plan.serieA : plan.serieB;
+            const isSerieA = currentTreeSeries === 'A';
+            const accentText = isSerieA ? 'text-brand-600' : 'text-emerald-700';
 
-            if (koA.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-10 text-stone-400 text-xs italic bg-amber-50/50 rounded-xl border border-dashed border-amber-200">
-                        <i class="fa-solid fa-sitemap mr-1"></i> Sơ đồ cây trực quan sẽ xuất hiện khi vòng bảng hoàn thành và vòng Knock-out Serie A được kích hoạt.
-                    </div>
-                `;
-                return;
-            }
-
-            const qf = koA.filter(t => t.stage === 'QF').sort((a, b) => a.slotIndex - b.slotIndex);
-            const sf = koA.filter(t => t.stage === 'SF').sort((a, b) => a.slotIndex - b.slotIndex);
-            const final = koA.find(t => t.stage === 'F');
-
-            const renderNodeCard = (tieObj, titlePlaceholder) => {
-                if (!tieObj) {
+            const renderTeamRow = (clubId, clubName, scoreText, isWinner) => {
+                if (!clubId) {
                     return `
-                        <div class="bg-stone-50/80 border border-stone-200 rounded-xl p-3 w-56 opacity-70 space-y-1 shadow-2xs">
-                            <div class="text-[10px] font-bold text-stone-400 uppercase tracking-wide">${titlePlaceholder}</div>
-                            <div class="text-xs font-semibold text-stone-500 py-1">Chờ xác định đội</div>
+                        <div class="flex justify-between items-center text-[11px] p-1.5 rounded-lg bg-stone-50 text-stone-400 font-semibold">
+                            <span class="truncate pr-1">${clubName || 'Chờ xác định'}</span>
+                            <span class="font-mono">-</span>
                         </div>
                     `;
                 }
+                const isSelected = selectedTeamFilterForBracket === clubId;
+                const rowClass = isSelected
+                    ? 'bg-brand-600 text-white shadow-xs'
+                    : (isWinner ? 'bg-emerald-50/90 text-emerald-900 hover:bg-emerald-100' : 'bg-stone-50/90 text-stone-900 hover:bg-amber-50');
+                return `
+                    <div onclick="filterBracketByTeam('${clubId}', '${clubName.replace(/'/g, "\\'")}')" 
+                         class="cursor-pointer flex justify-between items-center font-extrabold text-[11px] p-1.5 rounded-lg transition ${rowClass}" 
+                         title="Bấm xem các trận của ${clubName}">
+                        <span class="truncate pr-1.5"><i class="fa-solid fa-hand-pointer text-[8px] mr-1 opacity-60"></i>${clubName} ${isWinner ? '🏆' : ''}</span>
+                        <span class="font-score font-black text-xs shrink-0 ${isSelected ? 'text-white' : accentText}">${scoreText}</span>
+                    </div>
+                `;
+            };
 
+            const renderTreeTieCard = (tieObj, placeholderTitle, placeholderCourt, c1Placeholder, c2Placeholder) => {
+                if (!tieObj) {
+                    return `
+                        <div class="bg-stone-50/80 border border-dashed border-stone-300 rounded-xl p-2.5 w-52 space-y-1.5 opacity-80">
+                            <div class="flex justify-between items-center text-[9.5px] font-bold text-stone-400">
+                                <span class="truncate">${placeholderTitle}</span>
+                                <span>${placeholderCourt}</span>
+                            </div>
+                            ${renderTeamRow(null, c1Placeholder, '-', false)}
+                            ${renderTeamRow(null, c2Placeholder, '-', false)}
+                        </div>
+                    `;
+                }
                 const st = evaluateTieStatus(tieObj.matches);
                 const name1 = getClubName(tieObj.club1Id);
                 const name2 = getClubName(tieObj.club2Id);
                 const isFinished = st.isCompleted;
-
-                const isTeam1Selected = selectedTeamFilterForBracket === tieObj.club1Id;
-                const isTeam2Selected = selectedTeamFilterForBracket === tieObj.club2Id;
+                const hasSelectedTeam = selectedTeamFilterForBracket && (tieObj.club1Id === selectedTeamFilterForBracket || tieObj.club2Id === selectedTeamFilterForBracket);
 
                 return `
-                    <div class="bg-white border-2 ${isFinished ? 'border-emerald-400' : 'border-brand-300'} rounded-xl p-3 w-60 space-y-2 shadow-md transition">
-                        <div class="flex justify-between items-center text-[10px] font-black text-stone-500 border-b border-stone-100 pb-1">
-                            <span class="text-amber-800 cursor-pointer hover:underline" onclick="openCourtDetailModal('${tieObj.court}', '${tieObj.club1Id}', '${tieObj.club2Id}', '${tieObj.id}')"><i class="fa-solid fa-location-dot mr-0.5 text-orange-500"></i>${tieObj.court} (Xem 5 trận)</span>
-                            <span class="${isFinished ? 'text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded' : 'text-brand-600 animate-pulse'}">${isFinished ? 'Đã xong' : 'Đang LIVE'}</span>
+                    <div class="bg-white border-2 ${hasSelectedTeam ? 'border-amber-500 ring-2 ring-amber-200' : (isFinished ? 'border-emerald-300' : 'border-brand-200')} rounded-xl p-2.5 w-52 space-y-1.5 shadow-sm transition">
+                        <div class="flex justify-between items-center text-[9.5px] font-extrabold text-stone-500 border-b border-stone-100 pb-1 gap-1">
+                            <span class="text-amber-800 cursor-pointer hover:underline truncate" onclick="openCourtDetailModal('${tieObj.court}', '${tieObj.club1Id}', '${tieObj.club2Id}', '${tieObj.id}')">
+                                <i class="fa-solid fa-eye mr-0.5 text-orange-500"></i>${tieObj.court} • Chi tiết
+                            </span>
+                            <span class="${isFinished ? 'text-emerald-700' : (st.isLive ? 'text-brand-600 animate-pulse' : 'text-stone-400')} shrink-0">
+                                ${isFinished ? 'Xong' : (st.isLive ? 'LIVE' : 'Chờ')}
+                            </span>
                         </div>
-                        <div class="space-y-1.5">
-                            <div onclick="filterBracketByTeam('${tieObj.club1Id}', '${name1}')" class="cursor-pointer flex justify-between items-center font-extrabold text-xs p-1.5 rounded-lg transition ${isTeam1Selected ? 'bg-brand-600 text-white' : (st.winnerSide === 1 ? 'text-emerald-800 bg-emerald-50 hover:bg-emerald-100' : 'text-stone-900 bg-stone-50 hover:bg-amber-50')}">
-                                <span class="truncate pr-1"><i class="fa-solid fa-hand-pointer text-[9px] mr-1 opacity-70"></i>${name1} ${st.winnerSide === 1 ? '🏆' : ''}</span>
-                                <span class="font-score font-black text-sm shrink-0 ${isTeam1Selected ? 'text-white' : 'text-brand-600'}">${st.c1Wins}</span>
-                            </div>
-                            <div onclick="filterBracketByTeam('${tieObj.club2Id}', '${name2}')" class="cursor-pointer flex justify-between items-center font-extrabold text-xs p-1.5 rounded-lg transition ${isTeam2Selected ? 'bg-brand-600 text-white' : (st.winnerSide === 2 ? 'text-emerald-800 bg-emerald-50 hover:bg-emerald-100' : 'text-stone-900 bg-stone-50 hover:bg-amber-50')}">
-                                <span class="truncate pr-1"><i class="fa-solid fa-hand-pointer text-[9px] mr-1 opacity-70"></i>${name2} ${st.winnerSide === 2 ? '🏆' : ''}</span>
-                                <span class="font-score font-black text-sm shrink-0 ${isTeam2Selected ? 'text-white' : 'text-emerald-700'}">${st.c2Wins}</span>
-                            </div>
+                        <div class="space-y-1">
+                            ${renderTeamRow(tieObj.club1Id, name1, st.finishedCount > 0 || st.isLive ? st.c1Wins : '-', st.winnerSide === 1)}
+                            ${renderTeamRow(tieObj.club2Id, name2, st.finishedCount > 0 || st.isLive ? st.c2Wins : '-', st.winnerSide === 2)}
                         </div>
                     </div>
                 `;
             };
 
+            // CỘT 1: VÒNG BẢNG (TẤT CẢ CÁC BẢNG ĐẤU)
+            const groupNames = getAllGroupNames();
+            const groupColumnsHtml = groupNames.map(gName => {
+                const gTies = groupTies.filter(t => t.group === gName);
+                return `
+                    <div class="bg-amber-50/50 border border-amber-200/90 rounded-2xl p-2.5 space-y-2 min-w-[225px]">
+                        <div class="text-[11px] font-black text-amber-900 uppercase tracking-wider text-center bg-amber-100/90 py-1 rounded-xl border border-amber-200">
+                            Vòng Bảng • ${gName}
+                        </div>
+                        <div class="space-y-2">
+                            ${gTies.length > 0 ? gTies.map(t => renderTreeTieCard(t, gName, t.court, '', '')).join('') : `<div class="text-center py-4 text-[11px] text-stone-400 italic">Chưa xếp lịch</div>`}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // CÁC CỘT KNOCK-OUT (TỨ KẾT -> BÁN KẾT -> CHUNG KẾT)
+            const serQf = koTies.filter(t => t.stage === 'QF').sort((a, b) => a.slotIndex - b.slotIndex);
+            const serSf = koTies.filter(t => t.stage === 'SF').sort((a, b) => a.slotIndex - b.slotIndex);
+            const serF = koTies.filter(t => t.stage === 'F').sort((a, b) => a.slotIndex - b.slotIndex);
+
+            let koStagesHtml = '';
+            if (plan.startStage === 'QF' && seedItems.some(i => i.label.includes('Tứ Kết'))) {
+                const qfHtml = seedItems.map(item => renderTreeTieCard(
+                    serQf.find(t => t.slotIndex === item.slotIndex),
+                    item.label, item.court,
+                    item.c1 ? item.c1.name : 'Chờ vòng bảng',
+                    item.c2 ? item.c2.name : 'Chờ vòng bảng'
+                )).join('');
+                koStagesHtml += `
+                    <div class="flex items-center text-stone-300 shrink-0"><i class="fa-solid fa-angles-right text-lg"></i></div>
+                    <div class="space-y-2.5 flex flex-col justify-center shrink-0">
+                        <div class="text-[11px] font-black text-stone-700 uppercase tracking-wider text-center bg-stone-100 py-1 rounded-xl border border-stone-200">Tứ Kết Serie ${currentTreeSeries}</div>
+                        <div class="space-y-2.5">${qfHtml}</div>
+                    </div>
+                `;
+            }
+
+            if (plan.startStage === 'QF' || plan.startStage === 'SF') {
+                let sfHtml = '';
+                if (plan.startStage === 'SF' && seedItems.some(i => i.label.includes('Bán Kết'))) {
+                    sfHtml = seedItems.map(item => renderTreeTieCard(
+                        serSf.find(t => t.slotIndex === item.slotIndex),
+                        item.label, item.court,
+                        item.c1 ? item.c1.name : 'Chờ vòng bảng',
+                        item.c2 ? item.c2.name : 'Chờ vòng bảng'
+                    )).join('');
+                } else {
+                    sfHtml = [0, 1].map(idx => renderTreeTieCard(
+                        serSf.find(t => t.slotIndex === idx),
+                        `Bán Kết ${idx + 1} Serie ${currentTreeSeries}`,
+                        isSerieA ? `Sân ${idx + 1}` : `Sân ${idx + 3}`,
+                        `Thắng TK ${idx * 2 + 1}`,
+                        `Thắng TK ${idx * 2 + 2}`
+                    )).join('');
+                }
+                koStagesHtml += `
+                    <div class="flex items-center text-stone-300 shrink-0"><i class="fa-solid fa-chevron-right text-lg"></i></div>
+                    <div class="space-y-2.5 flex flex-col justify-center shrink-0">
+                        <div class="text-[11px] font-black text-stone-700 uppercase tracking-wider text-center bg-stone-100 py-1 rounded-xl border border-stone-200">Bán Kết Serie ${currentTreeSeries}</div>
+                        <div class="space-y-4">${sfHtml}</div>
+                    </div>
+                `;
+            }
+
+            const finalSeed = seedItems.find(i => i.label.includes('Chung Kết'));
+            const finalHtml = renderTreeTieCard(
+                serF[0],
+                `Chung Kết Serie ${currentTreeSeries}`,
+                isSerieA ? 'Sân 1' : 'Sân 2',
+                finalSeed?.c1 ? finalSeed.c1.name : `Thắng BK 1 Serie ${currentTreeSeries}`,
+                finalSeed?.c2 ? finalSeed.c2.name : `Thắng BK 2 Serie ${currentTreeSeries}`
+            );
+            koStagesHtml += `
+                <div class="flex items-center text-stone-300 shrink-0"><i class="fa-solid fa-chevron-right text-lg"></i></div>
+                <div class="space-y-2.5 flex flex-col justify-center shrink-0">
+                    <div class="text-[11px] font-black ${isSerieA ? 'text-brand-700 bg-rose-50 border-rose-200' : 'text-emerald-700 bg-emerald-50 border-emerald-200'} uppercase tracking-wider text-center py-1 rounded-xl border">🏆 Chung Kết Serie ${currentTreeSeries}</div>
+                    <div>${finalHtml}</div>
+                </div>
+            `;
+
             container.innerHTML = `
-                <div class="flex items-center justify-between gap-6 min-w-[780px] px-2 py-4">
-                    <!-- Cột Tứ Kết -->
-                    <div class="space-y-4 flex flex-col justify-around">
-                        <div class="text-xs font-black text-stone-600 uppercase tracking-wider text-center bg-stone-100 py-1 rounded-lg">1. Tứ Kết (QF)</div>
-                        <div class="space-y-3">
-                            ${qf.length > 0 ? qf.map((t, i) => renderNodeCard(t, `Tứ kết ${i+1}`)).join('') : `
-                                ${renderNodeCard(null, 'Tứ kết 1')}
-                                ${renderNodeCard(null, 'Tứ kết 2')}
-                                ${renderNodeCard(null, 'Tứ kết 3')}
-                                ${renderNodeCard(null, 'Tứ kết 4')}
-                            `}
-                        </div>
+                <div class="flex items-stretch gap-3.5 min-w-max px-1 py-2">
+                    <div class="flex items-start gap-2.5 shrink-0">
+                        ${groupColumnsHtml}
                     </div>
-
-                    <!-- Mũi tên kết nối 1 -->
-                    <div class="flex flex-col justify-around h-72 text-stone-300 font-bold items-center">
-                        <i class="fa-solid fa-chevron-right text-lg"></i>
-                        <i class="fa-solid fa-chevron-right text-lg"></i>
-                    </div>
-
-                    <!-- Cột Bán Kết -->
-                    <div class="space-y-4 flex flex-col justify-around">
-                        <div class="text-xs font-black text-stone-600 uppercase tracking-wider text-center bg-stone-100 py-1 rounded-lg">2. Bán Kết (SF)</div>
-                        <div class="space-y-6">
-                            ${sf.length > 0 ? sf.map((t, i) => renderNodeCard(t, `Bán kết ${i+1}`)).join('') : `
-                                ${renderNodeCard(null, 'Bán kết 1')}
-                                ${renderNodeCard(null, 'Bán kết 2')}
-                            `}
-                        </div>
-                    </div>
-
-                    <!-- Mũi tên kết nối 2 -->
-                    <div class="flex flex-col justify-center h-72 text-stone-300 font-bold items-center">
-                        <i class="fa-solid fa-chevron-right text-xl"></i>
-                    </div>
-
-                    <!-- Cột Chung Kết -->
-                    <div class="space-y-4 flex flex-col justify-center">
-                        <div class="text-xs font-black text-brand-700 uppercase tracking-wider text-center bg-rose-50 py-1 rounded-lg border border-rose-200">🏆 Chung Kết (Final)</div>
-                        <div class="flex items-center justify-center py-2">
-                            ${renderNodeCard(final, 'Trận Vô Địch')}
-                        </div>
-                    </div>
+                    ${koStagesHtml}
                 </div>
             `;
         }
-    
+
         function renderBracket() {
             renderVisualBracketTree();
             const allTies = getAllStructuredTies();
             const groupTies = allTies.filter(t => !t.knockoutRound);
             const koTies = allTies.filter(t => t.knockoutRound);
             const allGroupFinished = groupTies.length > 0 && groupTies.every(t => evaluateTieStatus(t.matches).isCompleted);
+            const isAdmin = isAdminLoggedIn();
 
             const plan = buildKnockoutSeedPlan();
             const subtitleEl = document.getElementById('bracket-structure-subtitle');
@@ -2601,13 +2685,15 @@
             const allSfDone = sfTies.length > 0 && sfTies.every(t => evaluateTieStatus(t.matches).isCompleted);
 
             let actionBtnHtml = '';
-            if (!hasAnyKo) {
-                const startLabel = plan.startStage === 'QF' ? 'Kích hoạt Vòng Tứ Kết' : (plan.startStage === 'SF' ? 'Kích hoạt Vòng Bán Kết' : 'Kích hoạt Chung Kết');
-                actionBtnHtml = `<button onclick="activateKnockoutRound('START')" class="px-3.5 py-2 sm:py-1.5 rounded-xl bg-gradient-to-r from-brand-600 to-orange-600 hover:from-brand-500 hover:to-orange-500 active:scale-95 text-white font-extrabold text-xs shadow-md transition flex items-center gap-1.5"><i class="fa-solid fa-bolt"></i> ${startLabel}</button>`;
-            } else if (allQfDone && sfTies.length === 0) {
-                actionBtnHtml = `<button onclick="activateKnockoutRound('SF_FROM_QF')" class="px-3.5 py-2 sm:py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-brand-600 hover:opacity-95 active:scale-95 text-white font-extrabold text-xs shadow-md transition flex items-center gap-1.5"><i class="fa-solid fa-forward"></i> Tạo Lịch Bán Kết</button>`;
-            } else if (allSfDone && fTies.length === 0) {
-                actionBtnHtml = `<button onclick="activateKnockoutRound('F_FROM_SF')" class="px-3.5 py-2 sm:py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-brand-600 hover:opacity-95 active:scale-95 text-white font-extrabold text-xs shadow-md transition flex items-center gap-1.5"><i class="fa-solid fa-trophy"></i> Tạo Lịch Chung Kết</button>`;
+            if (isAdmin) {
+                if (!hasAnyKo) {
+                    const startLabel = plan.startStage === 'QF' ? 'Kích hoạt Vòng Tứ Kết' : (plan.startStage === 'SF' ? 'Kích hoạt Vòng Bán Kết' : 'Kích hoạt Chung Kết');
+                    actionBtnHtml = `<button onclick="activateKnockoutRound('START')" class="px-3.5 py-2 sm:py-1.5 rounded-xl bg-gradient-to-r from-brand-600 to-orange-600 hover:from-brand-500 hover:to-orange-500 active:scale-95 text-white font-extrabold text-xs shadow-md transition flex items-center gap-1.5"><i class="fa-solid fa-bolt"></i> ${startLabel}</button>`;
+                } else if (allQfDone && sfTies.length === 0) {
+                    actionBtnHtml = `<button onclick="activateKnockoutRound('SF_FROM_QF')" class="px-3.5 py-2 sm:py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-brand-600 hover:opacity-95 active:scale-95 text-white font-extrabold text-xs shadow-md transition flex items-center gap-1.5"><i class="fa-solid fa-forward"></i> Tạo Lịch Bán Kết</button>`;
+                } else if (allSfDone && fTies.length === 0) {
+                    actionBtnHtml = `<button onclick="activateKnockoutRound('F_FROM_SF')" class="px-3.5 py-2 sm:py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-brand-600 hover:opacity-95 active:scale-95 text-white font-extrabold text-xs shadow-md transition flex items-center gap-1.5"><i class="fa-solid fa-trophy"></i> Tạo Lịch Chung Kết</button>`;
+                }
             }
 
             if (toolbarEl) toolbarEl.innerHTML = `${actionBtnHtml}<button onclick="renderBracket()" class="shrink-0 px-3 py-2 sm:py-1.5 rounded-xl bg-stone-100 hover:bg-amber-50 active:scale-95 text-stone-700 font-semibold transition text-xs border border-stone-200"><i class="fa-solid fa-rotate mr-1"></i> Làm mới</button>`;
@@ -2629,18 +2715,18 @@
                                 <span class="${st.isLive ? 'text-brand-600 animate-pulse' : scoreColor} font-extrabold">${statusText}</span>
                             </div>
                             <div class="space-y-1">
-                                <div class="flex justify-between items-center bg-white p-2 rounded-lg border ${rowBorder} text-stone-900 font-bold">
+                                <div onclick="filterBracketByTeam('${tieObj.club1Id}', '${name1.replace(/'/g, "\\'")}')" class="cursor-pointer flex justify-between items-center bg-white hover:bg-amber-50 p-2 rounded-lg border ${rowBorder} text-stone-900 font-bold">
                                     <span class="truncate pr-2">${name1} ${st.winnerSide === 1 ? '🏆' : ''}</span>
                                     <span class="font-score font-black text-sm ${scoreColor} shrink-0">${st.c1Wins}</span>
                                 </div>
-                                <div class="flex justify-between items-center bg-white p-2 rounded-lg border ${rowBorder} text-stone-900 font-bold">
+                                <div onclick="filterBracketByTeam('${tieObj.club2Id}', '${name2.replace(/'/g, "\\'")}')" class="cursor-pointer flex justify-between items-center bg-white hover:bg-amber-50 p-2 rounded-lg border ${rowBorder} text-stone-900 font-bold">
                                     <span class="truncate pr-2">${name2} ${st.winnerSide === 2 ? '🏆' : ''}</span>
                                     <span class="font-score font-black text-sm ${scoreColor} shrink-0">${st.c2Wins}</span>
                                 </div>
                             </div>
                             <div class="pt-1 flex items-center justify-between gap-2 text-[11px]">
                                 <button onclick="openCourtDetailModal('${tieObj.court}', '${tieObj.club1Id}', '${tieObj.club2Id}', '${tieObj.id}')" class="font-extrabold text-amber-800 hover:underline"><i class="fa-solid fa-eye mr-1"></i>Xem 5 nội dung</button>
-                                <a href="referee.html?court=${encodeURIComponent(tieObj.court)}" target="_blank" class="font-extrabold ${scoreColor} hover:underline">Mở Trọng Tài <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i></a>
+                                ${renderRefereeAccessAction(tieObj.court, 'inline')}
                             </div>
                         </div>
                     `;
@@ -2700,6 +2786,7 @@
         }
 
         function exportResultToExcel() {
+            if (!isAdminLoggedIn()) { openLoginModal(); return; }
             const groupedStandings = calculateStandingsByGroup();
             let exportData = [];
             Object.entries(groupedStandings).forEach(([gName, list]) => {
@@ -2719,7 +2806,7 @@
         }
 
         function toggleAddClubPanel(forceState) {
-            if (getCurrentUserRole() !== 'admin') { openLoginModal(); return; }
+            if (!isAdminLoggedIn()) { openLoginModal(); return; }
             const panel = document.getElementById('add-club-panel');
             if (!panel) return;
             const shouldOpen = typeof forceState === 'boolean' ? forceState : panel.classList.contains('hidden');
@@ -2736,13 +2823,13 @@
             const container = document.getElementById('teams-grid-container');
             if (!container) return;
 
-            if (getCurrentUserRole() !== 'admin') {
+            if (!isAdminLoggedIn()) {
                 container.innerHTML = `
                     <div class="col-span-full text-center py-16 bg-white rounded-3xl border-2 border-dashed border-amber-300 p-6 space-y-4 shadow-sm">
                         <div class="w-16 h-16 mx-auto rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-2xl shadow-inner"><i class="fa-solid fa-lock"></i></div>
                         <div class="space-y-1 max-w-md mx-auto">
                             <h3 class="font-extrabold text-stone-900 text-base sm:text-lg">Khu vực bảo mật danh sách CLB & VĐV</h3>
-                            <p class="text-xs text-stone-500">Vui lòng đăng nhập tài khoản Quản trị viên (Admin) để xem toàn bộ danh sách các CLB và vận động viên đã đăng ký thi đấu.</p>
+                            <p class="text-xs text-stone-500">Vui lòng đăng nhập tài khoản Quản trị viên (Admin) để xem và quản lý danh sách CLB & VĐV.</p>
                         </div>
                         <button type="button" onclick="openLoginModal()" class="px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-500 active:scale-95 text-white font-extrabold text-xs shadow-md transition inline-flex items-center gap-2">
                             <i class="fa-solid fa-user-shield"></i> Đăng Nhập Ngay
@@ -2825,7 +2912,7 @@
 
         function handleQuickAddPlayer(event, teamId) {
             event.preventDefault();
-            if (getCurrentUserRole() !== 'admin') { openLoginModal(); return; }
+            if (!isAdminLoggedIn()) { openLoginModal(); return; }
             const nameInput = document.getElementById(`new-player-name-${teamId}`);
             const genderSelect = document.getElementById(`new-player-gender-${teamId}`);
             const levelSelect = document.getElementById(`new-player-level-${teamId}`);
@@ -2850,7 +2937,7 @@
         }
 
         function openEditPlayerModal(teamId, playerId) {
-            if (getCurrentUserRole() !== 'admin') { openLoginModal(); return; }
+            if (!isAdminLoggedIn()) { openLoginModal(); return; }
             const team = teams.find(c => c.id === teamId);
             const player = team?.players?.find(p => p.id === playerId);
             if (!player) return;
@@ -2872,7 +2959,7 @@
 
         function saveEditedPlayer(event) {
             event.preventDefault();
-            if (getCurrentUserRole() !== 'admin') { openLoginModal(); return; }
+            if (!isAdminLoggedIn()) { openLoginModal(); return; }
             const teamId = document.getElementById('edit-player-team-id').value;
             const playerId = document.getElementById('edit-player-id').value;
             const newName = document.getElementById('edit-player-name').value.trim();
@@ -2892,7 +2979,7 @@
         }
 
         function promptDeleteTeam(teamId) {
-            if (getCurrentUserRole() !== 'admin') { openLoginModal(); return; }
+            if (!isAdminLoggedIn()) { openLoginModal(); return; }
             openPasswordModal("Xác nhận xóa Đội tuyển", () => {
                 teams = teams.filter(c => c.id !== teamId);
                 appState.clubs = teams;
@@ -2902,7 +2989,7 @@
         }
 
         function promptDeletePlayer(teamId, playerId) {
-            if (getCurrentUserRole() !== 'admin') { openLoginModal(); return; }
+            if (!isAdminLoggedIn()) { openLoginModal(); return; }
             openPasswordModal("Xác nhận xóa VĐV", () => {
                 const team = teams.find(c => c.id === teamId);
                 if (team && team.players) {
@@ -2967,7 +3054,7 @@
 
         function handleAddTeam(e) {
             if (e) e.preventDefault();
-            if (getCurrentUserRole() !== 'admin') { openLoginModal(); return; }
+            if (!isAdminLoggedIn()) { openLoginModal(); return; }
 
             const nameInput = document.getElementById('team-name');
             const name = nameInput ? nameInput.value.trim() : '';
@@ -3010,7 +3097,7 @@
         function renderAdminMatchesList() {
             const listEl = document.getElementById('admin-matches-list');
             if(!listEl) return;
-            if (getCurrentUserRole() !== 'admin') {
+            if (!isAdminLoggedIn()) {
                 listEl.innerHTML = `<div class="text-center py-6 text-stone-400 text-xs italic">🔒 Vui lòng đăng nhập quyền Quản trị viên để quản lý trận đấu.</div>`;
                 return;
             }
@@ -3040,7 +3127,7 @@
         }
 
         function updateMatchDirect(id) {
-            if (getCurrentUserRole() !== 'admin') { openLoginModal(); return; }
+            if (!isAdminLoggedIn()) { openLoginModal(); return; }
             const s1 = parseInt(document.getElementById(`admin-s1-${id}`).value) || 0;
             const s2 = parseInt(document.getElementById(`admin-s2-${id}`).value) || 0;
             const m = matches.find(x => x.id === id);
@@ -3053,6 +3140,7 @@
                 showToast('✅ Cập nhật tỷ số thành công!'); 
             }
         }
+
         function initApp() {
             applyRoleUI();
             enforceTieClinchRules();
@@ -3078,7 +3166,10 @@
             initRealtimeSyncIndex(); 
             initIphoneBottomDockSwipe();
             initApp(); 
-            const lastTab = localStorage.getItem('CAY_COI_ACTIVE_TAB') || 'home';
+            let lastTab = localStorage.getItem('CAY_COI_ACTIVE_TAB') || 'home';
+            if ((lastTab === 'admin' || lastTab === 'teams') && !isAdminLoggedIn()) {
+                lastTab = 'home';
+            }
             switchTab(lastTab);
         };
     </script>
