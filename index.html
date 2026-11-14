@@ -726,118 +726,121 @@
         }
 
         function openLoginModal() {
-            const currentRole = getCurrentUserRole();
-            if (currentRole === 'admin') {
-                localStorage.setItem('PICKLEBALL_USER_ROLE', 'guest');
-                showToast('🔒 Đã đăng xuất khỏi hệ thống quản trị!');
+        const currentRole = getCurrentUserRole();
+        if (currentRole === 'admin') {
+            localStorage.setItem('PICKLEBALL_USER_ROLE', 'guest');
+            showToast('🔒 Đã đăng xuất khỏi hệ thống quản trị!');
+            applyRoleUI();
+            initApp();
+            return;
+        }
+        
+        document.getElementById('role-login-modal').classList.remove('hidden');
+        document.getElementById('role-login-modal').classList.add('flex');
+        
+        const pwdInput = document.getElementById('login-password-input');
+        const errorMsg = document.getElementById('login-error-msg');
+        const modalCard = document.getElementById('login-modal-card-container');
+        const eyeIcon = document.getElementById('login-eye-icon');
+
+        if (errorMsg) errorMsg.classList.add('hidden');
+        if (modalCard) {
+            modalCard.classList.remove('animate-shake', 'border-rose-500', 'shadow-rose-500/25');
+            modalCard.classList.add('border-brand-300');
+        }
+        if (eyeIcon) eyeIcon.className = 'fa-solid fa-eye text-xs';
+
+        if (pwdInput) {
+            pwdInput.value = '';
+            pwdInput.type = 'password';
+            pwdInput.classList.remove('border-rose-500', 'bg-rose-50/60');
+            setTimeout(() => {
+                pwdInput.focus();
+            }, 50);
+        }
+    }
+
+    function closeLoginModal() {
+        document.getElementById('role-login-modal').classList.add('hidden');
+        document.getElementById('role-login-modal').classList.remove('flex');
+    }
+
+    function toggleLoginPasswordVisibility() {
+        const pwdInput = document.getElementById('login-password-input');
+        const eyeIcon = document.getElementById('login-eye-icon');
+        if (!pwdInput || !eyeIcon) return;
+
+        if (pwdInput.type === 'password') {
+            pwdInput.type = 'text';
+            eyeIcon.className = 'fa-solid fa-eye-slash text-xs text-brand-600';
+        } else {
+            pwdInput.type = 'password';
+            eyeIcon.className = 'fa-solid fa-eye text-xs';
+        }
+        pwdInput.focus();
+    }
+
+    document.getElementById('login-role-select').addEventListener('change', function() {
+        const courtWrapper = document.getElementById('referee-court-wrapper');
+        if (this.value === 'referee') {
+            courtWrapper.classList.remove('hidden');
+        } else {
+            courtWrapper.classList.add('hidden');
+        }
+    });
+
+    function triggerLoginErrorShake(msgText) {
+        const pwdInput = document.getElementById('login-password-input');
+        const modalCard = document.getElementById('login-modal-card-container');
+        const errorMsg = document.getElementById('login-error-msg');
+        const errorText = document.getElementById('login-error-text');
+
+        if (errorText) errorText.textContent = msgText;
+        if (errorMsg) errorMsg.classList.remove('hidden');
+        if (pwdInput) pwdInput.classList.add('border-rose-500', 'bg-rose-50/60');
+
+        if (modalCard) {
+            modalCard.classList.remove('border-brand-300', 'animate-shake');
+            void modalCard.offsetWidth; // Reset animation
+            modalCard.classList.add('animate-shake', 'border-rose-500', 'shadow-rose-500/25');
+            setTimeout(() => {
+                modalCard.classList.remove('animate-shake');
+            }, 450);
+        }
+
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+        if (pwdInput) {
+            pwdInput.focus();
+            pwdInput.select();
+        }
+    }
+
+    function handleRoleLogin(event) {
+        event.preventDefault();
+        const role = document.getElementById('login-role-select').value;
+        const pwdInput = document.getElementById('login-password-input');
+        const pwd = pwdInput ? pwdInput.value.trim() : '';
+        const court = document.getElementById('login-court-select').value;
+
+        if (role === 'admin') {
+            if (pwd === ADMIN_PASSWORD) {
+                localStorage.setItem('PICKLEBALL_USER_ROLE', 'admin');
+                closeLoginModal();
                 applyRoleUI();
                 initApp();
-                return;
-            }
-            
-            document.getElementById('role-login-modal').classList.remove('hidden');
-            document.getElementById('role-login-modal').classList.add('flex');
-            
-            const pwdInput = document.getElementById('login-password-input');
-            const errorMsg = document.getElementById('login-error-msg');
-            const modalContainer = document.getElementById('login-modal-card-container');
-            
-            if (pwdInput) {
-                pwdInput.value = '';
-                pwdInput.type = 'password';
-                pwdInput.classList.remove('border-rose-500', 'bg-rose-50/60');
-                const eyeIcon = document.getElementById('login-eye-icon');
-                if (eyeIcon) eyeIcon.className = 'fa-solid fa-eye text-xs';
-                if (errorMsg) errorMsg.classList.add('hidden');
-                if (modalContainer) modalContainer.classList.remove('border-rose-500', 'shadow-rose-500/25');
-
-                setTimeout(() => {
-                    pwdInput.focus();
-                }, 50);
-            }
-        }
-
-        function closeLoginModal() {
-            document.getElementById('role-login-modal').classList.add('hidden');
-            document.getElementById('role-login-modal').classList.remove('flex');
-        }
-
-        function toggleLoginPasswordVisibility() {
-            const pwdInput = document.getElementById('login-password-input');
-            const eyeIcon = document.getElementById('login-eye-icon');
-            if (!pwdInput || !eyeIcon) return;
-
-            if (pwdInput.type === 'password') {
-                pwdInput.type = 'text';
-                eyeIcon.className = 'fa-solid fa-eye-slash text-xs text-brand-600';
+                showToast('🔓 Đăng nhập thành công quyền Quản trị viên!');
             } else {
-                pwdInput.type = 'password';
-                eyeIcon.className = 'fa-solid fa-eye text-xs';
+                triggerLoginErrorShake('Sai mật khẩu Quản trị viên!');
             }
-        }
-
-        document.getElementById('login-role-select').addEventListener('change', function() {
-            const courtWrapper = document.getElementById('referee-court-wrapper');
-            if (this.value === 'referee') {
-                courtWrapper.classList.remove('hidden');
+        } else if (role === 'referee') {
+            if (pwd === REFEREE_PASSWORD || pwd === ADMIN_PASSWORD) {
+                closeLoginModal();
+                window.location.href = `referee.html?court=${encodeURIComponent(court)}`;
             } else {
-                courtWrapper.classList.add('hidden');
-            }
-        });
-
-        function handleRoleLogin(event) {
-            event.preventDefault();
-            const role = document.getElementById('login-role-select').value;
-            const pwdInput = document.getElementById('login-password-input');
-            const pwd = pwdInput.value.trim();
-            const court = document.getElementById('login-court-select').value;
-            const errorMsg = document.getElementById('login-error-msg');
-            const modalContainer = document.getElementById('login-modal-card-container');
-
-            if (role === 'admin') {
-                if (pwd === ADMIN_PASSWORD) {
-                    localStorage.setItem('PICKLEBALL_USER_ROLE', 'admin');
-                    closeLoginModal();
-                    applyRoleUI();
-                    initApp();
-                    showToast('🔓 Đăng nhập thành công quyền Quản trị viên!');
-                } else {
-                    if (errorMsg) errorMsg.classList.remove('hidden');
-                    if (pwdInput) pwdInput.classList.add('border-rose-500', 'bg-rose-50/60');
-                    if (modalContainer) {
-                        modalContainer.classList.remove('animate-ios-shake');
-                        void modalContainer.offsetWidth;
-                        modalContainer.classList.add('animate-ios-shake', 'border-rose-500', 'shadow-rose-500/25');
-                    }
-                    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-                    pwdInput.focus();
-                    pwdInput.select();
-                    setTimeout(() => {
-                        if (modalContainer) modalContainer.classList.remove('animate-ios-shake');
-                    }, 450);
-                }
-            } else if (role === 'referee') {
-                if (pwd === REFEREE_PASSWORD || pwd === ADMIN_PASSWORD) {
-                    closeLoginModal();
-                    window.location.href = `referee.html?court=${encodeURIComponent(court)}`;
-                } else {
-                    if (errorMsg) errorMsg.classList.remove('hidden');
-                    if (pwdInput) pwdInput.classList.add('border-rose-500', 'bg-rose-50/60');
-                    if (modalContainer) {
-                        modalContainer.classList.remove('animate-ios-shake');
-                        void modalContainer.offsetWidth;
-                        modalContainer.classList.add('animate-ios-shake', 'border-rose-500', 'shadow-rose-500/25');
-                    }
-                    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-                    pwdInput.focus();
-                    pwdInput.select();
-                    setTimeout(() => {
-                        if (modalContainer) modalContainer.classList.remove('animate-ios-shake');
-                    }, 450);
-                }
+                triggerLoginErrorShake('Sai mật khẩu Trọng tài!');
             }
         }
-
+    }
         function evaluateTieStatus(tieMatches) {
             let c1Wins = 0;
             let c2Wins = 0;
