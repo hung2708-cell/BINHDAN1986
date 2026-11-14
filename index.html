@@ -423,63 +423,64 @@
     </main>
 
     <!-- POPUP MODAL ĐĂNG NHẬP PHÂN QUYỀN (ADMIN vs TRỌNG TÀI) -->
-    <div id="role-login-modal" onclick="if(event.target === this) closeLoginModal()" class="fixed inset-0 z-[80] flex items-center justify-center bg-stone-900/65 backdrop-blur-sm hidden p-4">
-        <div id="login-modal-card-container" class="bg-white border-2 border-brand-300 w-full max-w-sm p-5 sm:p-6 rounded-2xl shadow-2xl space-y-4 animate-modal-pop relative transition-colors duration-200">
-            <div class="flex justify-between items-center border-b border-stone-200 pb-2.5">
-                <h3 class="font-extrabold text-stone-900 text-sm sm:text-base flex items-center gap-2">
-                    <i class="fa-solid fa-user-shield text-brand-600"></i> Đăng Nhập Hệ Thống
-                </h3>
-                <button type="button" onclick="closeLoginModal()" class="w-8 h-8 rounded-lg text-stone-400 hover:text-stone-700 flex items-center justify-center">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
+    <!-- POPUP MODAL ĐĂNG NHẬP PHÂN QUYỀN (ADMIN vs TRỌNG TÀI) -->
+<div id="role-login-modal" onclick="if(event.target === this) closeLoginModal()" class="fixed inset-0 z-[80] flex items-center justify-center bg-stone-900/65 backdrop-blur-sm hidden p-4">
+    <div id="login-modal-card-container" class="bg-white border-2 border-brand-300 w-full max-w-sm p-5 sm:p-6 rounded-2xl shadow-2xl space-y-4 animate-modal-pop transition-colors duration-200">
+        <div class="flex justify-between items-center border-b border-stone-200 pb-2.5">
+            <h3 class="font-extrabold text-stone-900 text-sm sm:text-base flex items-center gap-2">
+                <i class="fa-solid fa-user-shield text-brand-600"></i> Đăng Nhập Hệ Thống
+            </h3>
+            <button type="button" onclick="closeLoginModal()" class="w-8 h-8 rounded-lg text-stone-400 hover:text-stone-700 flex items-center justify-center">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        
+        <form onsubmit="handleRoleLogin(event)" class="space-y-3" autocomplete="off">
+            <div>
+                <label class="block text-xs font-bold text-stone-600 mb-1">Chọn Vai Trò</label>
+                <select id="login-role-select" class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3 py-2.5 text-xs font-bold text-stone-800 focus:outline-none focus:border-brand-500">
+                    <option value="admin">Quản trị viên (Ban Tổ Chức)</option>
+                    <option value="referee">Trọng tài bắt chính</option>
+                </select>
             </div>
             
-            <form onsubmit="handleRoleLogin(event)" class="space-y-3">
-                <div>
-                    <label class="block text-xs font-bold text-stone-600 mb-1">Chọn Vai Trò</label>
-                    <select id="login-role-select" class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3 py-2.5 text-xs font-bold text-stone-800 focus:outline-none focus:border-brand-500">
-                        <option value="admin">Quản trị viên (Ban Tổ Chức)</option>
-                        <option value="referee">Trọng tài bắt chính</option>
-                    </select>
-                </div>
-                
-                <div id="referee-court-wrapper" class="hidden">
-                    <label class="block text-xs font-bold text-stone-600 mb-1">Chọn Sân Phụ Trách</label>
-                    <select id="login-court-select" class="w-full bg-amber-50 border border-amber-300 rounded-xl px-3 py-2.5 text-xs font-extrabold text-amber-900 focus:outline-none focus:border-brand-500">
-                        <option value="Sân 1">Sân 1</option>
-                        <option value="Sân 2">Sân 2</option>
-                        <option value="Sân 3">Sân 3</option>
-                        <option value="Sân 4">Sân 4</option>
-                        <option value="Sân 5">Sân 5</option>
-                        <option value="Sân 6">Sân 6</option>
-                        <option value="Sân 7">Sân 7</option>
-                        <option value="Sân 8">Sân 8</option>
-                    </select>
-                </div>
+            <div id="referee-court-wrapper" class="hidden">
+                <label class="block text-xs font-bold text-stone-600 mb-1">Chọn Sân Phụ Trách</label>
+                <select id="login-court-select" class="w-full bg-amber-50 border border-amber-300 rounded-xl px-3 py-2.5 text-xs font-extrabold text-amber-900 focus:outline-none focus:border-brand-500">
+                    <option value="Sân 1">Sân 1</option>
+                    <option value="Sân 2">Sân 2</option>
+                    <option value="Sân 3">Sân 3</option>
+                    <option value="Sân 4">Sân 4</option>
+                    <option value="Sân 5">Sân 5</option>
+                    <option value="Sân 6">Sân 6</option>
+                    <option value="Sân 7">Sân 7</option>
+                    <option value="Sân 8">Sân 8</option>
+                </select>
+            </div>
 
-                <div>
-                    <label class="block text-xs font-bold text-stone-600 mb-1">Mật khẩu truy cập</label>
-                    <div class="relative">
-                        <input type="password" id="login-password-input" autocomplete="new-password" required placeholder="Nhập mật khẩu..." class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2.5 pr-10 text-sm text-stone-900 focus:outline-none focus:border-brand-500 font-mono tracking-widest transition-colors">
-                        <button type="button" onclick="toggleLoginPasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 p-1" title="Hiện/Ẩn mật khẩu">
-                            <i id="login-eye-icon" class="fa-solid fa-eye text-xs"></i>
-                        </button>
-                    </div>
-                    <div class="min-h-[20px] flex items-center mt-1">
-                        <p id="login-error-msg" class="text-xs text-rose-600 font-bold hidden flex items-center gap-1.5">
-                            <i class="fa-solid fa-circle-exclamation"></i>
-                            <span>Sai mật khẩu! Vui lòng thử lại.</span>
-                        </p>
-                    </div>
+            <div>
+                <label class="block text-xs font-bold text-stone-600 mb-1">Mật khẩu truy cập</label>
+                <div class="relative">
+                    <input type="password" id="login-password-input" autocomplete="new-password" required placeholder="Nhập mật khẩu..." class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2.5 pr-10 text-sm text-stone-900 focus:outline-none focus:border-brand-500 font-mono tracking-widest transition-colors">
+                    <button type="button" onclick="toggleLoginPasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 p-1" title="Hiện/Ẩn mật khẩu">
+                        <i id="login-eye-icon" class="fa-solid fa-eye text-xs"></i>
+                    </button>
                 </div>
+                <div class="min-h-[20px] flex items-center mt-1">
+                    <p id="login-error-msg" class="text-xs text-rose-600 font-bold hidden flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                        <span id="login-error-text">Sai mật khẩu! Vui lòng thử lại.</span>
+                    </p>
+                </div>
+            </div>
 
-                <div class="flex justify-end gap-2 pt-2 border-t border-stone-200">
-                    <button type="button" onclick="closeLoginModal()" class="px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold">Hủy</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold shadow-md">Xác Nhận</button>
-                </div>
-            </form>
-        </div>
+            <div class="flex justify-end gap-2 pt-2 border-t border-stone-200">
+                <button type="button" onclick="closeLoginModal()" class="px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold">Hủy</button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold shadow-md">Xác Nhận</button>
+            </div>
+        </form>
     </div>
+</div>
 
     <!-- POPUP MODAL THIỆP VINH DANH & CHÚC MỪNG NHÀ VÔ ĐỊCH -->
     <div id="champion-celebration-modal" onclick="if(event.target === this) closeChampionModal()" class="fixed inset-0 z-[65] flex items-center justify-center bg-stone-950/75 backdrop-blur-sm hidden p-3 sm:p-5">
