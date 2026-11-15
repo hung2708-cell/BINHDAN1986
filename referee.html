@@ -1023,11 +1023,60 @@
             return list;
         }
 
+        // =========================================================================
+        // TỰ ĐỘNG DỒN CẶP ĐẤU KẾ TIẾP VÀO SÂN VỪA XONG ĐỂ KHÔNG BỊ KẸT CẶP ĐÃ KẾT THÚC
+        // =========================================================================
+        function assignNextTieToCourtIfEmpty(courtName) {
+            const ties = state.ties || [];
+            if (!ties.length) return false;
+
+            // Kiểm tra sân này còn cặp nào chưa xong không
+            const hasUnfinishedOnCourt = ties.some(t =>
+                (t.court || t.matches?.[0]?.court || 'Sân 1') === courtName &&
+                (t.matches || []).length > 0 &&
+                !evaluateTieStatus(t.matches).isCompleted
+            );
+            if (hasUnfinishedOnCourt) return false;
+
+            // Tìm các đội đang bận đánh LIVE trên các sân khác
+            const busyClubIds = new Set();
+            ties.forEach(t => {
+                if (evaluateTieStatus(t.matches).isLive) {
+                    busyClubIds.add(t.club1Id);
+                    busyClubIds.add(t.club2Id);
+                }
+            });
+
+            // Tìm cặp đấu chưa diễn ra sớm nhất của giải (ưu tiên cặp có đội rảnh)
+            const upcomingTies = ties
+                .filter(t => {
+                    const st = evaluateTieStatus(t.matches);
+                    return (t.matches || []).length > 0 && !st.isCompleted && !st.isLive;
+                })
+                .sort((a, b) => (a.wave || a.matches?.[0]?.wave || 1) - (b.wave || b.matches?.[0]?.wave || 1));
+
+            const nextCandidate = upcomingTies.find(t => !busyClubIds.has(t.club1Id) && !busyClubIds.has(t.club2Id)) || upcomingTies[0];
+            if (!nextCandidate) return false;
+
+            nextCandidate.court = courtName;
+            (nextCandidate.matches || []).forEach(m => {
+                m.court = courtName;
+            });
+            return true;
+        }
+
         function getActiveTieMatchesForCourt(courtName) {
             enforceTieClinchRules();
-            const courtTies = (state.ties || [])
+            let courtTies = (state.ties || [])
                 .filter(t => (t.court || t.matches?.[0]?.court || 'Sân 1') === courtName && (t.matches || []).length > 0)
                 .sort((a, b) => (a.wave || a.matches?.[0]?.wave || 1) - (b.wave || b.matches?.[0]?.wave || 1));
+
+            let hasUnfinished = courtTies.some(t => !evaluateTieStatus(t.matches).isCompleted);
+            if (!hasUnfinished && assignNextTieToCourtIfEmpty(courtName)) {
+                courtTies = (state.ties || [])
+                    .filter(t => (t.court || t.matches?.[0]?.court || 'Sân 1') === courtName && (t.matches || []).length > 0)
+                    .sort((a, b) => (a.wave || a.matches?.[0]?.wave || 1) - (b.wave || b.matches?.[0]?.wave || 1));
+            }
 
             if (courtTies.length > 0) {
                 let targetTie = courtTies.find(t => evaluateTieStatus(t.matches).isLive);
@@ -1872,8 +1921,22 @@
             if (tieSt.isClinched || tieSt.isCompleted) {
                 const winnerClubName = getClubById(tieSt.winnerSide === 1 ? finishedMatch.club1Id : finishedMatch.club2Id).name;
                 recordMatchLog(finishedMatch, 'FINISH', `🏆 KẾT THÚC CẶP ĐẤU trên ${currentAssignedCourt}: ${winnerClubName} thắng ${tieSt.c1Wins}-${tieSt.c2Wins}`);
-                saveState();
-                showToast(`🏆 ${winnerClubName} thắng ${tieSt.c1Wins}-${tieSt.c2Wins}! Đã lưu lên Firebase.`);
+
+                // Tự động chuyển sang cặp đấu kế tiếp trên sân này (hoặc kéo cặp kế tiếp vào sân vừa trống)
+                const nextTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
+                const nextFirstMatch = nextTieMatches.find(x => x.status !== 'FINISHED' && x.status !== 'SKIPPED');
+                if (nextFirstMatch && nextFirstMatch.id !== finishedMatch.id) {
+                    state.activeLiveMatchId = nextFirstMatch.id;
+                    __lastPromptedTossMatchId = null;
+                    saveState();
+                    const n1 = getClubById(nextFirstMatch.club1Id).name;
+                    const n2 = getClubById(nextFirstMatch.club2Id).name;
+                    showToast(`🏆 ${winnerClubName} thắng! Chuyển sang cặp mới: ${n1} vs ${n2}`);
+                    setTimeout(() => openRefereePlayerSetupModal(1), 250);
+                } else {
+                    saveState();
+                    showToast(`🏆 ${winnerClubName} thắng ${tieSt.c1Wins}-${tieSt.c2Wins}! Đã hết lịch thi đấu.`);
+                }
                 return;
             }
 
@@ -1919,9 +1982,23 @@
             const c2 = getClubById(firstM.club2Id).name;
             recordMatchLog(firstM, 'FINISH', `🔒 Trọng tài kết thúc toàn bộ các nội dung trên ${currentAssignedCourt}: ${c1} (${finalSt.c1Wins}) - (${finalSt.c2Wins}) ${c2}`);
 
-            saveState();
-            renderRefereeApp();
-            showToast(`🔒 Đã kết thúc toàn bộ nội dung trên ${currentAssignedCourt}!`);
+            // Tự động nhảy sang cặp đấu kế tiếp trên sân này (hoặc kéo cặp mới vào sân trống)
+            const nextTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
+            const nextFirstMatch = nextTieMatches.find(x => x.status !== 'FINISHED' && x.status !== 'SKIPPED');
+            if (nextFirstMatch && nextFirstMatch.id !== firstM.id) {
+                state.activeLiveMatchId = nextFirstMatch.id;
+                __lastPromptedTossMatchId = null;
+                saveState();
+                renderRefereeApp();
+                const n1 = getClubById(nextFirstMatch.club1Id).name;
+                const n2 = getClubById(nextFirstMatch.club2Id).name;
+                showToast(`🔒 Xong cặp ${c1} vs ${c2}! Chuyển sang cặp kế tiếp: ${n1} vs ${n2}`);
+                setTimeout(() => openRefereePlayerSetupModal(1), 250);
+            } else {
+                saveState();
+                renderRefereeApp();
+                showToast(`🔒 Đã kết thúc toàn bộ nội dung trên ${currentAssignedCourt}!`);
+            }
         }
 
         function triggerSideOutOrNextServer() {
