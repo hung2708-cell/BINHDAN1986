@@ -296,7 +296,8 @@
                         <h3 class="font-black text-brand-700 text-sm sm:text-base uppercase flex items-center">
                             <i class="fa-solid fa-diagram-project mr-2 text-amber-500"></i> Sơ Đồ Nhánh Đấu Toàn Giải
                         </h3>
-                        <div class="flex items-center gap-1 bg-stone-100 p-1 rounded-xl border border-stone-200">
+                        <!-- Ẩn bộ chọn Nhánh A/B khi vòng bảng chưa đấu xong -->
+                        <div id="tree-series-switcher" class="hidden items-center gap-1 bg-stone-100 p-1 rounded-xl border border-stone-200">
                             <button type="button" id="tree-series-btn-A" onclick="switchTreeSeries('A')" class="px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-brand-600 text-white shadow-2xs transition">Nhánh Serie A (Cúp Vàng)</button>
                             <button type="button" id="tree-series-btn-B" onclick="switchTreeSeries('B')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold text-stone-600 hover:text-stone-900 transition">Nhánh Serie B (Hạng Phụ)</button>
                         </div>
@@ -2109,9 +2110,6 @@
             document.getElementById('match-detail-modal').classList.remove('flex'); 
         }
 
-        // =========================================================================
-        // TÍNH TOÁN BẢNG XẾP HẠNG VÒNG BẢNG (CHỈ XẾP HẠNG & PHÂN NHÁNH KHI BẢNG ĐẤU XONG)
-        // =========================================================================
         function calculateStandingsByGroup() {
             let statsMap = {};
             teams.forEach(t => { 
@@ -2177,7 +2175,6 @@
                 const isThisGroupFinished = thisGroupTies.length > 0 && thisGroupTies.every(t => evaluateTieStatus(t.matches).isCompleted);
                 const hasAnyMatchPlayed = list.some(st => st.played > 0 || st.matchWins > 0 || st.matchLosses > 0);
 
-                // Chỉ sắp xếp thứ hạng khi bảng đã có trận đấu; nếu chưa đấu thì giữ nguyên thứ tự ban đầu
                 if (hasAnyMatchPlayed) {
                     list.sort((a, b) => {
                         if (b.points !== a.points) return b.points - a.points;
@@ -2217,7 +2214,6 @@
                         const isGroupDone = standingsArray.length > 0 && standingsArray[0].isGroupFinished;
 
                         const rowsHtml = standingsArray.map((st, idx) => {
-                            // Khi bảng chưa đấu xong: tất cả số thứ tự để đồng đều, không tô màu nổi bật Nhất/Nhì
                             let rankBadge = 'bg-stone-100 text-stone-600 border border-stone-200';
                             let rankText = `${idx + 1}`;
                             let seriesBadge = `<span class="px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-bold bg-stone-100 text-stone-500 border border-stone-200">Chưa chia nhánh</span>`;
@@ -2482,7 +2478,9 @@
         }
 
         // =========================================================================
-        // SƠ ĐỒ CÂY TOÀN GIẢI BẮT ĐẦU TỪ VÒNG BẢNG -> TỨ KẾT -> BÁN KẾT -> CHUNG KẾT
+        // SƠ ĐỒ CÂY TOÀN GIẢI:
+        // - KHI VÒNG BẢNG CHƯA XONG: HIỂN THỊ CÁC CẶP ĐẤU VÒNG BẢNG (CHƯA CHIA NHÁNH A/B)
+        // - KHI VÒNG BẢNG ĐÃ XONG: HIỂN THỊ NHÁNH SERIE A / SERIE B & ĐIỀN ĐỘI THẮNG ĐI TIẾP
         // =========================================================================
         function switchTreeSeries(ser) {
             currentTreeSeries = ser;
@@ -2583,63 +2581,30 @@
             if (!container) return;
 
             const allTies = getAllStructuredTies();
+            const groupTies = allTies.filter(t => !t.knockoutRound);
+            const allGroupFinished = groupTies.length > 0 && groupTies.every(t => evaluateTieStatus(t.matches).isCompleted);
+
+            // Chỉ hiển thị nút chọn Nhánh A / B khi vòng bảng đã đấu xong
+            const switcherEl = document.getElementById('tree-series-switcher');
+            if (switcherEl) {
+                if (allGroupFinished) {
+                    switcherEl.classList.remove('hidden');
+                    switcherEl.classList.add('flex');
+                } else {
+                    switcherEl.classList.add('hidden');
+                    switcherEl.classList.remove('flex');
+                }
+            }
+
             const koTies = allTies.filter(t => t.knockoutRound && t.series === currentTreeSeries);
             const groupedStandings = calculateStandingsByGroup();
             const plan = buildKnockoutSeedPlan();
             const seedItems = currentTreeSeries === 'A' ? plan.serieA : plan.serieB;
             const isSerieA = currentTreeSeries === 'A';
-            const branchColor = isSerieA ? '#ea580c' : '#059669';
+            const branchColor = allGroupFinished ? (isSerieA ? '#ea580c' : '#059669') : '#d97706';
 
-            // 1. CỘT ĐẦU TIÊN: VÒNG BẢNG (CHỈ CHIA ĐỘI, CHƯA CHIA NHÁNH - KHÔNG TÔ NỔI BẬT KHI CHƯA ĐẤU XONG)
-            const groupEntries = Object.entries(groupedStandings);
-            const groupStageCardsHtml = groupEntries.length > 0 ? groupEntries.map(([gName, list]) => {
-                const isGroupDone = list.length > 0 && list[0].isGroupFinished;
-
-                const teamsRows = list.map((st, idx) => {
-                    const isSelected = selectedTeamFilterForBracket === st.id;
-                    const isQualified = isGroupDone && (isSerieA ? (idx < 2) : (idx >= 2 && idx < 4));
-
-                    // Khi chưa đấu xong: tất cả số thứ tự và nền giống hệt nhau
-                    const rowStyle = isSelected
-                        ? 'bg-amber-200 ring-1 ring-amber-500 font-black text-stone-950'
-                        : (isQualified
-                            ? (isSerieA ? 'bg-rose-50/90 text-brand-900 font-extrabold hover:bg-rose-100' : 'bg-emerald-50/90 text-emerald-900 font-extrabold hover:bg-emerald-100')
-                            : 'bg-stone-50/80 text-stone-800 font-semibold hover:bg-amber-50/70');
-
-                    let numBadgeClass = 'bg-stone-200 text-stone-700';
-                    let numLabel = `${idx + 1}`;
-                    if (isGroupDone) {
-                        if (idx === 0) { numBadgeClass = 'bg-amber-500 text-white'; numLabel = '1'; }
-                        else if (idx === 1) { numBadgeClass = 'bg-brand-600 text-white'; numLabel = '2'; }
-                    }
-
-                    return `
-                        <div onclick="openTeamJourneyModal('${st.id}', '${st.name.replace(/'/g, "\\'")}')" 
-                             class="cursor-pointer flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg text-xs transition ${rowStyle}">
-                            <div class="flex items-center gap-1.5 min-w-0">
-                                <span class="w-4 h-4 rounded text-[9px] font-black flex items-center justify-center shrink-0 ${numBadgeClass}">${numLabel}</span>
-                                <span class="truncate">${st.name}</span>
-                            </div>
-                            <span class="font-score text-[11px] font-bold text-stone-500 shrink-0">${st.points}đ</span>
-                        </div>
-                    `;
-                }).join('');
-
-                return `
-                    <div class="bg-white border border-stone-200 rounded-xl p-2.5 w-60 shadow-sm space-y-1.5">
-                        <div class="flex items-center justify-between text-[10px] font-black uppercase border-b border-stone-100 pb-1">
-                            <span class="text-stone-700"><i class="fa-solid fa-layer-group mr-1 text-amber-600"></i>${gName}</span>
-                            <span class="text-stone-400 text-[9px]">${isGroupDone ? 'Đã chốt hạng' : 'Vòng tròn'}</span>
-                        </div>
-                        <div class="space-y-1">
-                            ${teamsRows}
-                        </div>
-                    </div>
-                `;
-            }).join('') : `<div class="bg-stone-50 border border-stone-200 rounded-xl p-4 w-56 text-center text-xs text-stone-400">Chưa có bảng đấu</div>`;
-
-            // Hàm dựng thẻ cặp đấu đối kháng trên sơ đồ cây (Chỉ điền tên khi bảng đấu xong hoặc trận trước đã có đội thắng)
-            const buildTreeCard = (tieObj, placeholderLabel, c1Placeholder, c2Placeholder) => {
+            // Hàm dựng thẻ cặp đấu đối kháng trên sơ đồ cây (Ghép từng đôi đấu với nhau)
+            const buildTreeCard = (tieObj, placeholderLabel, c1Placeholder, c2Placeholder, useSeriesAccent = false) => {
                 if (!tieObj) {
                     return `
                         <div class="bg-white border border-dashed border-stone-300 rounded-xl p-2.5 w-60 opacity-85 space-y-1.5">
@@ -2667,36 +2632,159 @@
                 const finishedMatches = (tieObj.matches || []).filter(m => m.status === 'FINISHED');
                 const scoresRow1 = finishedMatches.length > 0
                     ? finishedMatches.map(m => `<span class="px-1 ${m.score1 > m.score2 ? 'font-black text-stone-900' : 'text-stone-400'}">${m.score1}</span>`).join('<span class="text-stone-300">|</span>')
-                    : `<span class="font-black">${st.c1Wins}</span>`;
+                    : `<span class="font-black text-stone-400">${st.c1Wins}</span>`;
                 const scoresRow2 = finishedMatches.length > 0
                     ? finishedMatches.map(m => `<span class="px-1 ${m.score2 > m.score1 ? 'font-black text-stone-900' : 'text-stone-400'}">${m.score2}</span>`).join('<span class="text-stone-300">|</span>')
-                    : `<span class="font-black">${st.c2Wins}</span>`;
+                    : `<span class="font-black text-stone-400">${st.c2Wins}</span>`;
+
+                const cardBorder = (w1 || w2)
+                    ? (useSeriesAccent ? (isSerieA ? 'border-amber-300' : 'border-emerald-300') : 'border-emerald-300')
+                    : 'border-stone-200';
 
                 return `
-                    <div class="bg-white border-2 ${w1 || w2 ? (isSerieA ? 'border-amber-300' : 'border-emerald-300') : 'border-stone-200'} rounded-xl p-2.5 w-60 shadow-sm hover:shadow-md transition space-y-1.5">
+                    <div class="bg-white border-2 ${cardBorder} rounded-xl p-2.5 w-60 shadow-sm hover:shadow-md transition space-y-1.5">
                         <div class="flex items-center justify-between text-[9px] font-bold text-stone-400 border-b border-stone-100 pb-1">
-                            <span>${tieObj.court}</span>
+                            <span>${tieObj.court} • ${tieObj.knockoutRound ? tieObj.group : `Lượt ${tieObj.wave}`}</span>
                             <button onclick="openCourtDetailModal('${tieObj.court}', '${tieObj.club1Id}', '${tieObj.club2Id}', '${tieObj.id}')" class="text-brand-600 hover:underline font-extrabold">Chi tiết 5 trận</button>
                         </div>
                         <div onclick="openTeamJourneyModal('${tieObj.club1Id}', '${name1.replace(/'/g, "\\'")}')" 
-                             class="cursor-pointer flex items-center justify-between gap-2 px-1.5 py-1 rounded-lg transition ${isSel1 ? 'bg-amber-100 ring-1 ring-amber-400' : 'hover:bg-stone-50'}">
-                            <span class="text-xs truncate ${w1 ? 'font-black text-stone-900' : 'font-medium text-stone-600'}">${name1} ${w1 ? '🏆' : ''}</span>
+                             class="cursor-pointer flex items-center justify-between gap-2 px-1.5 py-1 rounded-lg transition ${isSel1 ? 'bg-amber-100 ring-1 ring-amber-400' : (w1 ? 'bg-emerald-50/70 hover:bg-emerald-100/70' : 'hover:bg-stone-50')}">
+                            <span class="text-xs truncate ${w1 ? 'font-black text-stone-900' : 'font-semibold text-stone-700'}">${name1} ${w1 ? '🏆' : ''}</span>
                             <div class="font-score text-xs shrink-0 flex items-center">${scoresRow1}</div>
                         </div>
                         <div onclick="openTeamJourneyModal('${tieObj.club2Id}', '${name2.replace(/'/g, "\\'")}')" 
-                             class="cursor-pointer flex items-center justify-between gap-2 px-1.5 py-1 rounded-lg transition ${isSel2 ? 'bg-amber-100 ring-1 ring-amber-400' : 'hover:bg-stone-50'}">
-                            <span class="text-xs truncate ${w2 ? 'font-black text-stone-900' : 'font-medium text-stone-600'}">${name2} ${w2 ? '🏆' : ''}</span>
+                             class="cursor-pointer flex items-center justify-between gap-2 px-1.5 py-1 rounded-lg transition ${isSel2 ? 'bg-amber-100 ring-1 ring-amber-400' : (w2 ? 'bg-emerald-50/70 hover:bg-emerald-100/70' : 'hover:bg-stone-50')}">
+                            <span class="text-xs truncate ${w2 ? 'font-black text-stone-900' : 'font-semibold text-stone-700'}">${name2} ${w2 ? '🏆' : ''}</span>
                             <div class="font-score text-xs shrink-0 flex items-center">${scoresRow2}</div>
                         </div>
                     </div>
                 `;
             };
 
+            // =========================================================================
+            // TRƯỜNG HỢP 1: VÒNG BẢNG CHƯA ĐẤU XONG -> CHƯA CHIA NHÁNH A/B
+            // HIỂN THỊ TỪNG CẶP ĐẤU VÒNG BẢNG NỐI SANG Ô CHỜ VÒNG LOẠI TRỰC TIẾP
+            // =========================================================================
+            if (!allGroupFinished) {
+                const groupNames = getAllGroupNames();
+                const groupMatchColumnsHtml = groupNames.map(gName => {
+                    const gTies = groupTies.filter(t => t.group === gName).sort((a, b) => (a.wave || 1) - (b.wave || 1));
+                    return `
+                        <div class="bg-stone-50/80 border border-stone-200 rounded-2xl p-2.5 space-y-2.5 shrink-0">
+                            <div class="text-[11px] font-black text-stone-700 uppercase tracking-wider text-center bg-white py-1 px-2 rounded-lg border border-stone-200">
+                                ${gName} (${gTies.length} cặp đấu)
+                            </div>
+                            <div class="space-y-2">
+                                ${gTies.length > 0 ? gTies.map(t => buildTreeCard(t, gName, '', '', false)).join('') : '<div class="text-xs text-stone-400 italic text-center py-4 w-56">Chưa xếp cặp đấu</div>'}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                container.innerHTML = `
+                    <div style="--branch-color: #d97706;" class="flex items-stretch gap-4 min-w-max px-3 py-2">
+                        <!-- CỘT 1: CÁC CẶP ĐẤU VÒNG BẢNG -->
+                        <div class="flex flex-col justify-between space-y-3">
+                            <div class="text-xs font-black text-amber-800 uppercase tracking-wider text-center bg-amber-100/80 py-1 px-3 rounded-lg border border-amber-200">
+                                1. VÒNG BẢNG (CHƯA CHIA NHÁNH)
+                            </div>
+                            <div class="flex items-start gap-3">
+                                ${groupMatchColumnsHtml}
+                            </div>
+                        </div>
+
+                        <div class="flex items-center pt-6 text-amber-500">
+                            <div class="w-5 h-[2.5px] bg-amber-400"></div>
+                            <i class="fa-solid fa-angles-right text-base"></i>
+                        </div>
+
+                        <!-- CỘT 2: CHỜ CHIA NHÁNH SAU VÒNG BẢNG -->
+                        <div class="flex flex-col justify-between space-y-3">
+                            <div class="text-xs font-black text-stone-500 uppercase tracking-wider text-center bg-stone-100 py-1 px-3 rounded-lg">
+                                2. VÒNG LOẠI TRỰC TIẾP
+                            </div>
+                            <div class="flex-1 flex flex-col justify-center space-y-4">
+                                <div class="bg-stone-50 border border-dashed border-stone-300 rounded-xl p-3.5 w-60 text-center space-y-1">
+                                    <div class="text-xs font-extrabold text-brand-700"><i class="fa-solid fa-trophy mr-1 text-amber-500"></i> Nhánh Serie A</div>
+                                    <p class="text-[11px] text-stone-500">Chờ hoàn thành vòng bảng để xác định Nhất & Nhì mỗi bảng</p>
+                                </div>
+                                <div class="bg-stone-50 border border-dashed border-stone-300 rounded-xl p-3.5 w-60 text-center space-y-1">
+                                    <div class="text-xs font-extrabold text-emerald-700"><i class="fa-solid fa-medal mr-1 text-emerald-500"></i> Nhánh Serie B</div>
+                                    <p class="text-[11px] text-stone-500">Chờ hoàn thành vòng bảng để xác định Hạng 3 & 4 mỗi bảng</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center pt-6 text-stone-300">
+                            <div class="w-5 h-[2.5px] bg-stone-300"></div>
+                            <i class="fa-solid fa-chevron-right text-base"></i>
+                        </div>
+
+                        <!-- CỘT 3: CHUNG KẾT & VÔ ĐỊCH -->
+                        <div class="flex flex-col justify-between space-y-3">
+                            <div class="text-xs font-black text-stone-500 uppercase tracking-wider text-center bg-stone-100 py-1 px-3 rounded-lg">
+                                3. CHUNG KẾT & VÔ ĐỊCH
+                            </div>
+                            <div class="flex-1 flex items-center">
+                                <div class="bg-stone-50 border border-dashed border-stone-300 rounded-2xl p-4 w-56 text-center space-y-1.5 opacity-80">
+                                    <div class="w-10 h-10 mx-auto rounded-full bg-stone-200/70 flex items-center justify-center text-xl text-stone-400">
+                                        <i class="fa-solid fa-trophy"></i>
+                                    </div>
+                                    <div class="text-[10px] font-black uppercase text-stone-400">NHÀ VÔ ĐỊCH</div>
+                                    <div class="text-xs font-bold text-stone-500">Chờ đấu xong các vòng</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // =========================================================================
+            // TRƯỜNG HỢP 2: VÒNG BẢNG ĐÃ XONG -> MỞ NHÁNH SERIE A / B VÀ GHÉP TỪNG ĐÔI ĐẤU
+            // ĐỘI THẮNG Ở MỖI CẶP ĐẤU SẼ TỰ ĐỘNG ĐI TIẾP VÀO VÒNG TRONG
+            // =========================================================================
+            const groupEntries = Object.entries(groupedStandings);
+            const groupStageCardsHtml = groupEntries.map(([gName, list]) => {
+                const teamsRows = list.map((st, idx) => {
+                    const isSelected = selectedTeamFilterForBracket === st.id;
+                    const isQualified = isSerieA ? (idx < 2) : (idx >= 2 && idx < 4);
+                    const rowStyle = isSelected
+                        ? 'bg-amber-200 ring-1 ring-amber-500 font-black text-stone-950'
+                        : (isQualified
+                            ? (isSerieA ? 'bg-rose-50/90 text-brand-900 font-extrabold hover:bg-rose-100' : 'bg-emerald-50/90 text-emerald-900 font-extrabold hover:bg-emerald-100')
+                            : 'bg-stone-50/70 text-stone-400 font-medium hover:bg-stone-100');
+                    const numBadgeClass = idx === 0
+                        ? 'bg-amber-500 text-white'
+                        : (idx === 1 ? 'bg-brand-600 text-white' : 'bg-stone-200 text-stone-700');
+
+                    return `
+                        <div onclick="openTeamJourneyModal('${st.id}', '${st.name.replace(/'/g, "\\'")}')" 
+                             class="cursor-pointer flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg text-xs transition ${rowStyle}">
+                            <div class="flex items-center gap-1.5 min-w-0">
+                                <span class="w-4 h-4 rounded text-[9px] font-black flex items-center justify-center shrink-0 ${numBadgeClass}">${idx + 1}</span>
+                                <span class="truncate">${st.name}</span>
+                            </div>
+                            <span class="font-score text-[11px] font-black shrink-0">${st.points}đ</span>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="bg-white border-2 ${isSerieA ? 'border-rose-200' : 'border-emerald-200'} rounded-xl p-2.5 w-60 shadow-sm space-y-1.5">
+                        <div class="flex items-center justify-between text-[10px] font-black uppercase border-b border-stone-100 pb-1">
+                            <span class="${isSerieA ? 'text-brand-700' : 'text-emerald-700'}"><i class="fa-solid fa-layer-group mr-1"></i>${gName}</span>
+                            <span class="text-emerald-700 text-[9px]">Đã chốt hạng</span>
+                        </div>
+                        <div class="space-y-1">${teamsRows}</div>
+                    </div>
+                `;
+            }).join('');
+
             const serQf = koTies.filter(t => t.stage === 'QF').sort((a, b) => a.slotIndex - b.slotIndex);
             const serSf = koTies.filter(t => t.stage === 'SF').sort((a, b) => a.slotIndex - b.slotIndex);
             const serF = koTies.filter(t => t.stage === 'F').sort((a, b) => a.slotIndex - b.slotIndex);
 
-            // Tự động lấy đội thắng ở cặp đấu trước đưa sang ô chờ vòng sau (nếu vòng sau chưa kích hoạt)
             const getWinnerNameFromTie = (tieObj, fallbackPlaceholder) => {
                 if (!tieObj) return fallbackPlaceholder;
                 const st = evaluateTieStatus(tieObj.matches);
@@ -2711,10 +2799,9 @@
                 championName = getWinnerNameFromTie(serF[0], 'Chưa xác định');
             }
 
-            // GHÉP CÁC CỘT TỪ VÒNG BẢNG -> TỨ KẾT -> BÁN KẾT -> CHUNG KẾT -> VÔ ĐỊCH
             let columnsHtml = `
                 <div class="flex flex-col justify-between space-y-4">
-                    <div class="text-xs font-black text-stone-700 uppercase tracking-wider text-center bg-stone-100 py-1 px-2 rounded-lg border border-stone-200">1. VÒNG BẢNG (CHIA ĐỘI)</div>
+                    <div class="text-xs font-black text-amber-800 uppercase tracking-wider text-center bg-amber-100/80 py-1 px-2 rounded-lg border border-amber-200">1. KẾT QUẢ VÒNG BẢNG</div>
                     <div class="flex-1 flex flex-col justify-center space-y-3">
                         ${groupStageCardsHtml}
                     </div>
@@ -2732,9 +2819,7 @@
                 const qfCards = [0, 1, 2, 3].map(idx => {
                     const seed = seedItems[idx];
                     const tieObj = serQf.find(t => t.slotIndex === idx);
-                    const c1Ready = seed?.c1?.isGroupFinished ? seed.c1.name : (seed?.p1 || 'Chờ vòng bảng');
-                    const c2Ready = seed?.c2?.isGroupFinished ? seed.c2.name : (seed?.p2 || 'Chờ vòng bảng');
-                    return buildTreeCard(tieObj, `Tứ kết ${idx + 1}`, c1Ready, c2Ready);
+                    return buildTreeCard(tieObj, `Tứ kết ${idx + 1}`, seed?.c1?.name || seed?.p1, seed?.c2?.name || seed?.p2, true);
                 });
                 columnsHtml += `
                     <div class="flex flex-col justify-between space-y-4">
@@ -2755,13 +2840,13 @@
                     let c1Wait = '', c2Wait = '';
                     if (plan.startStage === 'SF') {
                         const seed = seedItems[idx];
-                        c1Wait = seed?.c1?.isGroupFinished ? seed.c1.name : (seed?.p1 || 'Chờ vòng bảng');
-                        c2Wait = seed?.c2?.isGroupFinished ? seed.c2.name : (seed?.p2 || 'Chờ vòng bảng');
+                        c1Wait = seed?.c1?.name || seed?.p1 || 'Chờ xác định';
+                        c2Wait = seed?.c2?.name || seed?.p2 || 'Chờ xác định';
                     } else {
                         c1Wait = getWinnerNameFromTie(serQf.find(t => t.slotIndex === idx * 2), `Thắng TK ${idx * 2 + 1}`);
                         c2Wait = getWinnerNameFromTie(serQf.find(t => t.slotIndex === idx * 2 + 1), `Thắng TK ${idx * 2 + 2}`);
                     }
-                    return buildTreeCard(tieObj, `Bán kết ${idx + 1}`, c1Wait, c2Wait);
+                    return buildTreeCard(tieObj, `Bán kết ${idx + 1}`, c1Wait, c2Wait, true);
                 });
                 columnsHtml += `
                     <div class="flex flex-col justify-between space-y-4">
@@ -2778,13 +2863,13 @@
             let finalC1Wait = '', finalC2Wait = '';
             if (plan.startStage === 'F') {
                 const seed = seedItems[0];
-                finalC1Wait = seed?.c1?.isGroupFinished ? seed.c1.name : (seed?.p1 || 'Chờ vòng bảng');
-                finalC2Wait = seed?.c2?.isGroupFinished ? seed.c2.name : (seed?.p2 || 'Chờ vòng bảng');
+                finalC1Wait = seed?.c1?.name || seed?.p1 || 'Chờ xác định';
+                finalC2Wait = seed?.c2?.name || seed?.p2 || 'Chờ xác định';
             } else {
                 finalC1Wait = getWinnerNameFromTie(serSf.find(t => t.slotIndex === 0), 'Thắng Bán kết 1');
                 finalC2Wait = getWinnerNameFromTie(serSf.find(t => t.slotIndex === 1), 'Thắng Bán kết 2');
             }
-            const finalCard = buildTreeCard(serF[0], 'Chung kết', finalC1Wait, finalC2Wait);
+            const finalCard = buildTreeCard(serF[0], 'Chung kết', finalC1Wait, finalC2Wait, true);
             columnsHtml += `
                 <div class="flex flex-col justify-between space-y-4">
                     <div class="text-xs font-black text-stone-700 uppercase tracking-wider text-center bg-stone-100 py-1 px-2 rounded-lg">CHUNG KẾT</div>
