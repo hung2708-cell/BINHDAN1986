@@ -169,6 +169,9 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-1 shrink-0">
+                    <button type="button" onclick="openMatchLogModal()" title="Xem Log Nhật Ký Trận Đấu" class="px-2 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-extrabold transition flex items-center gap-1">
+                        <i class="fa-solid fa-clock-rotate-left"></i><span>Log</span>
+                    </button>
                     <select id="refereeCourtSelect" onchange="changeRefereeCourt(this.value)" class="bg-rose-50 border border-brand-300 rounded-lg px-2 py-1 text-brand-700 font-extrabold text-xs shadow-sm focus:outline-none">
                         <option value="Sân 1">Sân 1</option>
                     </select>
@@ -188,22 +191,25 @@
             </div>
         </div>
 
-        <!-- 3. SƠ ĐỒ SÂN 2D & CHỌN SÂN / BÓNG / GIAO / ĐỠ -->
+        <!-- 3. SƠ ĐỒ SÂN 2D & CHỌN SÂN / BÓNG / THAY Y TẾ / ĐĂNG KÝ VĐV -->
         <div id="courtPanelBox" class="bg-white/95 border border-amber-200/90 rounded-xl p-2 flex flex-col justify-between gap-1.5 shadow-sm flex-1 min-h-0 backdrop-blur-sm">
             <div class="flex justify-between items-center text-[10px] font-extrabold text-amber-800 shrink-0 gap-1">
-                <span class="truncate"><i class="fa-solid fa-earth-asia mr-1 text-emerald-600"></i>Sơ Đồ Sân 2D</span>
-                <div class="flex items-center gap-1.5 shrink-0">
-                    <button type="button" onclick="openCoinTossModal()" class="px-2 py-0.5 rounded bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 font-extrabold text-[10px] shadow-sm transition">
-                        <i class="fa-solid fa-coins mr-1 text-orange-600"></i>Chọn Sân/Bóng
+                <span class="truncate"><i class="fa-solid fa-earth-asia mr-1 text-emerald-600"></i>Sân 2D</span>
+                <div class="flex items-center gap-1 shrink-0">
+                    <button type="button" id="btnOpenCoinToss" onclick="openCoinTossModal(false)" class="px-1.5 py-0.5 rounded bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 font-extrabold text-[9.5px] shadow-2xs transition">
+                        <i class="fa-solid fa-coins mr-0.5 text-orange-600"></i>Bốc Thăm
                     </button>
-                    <button type="button" onclick="openRefereePlayerSetupModal(1)" class="px-2 py-0.5 rounded bg-gradient-to-r from-brand-600 to-orange-600 hover:from-brand-500 hover:to-orange-500 text-white font-extrabold text-[10px] shadow-sm transition">
-                        <i class="fa-solid fa-users-gear mr-1"></i>Đăng Ký VĐV
+                    <button type="button" onclick="openMedicalSubModal()" class="px-1.5 py-0.5 rounded bg-sky-100 hover:bg-sky-200 text-sky-900 border border-sky-300 font-extrabold text-[9.5px] shadow-2xs transition">
+                        <i class="fa-solid fa-kit-medical mr-0.5 text-rose-600"></i>Thay Y Tế
+                    </button>
+                    <button type="button" onclick="openRefereePlayerSetupModal(1)" class="px-1.5 py-0.5 rounded bg-gradient-to-r from-brand-600 to-orange-600 hover:from-brand-500 hover:to-orange-500 text-white font-extrabold text-[9.5px] shadow-2xs transition">
+                        <i class="fa-solid fa-users-gear mr-0.5"></i>VĐV
                     </button>
                 </div>
             </div>
 
             <!-- Khung sân 2D -->
-            <div id="courtSvgWrapper" class="relative w-full h-[130px] sm:h-[146px] bg-gradient-to-br from-emerald-700 via-emerald-600 to-teal-700 rounded-lg border-2 border-emerald-500 overflow-hidden shadow-inner flex items-center justify-center">
+            <div id="courtSvgWrapper" class="relative w-full h-[126px] sm:h-[144px] bg-gradient-to-br from-emerald-700 via-emerald-600 to-teal-700 rounded-lg border-2 border-emerald-500 overflow-hidden shadow-inner flex items-center justify-center">
                 <div id="leftCourtSideTag" class="absolute top-1 left-2 text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-white/90 text-stone-800 shadow-sm pointer-events-none z-10">Sân Trái</div>
                 <div id="rightCourtSideTag" class="absolute top-1 right-2 text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-white/90 text-stone-800 shadow-sm pointer-events-none z-10">Sân Phải</div>
 
@@ -245,6 +251,15 @@
 
     <!-- CỘT PHẢI -->
     <div id="rightLandscapeCol" class="flex-1 min-h-0 flex flex-col justify-between gap-1.5">
+        <!-- BANNER CẢNH BÁO BẮT BUỘC BỐC THĂM TRƯỚC TRẬN -->
+        <div id="mandatoryCoinTossBanner" class="hidden px-2.5 py-1.5 rounded-xl bg-amber-100 border-2 border-amber-400 text-amber-950 text-[10px] font-extrabold flex items-center justify-between gap-2 shadow-sm shrink-0">
+            <div class="flex items-center gap-1.5 min-w-0">
+                <i class="fa-solid fa-coins text-orange-600 text-xs shrink-0 animate-bounce"></i>
+                <span class="truncate">Bắt buộc bốc thăm chọn Sân & Bóng trước trận!</span>
+            </div>
+            <button type="button" onclick="openCoinTossModal(true)" class="px-2.5 py-1 rounded-lg bg-brand-600 text-white font-extrabold text-[10px] shrink-0 shadow-xs">Bốc thăm ngay</button>
+        </div>
+
         <!-- BANNER LUÂN PHIÊN 4 VĐV TRẬN ĐƠN -->
         <div id="singlesRotationBanner" class="hidden px-2.5 py-1 rounded-xl bg-amber-100 border border-amber-400 text-amber-950 text-[10px] font-extrabold flex items-center justify-between gap-2 shadow-sm shrink-0">
             <div class="flex items-center gap-1.5 min-w-0">
@@ -288,28 +303,31 @@
                 </div>
             </div>
 
-            <!-- HÀNG NÚT ĐIỀU KHIỂN -->
-            <div class="grid grid-cols-3 gap-1.5 shrink-0">
-                <button type="button" onclick="triggerSideOutOrNextServer()" class="py-2 rounded-lg bg-amber-50 border border-amber-300 text-amber-900 font-extrabold text-[11px] shadow-sm hover:bg-amber-100 transition">
-                    <i class="fa-solid fa-arrows-rotate mr-1 text-orange-600"></i>Đổi Phát
+            <!-- HÀNG NÚT ĐIỀU KHIỂN (ĐỔI PHÁT / ĐỔI SÂN / CHỐT TRẬN / KẾT THÚC CẶP ĐẤU) -->
+            <div class="grid grid-cols-4 gap-1 shrink-0">
+                <button type="button" onclick="triggerSideOutOrNextServer()" class="py-2 rounded-lg bg-amber-50 border border-amber-300 text-amber-900 font-extrabold text-[10px] shadow-2xs hover:bg-amber-100 transition flex flex-col items-center justify-center leading-tight">
+                    <i class="fa-solid fa-arrows-rotate text-orange-600 mb-0.5"></i><span>Đổi Phát</span>
                 </button>
-                <button type="button" onclick="swapCourtEnds()" class="py-2 rounded-lg bg-rose-50 border border-rose-200 text-brand-700 font-extrabold text-[11px] shadow-sm hover:bg-rose-100 transition">
-                    <i class="fa-solid fa-right-left mr-1"></i>Đổi Sân
+                <button type="button" onclick="swapCourtEnds()" class="py-2 rounded-lg bg-rose-50 border border-rose-200 text-brand-700 font-extrabold text-[10px] shadow-2xs hover:bg-rose-100 transition flex flex-col items-center justify-center leading-tight">
+                    <i class="fa-solid fa-right-left mb-0.5"></i><span>Đổi Sân</span>
                 </button>
-                <button type="button" onclick="finishCurrentLiveMatchAndAdvance()" class="py-2 rounded-lg bg-emerald-600 text-white font-extrabold text-[11px] shadow-sm hover:bg-emerald-500 transition">
-                    <i class="fa-solid fa-flag-checkered mr-1"></i>Chốt Trận
+                <button type="button" onclick="finishCurrentLiveMatchAndAdvance()" class="py-2 rounded-lg bg-emerald-600 text-white font-extrabold text-[10px] shadow-2xs hover:bg-emerald-500 transition flex flex-col items-center justify-center leading-tight">
+                    <i class="fa-solid fa-flag-checkered mb-0.5"></i><span>Chốt Trận</span>
+                </button>
+                <button type="button" onclick="finishEntireTieOnCourt()" class="py-2 rounded-lg bg-stone-800 text-amber-300 font-extrabold text-[10px] shadow-2xs hover:bg-stone-700 transition flex flex-col items-center justify-center leading-tight">
+                    <i class="fa-solid fa-lock mb-0.5"></i><span>Xong Cặp</span>
                 </button>
             </div>
         </div>
 
-        <!-- BANNER HOÀN TẤT -->
-        <div id="matchFinishedCelebrationBanner" class="hidden px-2.5 py-1.5 rounded-xl bg-emerald-100 border border-emerald-400 text-emerald-900 text-[11px] font-extrabold text-center flex items-center justify-between shadow-sm shrink-0">
-            <span id="finishedBannerText">🏆 Nội dung đã hoàn tất!</span>
-            <button type="button" onclick="reopenFinishedMatch()" class="px-2 py-0.5 rounded bg-emerald-600 text-white shrink-0">Mở lại</button>
+        <!-- BANNER HOÀN TẤT (GIỮ NGUYÊN SÂN, KHÔNG TỰ NHẢY SANG SÂN KHÁC) -->
+        <div id="matchFinishedCelebrationBanner" class="hidden px-2.5 py-1.5 rounded-xl bg-emerald-100 border border-emerald-400 text-emerald-900 text-[10.5px] font-extrabold flex items-center justify-between gap-2 shadow-sm shrink-0">
+            <span id="finishedBannerText" class="truncate">🏆 Nội dung đã hoàn tất!</span>
+            <button type="button" id="reopenMatchBtn" onclick="reopenFinishedMatch()" class="px-2 py-0.5 rounded bg-emerald-700 text-white text-[10px] shrink-0">Mở lại</button>
         </div>
     </div>
 
-    <!-- MODAL KHÓA BẢO MẬT TRỌNG TÀI (BẮT BUỘC NHẬP MẬT KHẨU ĐỂ SỬ DỤNG) -->
+    <!-- MODAL KHÓA BẢO MẬT TRỌNG TÀI -->
     <div id="refereeAuthLockModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-stone-950/85 p-4 backdrop-blur-md">
         <div id="refereeLockCard" class="bg-white border-2 border-brand-400 rounded-2xl max-w-sm w-full p-5 sm:p-6 space-y-4 shadow-2xl animate-modal-pop">
             <div class="text-center space-y-2">
@@ -349,18 +367,18 @@
         </div>
     </div>
 
-    <!-- MODAL TUNG ĐỒNG XU & CHỌN SÂN / CHỌN BÓNG TRƯỚC TRẬN -->
-    <div id="coinTossModal" onclick="if(event.target === this) closeCoinTossModal()" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-900/55 p-3 backdrop-blur-sm">
-        <div class="bg-[#FFFDF9] border-2 border-amber-300 rounded-2xl max-w-sm w-full p-4 space-y-3 shadow-2xl max-h-[92dvh] overflow-y-auto">
+    <!-- MODAL BẮT BUỘC BỐC THĂM CHỌN SÂN / CHỌN BÓNG TRƯỚC TRẬN -->
+    <div id="coinTossModal" onclick="if(event.target === this && !isMandatoryCoinTossOpen) closeCoinTossModal()" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-900/65 p-3 backdrop-blur-sm">
+        <div class="bg-[#FFFDF9] border-2 border-amber-400 rounded-2xl max-w-sm w-full p-4 space-y-3 shadow-2xl max-h-[92dvh] overflow-y-auto animate-modal-pop">
             <div class="flex justify-between items-center border-b border-amber-200 pb-2">
                 <div class="flex items-center gap-2">
                     <div class="w-7 h-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center border border-amber-300"><i class="fa-solid fa-coins"></i></div>
                     <div>
-                        <h3 class="text-xs font-extrabold text-stone-900 uppercase">Chọn Sân & Chọn Bóng</h3>
-                        <p class="text-[10px] text-stone-500">Tung đồng xu hoặc thiết lập trực tiếp</p>
+                        <h3 class="text-xs font-extrabold text-stone-900 uppercase">Bốc Thăm Chọn Sân & Bóng</h3>
+                        <p id="coinTossModalSub" class="text-[10px] text-rose-600 font-bold">Bắt buộc xác nhận trước khi bắt đầu trận đấu</p>
                     </div>
                 </div>
-                <button type="button" onclick="closeCoinTossModal()" class="w-7 h-7 rounded-lg bg-stone-100 text-stone-500 hover:text-brand-600 flex items-center justify-center"><i class="fa-solid fa-xmark text-sm"></i></button>
+                <button type="button" id="closeCoinTossBtn" onclick="closeCoinTossModal()" class="w-7 h-7 rounded-lg bg-stone-100 text-stone-500 hover:text-brand-600 flex items-center justify-center"><i class="fa-solid fa-xmark text-sm"></i></button>
             </div>
 
             <div class="bg-amber-50/70 border border-amber-200 rounded-xl p-2.5 text-center space-y-1.5">
@@ -396,8 +414,86 @@
             </div>
 
             <button type="button" onclick="applyCoinTossSettings()" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-orange-600 hover:from-brand-500 hover:to-orange-500 text-white font-extrabold text-xs uppercase shadow-md">
-                <i class="fa-solid fa-check mr-1"></i> Xác Nhận & Vào Trận
+                <i class="fa-solid fa-check mr-1"></i> Xác Nhận Bốc Thăm & Vào Trận
             </button>
+        </div>
+    </div>
+
+    <!-- MODAL THAY VĐV Y TẾ TRONG TRẬN -->
+    <div id="medicalSubModal" onclick="if(event.target === this) closeMedicalSubModal()" class="fixed inset-0 z-55 hidden items-center justify-center bg-stone-900/65 p-3 backdrop-blur-sm">
+        <div class="bg-[#FFFDF9] border-2 border-sky-400 rounded-2xl max-w-sm w-full p-4 space-y-3 shadow-2xl animate-modal-pop">
+            <div class="flex justify-between items-center border-b border-sky-200 pb-2">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center border border-rose-200"><i class="fa-solid fa-kit-medical"></i></div>
+                    <div>
+                        <h3 class="text-xs font-extrabold text-stone-900 uppercase">Thay VĐV Y Tế (Chấn Thương)</h3>
+                        <p id="medSubMatchTitle" class="text-[10px] text-sky-700 font-bold">Nội dung hiện tại</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeMedicalSubModal()" class="w-7 h-7 rounded-lg bg-stone-100 text-stone-500 hover:text-brand-600 flex items-center justify-center"><i class="fa-solid fa-xmark text-sm"></i></button>
+            </div>
+
+            <form onsubmit="applyMedicalSubstitution(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-[10px] font-extrabold text-stone-600 uppercase mb-1">1. Chọn Đội cần thay VĐV y tế:</label>
+                    <select id="medSubSideSelect" onchange="populateMedicalSubPlayers()" class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3 py-2 text-xs font-extrabold text-stone-900"></select>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-extrabold text-rose-700 uppercase mb-1">2. VĐV chấn thương rời sân (RA):</label>
+                    <select id="medSubOutPlayerSelect" onchange="populateMedicalSubInPlayers()" class="w-full bg-rose-50/70 border border-rose-300 rounded-xl px-3 py-2 text-xs font-bold text-rose-900"></select>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-extrabold text-emerald-700 uppercase mb-1">3. VĐV dự bị vào sân thay thế (VÀO):</label>
+                    <select id="medSubInPlayerSelect" class="w-full bg-emerald-50/70 border border-emerald-300 rounded-xl px-3 py-2 text-xs font-bold text-emerald-900"></select>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-extrabold text-stone-600 uppercase mb-1">Lý do y tế (Ghi vào Log):</label>
+                    <input type="text" id="medSubReasonInput" value="Chấn thương / Chuột rút" placeholder="VD: Căng cơ, chuột rút..." class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3 py-2 text-xs text-stone-900">
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2 border-t border-stone-200">
+                    <button type="button" onclick="closeMedicalSubModal()" class="px-4 py-2 rounded-xl bg-stone-100 text-stone-700 font-bold text-xs">Hủy</button>
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-extrabold text-xs shadow-sm">
+                        <i class="fa-solid fa-user-check mr-1"></i> Xác Nhận Thay Y Tế
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL XEM LOG NHẬT KÝ CỦA CÁC TRẬN ĐẤU -->
+    <div id="matchLogModal" onclick="if(event.target === this) closeMatchLogModal()" class="fixed inset-0 z-55 hidden items-center justify-center bg-stone-900/65 p-3 backdrop-blur-sm">
+        <div class="bg-[#FFFDF9] border-2 border-amber-300 rounded-2xl max-w-lg w-full p-4 space-y-3 shadow-2xl max-h-[88dvh] flex flex-col animate-modal-pop">
+            <div class="flex justify-between items-center border-b border-amber-200 pb-2 shrink-0">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center border border-amber-300"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                    <div>
+                        <h3 class="text-xs font-extrabold text-stone-900 uppercase">Nhật Ký (Log) Thi Đấu</h3>
+                        <p id="matchLogSubtitle" class="text-[10px] text-stone-500 font-semibold">Lưu toàn bộ lịch sử điểm, bốc thăm, thay y tế</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeMatchLogModal()" class="w-7 h-7 rounded-lg bg-stone-100 text-stone-500 hover:text-brand-600 flex items-center justify-center"><i class="fa-solid fa-xmark text-sm"></i></button>
+            </div>
+
+            <div class="flex items-center gap-2 shrink-0">
+                <select id="logScopeSelect" onchange="renderMatchLogsList()" class="flex-1 bg-stone-50 border border-stone-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-stone-800">
+                    <option value="CURRENT_MATCH">Log Nội dung đang chọn</option>
+                    <option value="CURRENT_TIE">Log Toàn bộ Cặp đấu trên Sân</option>
+                    <option value="ALL_TOURNAMENT">Log Tất cả các trận đã đấu</option>
+                </select>
+                <button type="button" onclick="copyMatchLogsToClipboard()" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shrink-0">
+                    <i class="fa-solid fa-copy mr-1"></i> Sao chép
+                </button>
+            </div>
+
+            <div id="matchLogListContainer" class="space-y-1.5 overflow-y-auto pr-1 flex-1 bg-stone-50/70 p-2.5 rounded-xl border border-stone-200 text-xs"></div>
+
+            <div class="pt-1 border-t border-amber-200 flex justify-end shrink-0">
+                <button type="button" onclick="closeMatchLogModal()" class="px-4 py-1.5 rounded-xl bg-stone-800 text-white text-xs font-bold">Đóng</button>
+            </div>
         </div>
     </div>
 
@@ -431,14 +527,20 @@
         let currentSetupStep = 1;
         let tempTossServeTeam = 1;
         let tempTossSwapped = false;
+        let isMandatoryCoinTossOpen = false;
+        let __lastPromptedTossMatchId = null;
 
         let __lastScoreTapAt = 0;
         let __lastLocalMutationAt = 0;
         let __courtSwapFreezeUntil = 0;
 
         // =========================================================================
-        // HỆ THỐNG KHÓA BẢO MẬT TRANG TRỌNG TÀI (BẮT BUỘC ĐĂNG NHẬP)
+        // HỆ THỐNG KHÓA BẢO MẬT TRANG TRỌNG TÀI
         // =========================================================================
+        function isAdminRole() {
+            return localStorage.getItem('PICKLEBALL_USER_ROLE') === 'admin';
+        }
+
         function isRefereeAuthorized() {
             const role = localStorage.getItem('PICKLEBALL_USER_ROLE');
             const refAuth = sessionStorage.getItem('PICKLEBALL_REFEREE_UNLOCKED') === '1' || localStorage.getItem('PICKLEBALL_REFEREE_UNLOCKED') === '1';
@@ -463,8 +565,9 @@
                 return true;
             }
 
-            // Đóng mọi modal con khác nếu đang mở
-            closeCoinTossModal();
+            closeCoinTossModal(true);
+            closeMedicalSubModal();
+            closeMatchLogModal();
             forceCloseSetupModal();
 
             if (leftCol) leftCol.classList.add('pointer-events-none', 'blur-[3px]');
@@ -545,13 +648,136 @@
                 let raw = localStorage.getItem(STORAGE_KEY);
                 if (raw) return JSON.parse(raw);
             } catch (e) {}
-            return { ties: [], clubs: [] };
+            return { ties: [], clubs: [], matchLogs: [] };
         }
 
         let state = loadState();
-        
+        if (!Array.isArray(state.matchLogs)) state.matchLogs = [];
+
         const urlParams = new URLSearchParams(window.location.search);
         let currentAssignedCourt = urlParams.get('court') || localStorage.getItem('REF_STANDALONE_COURT') || 'Sân 1';
+
+        // =========================================================================
+        // GHI NHẬT KÝ (LOG) CHI TIẾT CỦA TỪNG TRẬN ĐẤU & TOÀN GIẢI
+        // =========================================================================
+        function formatNowTime() {
+            const d = new Date();
+            const pad = (n) => String(n).padStart(2, '0');
+            return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        }
+
+        function recordMatchLog(matchObj, eventType, detailText) {
+            if (!matchObj) return;
+            if (!Array.isArray(matchObj.logs)) matchObj.logs = [];
+            if (!Array.isArray(state.matchLogs)) state.matchLogs = [];
+
+            const { tie } = findMatchById(matchObj.id);
+            const c1 = getClubById(matchObj.club1Id).name;
+            const c2 = getClubById(matchObj.club2Id).name;
+            const cleanCat = (matchObj.catLabel || '').replace(/^(Bảng [^•]+•\s*)?(Lượt \d+\s*•\s*)?(Vòng \d+\s*•\s*)?/i, '');
+            const scoreSnapshot = `${matchObj.score1 || 0}-${matchObj.score2 || 0}`;
+
+            const entry = {
+                id: 'log_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                time: formatNowTime(),
+                timestamp: Date.now(),
+                court: matchObj.court || currentAssignedCourt,
+                tieId: tie?.id || '',
+                tieLabel: `${c1} vs ${c2}`,
+                matchId: matchObj.id,
+                matchLabel: cleanCat,
+                type: eventType,
+                score: scoreSnapshot,
+                detail: detailText,
+                actor: isAdminRole() ? 'Admin' : 'Trọng tài'
+            };
+
+            matchObj.logs.unshift(entry);
+            state.matchLogs.unshift(entry);
+            if (state.matchLogs.length > 500) state.matchLogs.length = 500;
+        }
+
+        function openMatchLogModal() {
+            if (!enforceRefereeSecurityLock()) return;
+            renderMatchLogsList();
+            document.getElementById('matchLogModal').classList.remove('hidden');
+            document.getElementById('matchLogModal').classList.add('flex');
+        }
+
+        function closeMatchLogModal() {
+            document.getElementById('matchLogModal').classList.add('hidden');
+            document.getElementById('matchLogModal').classList.remove('flex');
+        }
+
+        function renderMatchLogsList() {
+            const container = document.getElementById('matchLogListContainer');
+            const scope = document.getElementById('logScopeSelect')?.value || 'CURRENT_MATCH';
+            if (!container) return;
+
+            const { tie, match: curMatch } = findMatchById(state.activeLiveMatchId);
+            let logsToShow = [];
+
+            if (scope === 'CURRENT_MATCH' && curMatch) {
+                logsToShow = curMatch.logs || (state.matchLogs || []).filter(l => l.matchId === curMatch.id);
+            } else if (scope === 'CURRENT_TIE' && tie) {
+                const matchIds = new Set((tie.matches || []).map(x => x.id));
+                logsToShow = (state.matchLogs || []).filter(l => l.tieId === tie.id || matchIds.has(l.matchId));
+            } else {
+                logsToShow = state.matchLogs || [];
+            }
+
+            if (!logsToShow.length) {
+                container.innerHTML = `<div class="text-center py-8 text-stone-400 italic">Chưa có nhật ký ghi nhận cho mục này.</div>`;
+                return;
+            }
+
+            const badgeMap = {
+                'COIN_TOSS': 'bg-amber-100 text-amber-800 border-amber-300',
+                'SCORE': 'bg-emerald-100 text-emerald-800 border-emerald-300',
+                'MEDICAL_SUB': 'bg-rose-100 text-rose-800 border-rose-300',
+                'SERVE_CHANGE': 'bg-sky-100 text-sky-800 border-sky-300',
+                'FINISH': 'bg-purple-100 text-purple-800 border-purple-300'
+            };
+
+            container.innerHTML = logsToShow.map(l => {
+                const bCls = badgeMap[l.type] || 'bg-stone-100 text-stone-700 border-stone-300';
+                return `
+                    <div class="bg-white border border-stone-200 rounded-lg p-2 space-y-0.5 shadow-2xs">
+                        <div class="flex items-center justify-between gap-1 text-[10px]">
+                            <span class="font-mono font-bold text-stone-500">[${l.time}] • ${l.court}</span>
+                            <div class="flex items-center gap-1">
+                                <span class="px-1.5 py-0.2 rounded border font-extrabold ${bCls}">${l.score}</span>
+                                <span class="text-[9px] text-stone-400 font-bold">${l.actor || 'TT'}</span>
+                            </div>
+                        </div>
+                        <div class="text-[11px] font-bold text-stone-900 leading-snug">${l.detail}</div>
+                        <div class="text-[9.5px] text-stone-500 truncate">${l.tieLabel} • ${l.matchLabel}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function copyMatchLogsToClipboard() {
+            const scope = document.getElementById('logScopeSelect')?.value || 'CURRENT_MATCH';
+            const { tie, match: curMatch } = findMatchById(state.activeLiveMatchId);
+            let logsToShow = [];
+            if (scope === 'CURRENT_MATCH' && curMatch) {
+                logsToShow = curMatch.logs || (state.matchLogs || []).filter(l => l.matchId === curMatch.id);
+            } else if (scope === 'CURRENT_TIE' && tie) {
+                const matchIds = new Set((tie.matches || []).map(x => x.id));
+                logsToShow = (state.matchLogs || []).filter(l => l.tieId === tie.id || matchIds.has(l.matchId));
+            } else {
+                logsToShow = state.matchLogs || [];
+            }
+
+            if (!logsToShow.length) { showToast('Không có dữ liệu log để sao chép!'); return; }
+            const text = logsToShow.slice().reverse().map(l => `[${l.time}] [${l.court}] (${l.tieLabel} - ${l.matchLabel}) [${l.score}]: ${l.detail}`).join('\n');
+            navigator.clipboard?.writeText(text).then(() => {
+                showToast('📋 Đã sao chép toàn bộ Log vào bộ nhớ tạm!');
+            }).catch(() => {
+                showToast('⚠️ Trình duyệt không hỗ trợ sao chép tự động!');
+            });
+        }
 
         function evaluateTieStatus(tieMatches) {
             let c1Wins = 0;
@@ -637,7 +863,7 @@
 
             courtSel.innerHTML = activeCourts.map(c => `<option value="${c}">${c}</option>`).join('');
             courtSel.value = currentAssignedCourt;
-            document.getElementById('refereeCourtTitle').textContent = `Bắt chính: ${currentAssignedCourt}`;
+            document.getElementById('refereeCourtTitle').textContent = `Cố định: ${currentAssignedCourt}`;
             document.getElementById('liveCurrentCourtBadge').textContent = currentAssignedCourt;
         }
 
@@ -646,7 +872,7 @@
             if (!courtName) return;
             currentAssignedCourt = courtName;
             localStorage.setItem('REF_STANDALONE_COURT', courtName);
-            document.getElementById('refereeCourtTitle').textContent = `Bắt chính: ${courtName}`;
+            document.getElementById('refereeCourtTitle').textContent = `Cố định: ${courtName}`;
             document.getElementById('liveCurrentCourtBadge').textContent = courtName;
             
             const activeTieMatches = getActiveTieMatchesForCourt(courtName);
@@ -663,7 +889,7 @@
             el.className = 'px-3.5 py-2 rounded-xl bg-white/95 border-2 border-brand-300 text-brand-700 text-xs font-extrabold shadow-xl text-center';
             el.textContent = msg;
             c.appendChild(el);
-            setTimeout(() => el.remove(), 2200);
+            setTimeout(() => el.remove(), 2400);
         }
 
         let mqttClient = null;
@@ -684,6 +910,7 @@
 
                     if (pkt.state) {
                         state = pkt.state;
+                        if (!Array.isArray(state.matchLogs)) state.matchLogs = [];
                         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
                         renderRefereeApp();
                     }
@@ -700,6 +927,7 @@
                 if (Date.now() - __lastLocalMutationAt < 1000) return;
                 try {
                     state = JSON.parse(e.newValue);
+                    if (!Array.isArray(state.matchLogs)) state.matchLogs = [];
                     renderRefereeApp();
                 } catch (err) {}
             }
@@ -753,6 +981,7 @@
             return list;
         }
 
+        // Luôn bám sát đúng sân được giao (currentAssignedCourt), tuyệt đối không tự nhảy sang sân khác
         function getActiveTieMatchesForCourt(courtName) {
             enforceTieClinchRules();
             const courtTies = (state.ties || [])
@@ -785,11 +1014,33 @@
             return { tie: firstTie, match: firstTie?.matches?.[0] || null };
         }
 
-        function openCoinTossModal() {
+        // =========================================================================
+        // 1. BẮT BUỘC BỐC THĂM CHỌN SÂN / BÓNG TRƯỚC MỖI TRẬN ĐẤU
+        // =========================================================================
+        function isCoinTossRequiredForMatch(m) {
+            if (!m) return false;
+            if (m.status === 'FINISHED' || m.status === 'SKIPPED') return false;
+            const s1 = parseInt(m.score1) || 0;
+            const s2 = parseInt(m.score2) || 0;
+            if (s1 > 0 || s2 > 0) return false;
+            return !Boolean(m.coinTossConfirmed);
+        }
+
+        function openCoinTossModal(mandatory = false) {
             if (!enforceRefereeSecurityLock()) return;
             const { match: m } = findMatchById(state.activeLiveMatchId);
             if (!m) return;
             if (!m.courtState) syncMatchCourtStateFromLineup(m);
+
+            isMandatoryCoinTossOpen = Boolean(mandatory);
+            const closeBtn = document.getElementById('closeCoinTossBtn');
+            const subEl = document.getElementById('coinTossModalSub');
+            if (closeBtn) closeBtn.classList.toggle('hidden', isMandatoryCoinTossOpen);
+            if (subEl) {
+                subEl.textContent = isMandatoryCoinTossOpen
+                    ? '⚠️ Bắt buộc bốc thăm chọn Sân & Bóng trước khi tính điểm!'
+                    : 'Tung đồng xu hoặc điều chỉnh quyền giao bóng / chọn sân';
+            }
 
             tempTossServeTeam = m.servingTeam || 1;
             tempTossSwapped = Boolean(m.courtState?.swappedEnds);
@@ -808,7 +1059,12 @@
             document.getElementById('coinTossModal').classList.add('flex');
         }
 
-        function closeCoinTossModal() {
+        function closeCoinTossModal(force = false) {
+            if (isMandatoryCoinTossOpen && !force) {
+                showToast('⚠️ Vui lòng xác nhận bốc thăm chọn Sân/Bóng trước!');
+                return;
+            }
+            isMandatoryCoinTossOpen = false;
             document.getElementById('coinTossModal').classList.add('hidden');
             document.getElementById('coinTossModal').classList.remove('flex');
         }
@@ -864,13 +1120,150 @@
             m.servingTeam = tempTossServeTeam;
             m.serverNum = m.catKey === 'DON' ? 1 : 2;
             m.courtState.swappedEnds = tempTossSwapped;
+            m.coinTossConfirmed = true;
+
+            const c1 = getClubById(m.club1Id).name;
+            const c2 = getClubById(m.club2Id).name;
+            const serverClub = tempTossServeTeam === 1 ? c1 : c2;
+            const sideDesc = tempTossSwapped ? `${c2} Sân Trái - ${c1} Sân Phải` : `${c1} Sân Trái - ${c2} Sân Phải`;
+
+            recordMatchLog(m, 'COIN_TOSS', `Bốc thăm: ${serverClub} giao bóng trước (${sideDesc})`);
 
             saveState();
-            closeCoinTossModal();
+            closeCoinTossModal(true);
             renderRefereeApp();
-
-            const serverClub = getClubById(tempTossServeTeam === 1 ? m.club1Id : m.club2Id).name;
             showToast(`✅ ${serverClub} giao bóng trước (${tempTossSwapped ? 'Đổi bên sân' : 'Giữ bên sân'})!`);
+        }
+
+        // =========================================================================
+        // 5. THAY VĐV Y TẾ TRONG TRẬN ĐẤU
+        // =========================================================================
+        function openMedicalSubModal() {
+            if (!enforceRefereeSecurityLock()) return;
+            const { match: m } = findMatchById(state.activeLiveMatchId);
+            if (!m) return;
+
+            if (m.status === 'FINISHED' || m.status === 'SKIPPED') {
+                showToast('⚠️ Nội dung này đã kết thúc, không thể thay VĐV y tế!');
+                return;
+            }
+
+            const c1 = getClubById(m.club1Id);
+            const c2 = getClubById(m.club2Id);
+            const cleanCat = (m.catLabel || '').replace(/^(Bảng [^•]+•\s*)?(Lượt \d+\s*•\s*)?(Vòng \d+\s*•\s*)?/i, '');
+            document.getElementById('medSubMatchTitle').textContent = `${cleanCat} (${m.score1 || 0}-${m.score2 || 0})`;
+
+            const sideSel = document.getElementById('medSubSideSelect');
+            sideSel.innerHTML = `
+                <option value="1">Đội 1: ${c1.name}</option>
+                <option value="2">Đội 2: ${c2.name}</option>
+            `;
+            sideSel.value = '1';
+            populateMedicalSubPlayers();
+
+            document.getElementById('medicalSubModal').classList.remove('hidden');
+            document.getElementById('medicalSubModal').classList.add('flex');
+        }
+
+        function closeMedicalSubModal() {
+            document.getElementById('medicalSubModal').classList.add('hidden');
+            document.getElementById('medicalSubModal').classList.remove('flex');
+        }
+
+        function populateMedicalSubPlayers() {
+            const { match: m } = findMatchById(state.activeLiveMatchId);
+            if (!m) return;
+            const side = parseInt(document.getElementById('medSubSideSelect').value, 10) || 1;
+            const club = getClubById(side === 1 ? m.club1Id : m.club2Id);
+            const arrKey = side === 1 ? 'team1PlayerIds' : 'team2PlayerIds';
+            const onCourtIds = m[arrKey] || [];
+
+            const outSel = document.getElementById('medSubOutPlayerSelect');
+            if (onCourtIds.length === 0) {
+                outSel.innerHTML = `<option value="">(Đội chưa đăng ký VĐV trên sân)</option>`;
+            } else {
+                outSel.innerHTML = onCourtIds.map(pid => {
+                    const p = getPlayerById(club.id, pid);
+                    return p ? `<option value="${p.id}">${p.name} (${p.gender || 'Nam'} - Trình ${p.level || 'A'})</option>` : '';
+                }).join('');
+            }
+            populateMedicalSubInPlayers();
+        }
+
+        function populateMedicalSubInPlayers() {
+            const { match: m } = findMatchById(state.activeLiveMatchId);
+            if (!m) return;
+            const side = parseInt(document.getElementById('medSubSideSelect').value, 10) || 1;
+            const club = getClubById(side === 1 ? m.club1Id : m.club2Id);
+            const arrKey = side === 1 ? 'team1PlayerIds' : 'team2PlayerIds';
+            const onCourtIds = m[arrKey] || [];
+            const outPlayerId = document.getElementById('medSubOutPlayerSelect').value;
+            const outPlayer = getPlayerById(club.id, outPlayerId);
+            const genderRule = getMatchGenderRule(m);
+
+            const benchPlayers = (club.players || []).filter(p => {
+                if (onCourtIds.includes(p.id)) return false;
+                if (genderRule === 'NAM' && isPlayerFemale(p)) return false;
+                if (genderRule === 'NU' && !isPlayerFemale(p)) return false;
+                if (genderRule === 'NAM_NU' && outPlayer) {
+                    return isPlayerFemale(p) === isPlayerFemale(outPlayer);
+                }
+                return true;
+            });
+
+            const inSel = document.getElementById('medSubInPlayerSelect');
+            if (benchPlayers.length === 0) {
+                inSel.innerHTML = `<option value="">(Không còn VĐV dự bị hợp lệ trong CLB)</option>`;
+            } else {
+                inSel.innerHTML = benchPlayers.map(p => `<option value="${p.id}">${p.name} (${p.gender || 'Nam'} - Trình ${p.level || 'A'})</option>`).join('');
+            }
+        }
+
+        function applyMedicalSubstitution(event) {
+            event.preventDefault();
+            if (!enforceRefereeSecurityLock()) return;
+            const { match: m } = findMatchById(state.activeLiveMatchId);
+            if (!m) return;
+
+            const side = parseInt(document.getElementById('medSubSideSelect').value, 10) || 1;
+            const outId = document.getElementById('medSubOutPlayerSelect').value;
+            const inId = document.getElementById('medSubInPlayerSelect').value;
+            const reason = document.getElementById('medSubReasonInput').value.trim() || 'Thay y tế';
+
+            if (!outId || !inId) {
+                showToast('⚠️ Vui lòng chọn đầy đủ VĐV ra sân và VĐV thay thế!');
+                return;
+            }
+
+            const club = getClubById(side === 1 ? m.club1Id : m.club2Id);
+            const outPlayer = getPlayerById(club.id, outId);
+            const inPlayer = getPlayerById(club.id, inId);
+            if (!outPlayer || !inPlayer) return;
+
+            const arrKey = side === 1 ? 'team1PlayerIds' : 'team2PlayerIds';
+            const curList = [...(m[arrKey] || [])];
+            const idx = curList.indexOf(outId);
+            if (idx !== -1) curList[idx] = inId;
+            m[arrKey] = curList;
+
+            // Cập nhật trực tiếp tên trên sơ đồ 2D tại đúng ô VĐV vừa rời sân
+            if (m.courtState) {
+                if (side === 1) {
+                    if (m.courtState.t1Right === outPlayer.name) m.courtState.t1Right = inPlayer.name;
+                    if (m.courtState.t1Left === outPlayer.name) m.courtState.t1Left = inPlayer.name;
+                } else {
+                    if (m.courtState.t2Right === outPlayer.name) m.courtState.t2Right = inPlayer.name;
+                    if (m.courtState.t2Left === outPlayer.name) m.courtState.t2Left = inPlayer.name;
+                }
+            }
+            syncMatchCourtStateFromLineup(m, true);
+
+            recordMatchLog(m, 'MEDICAL_SUB', `🚑 Thay VĐV y tế (${club.name}): ${outPlayer.name} RA ➔ ${inPlayer.name} VÀO (${reason})`);
+
+            saveState();
+            closeMedicalSubModal();
+            renderRefereeApp();
+            showToast(`🚑 Đã thay y tế: ${outPlayer.name} ➔ ${inPlayer.name}`);
         }
 
         function evaluateMatchWinCondition(m) {
@@ -948,6 +1341,7 @@
                     else { cs.t2Left = selectedName; cs.t2Right = partner; }
                 }
             }
+            recordMatchLog(m, 'SERVE_CHANGE', `Chọn người giao bóng: ${selectedName}`);
             saveState();
             renderRefereeApp();
             showToast(`🎾 Người giao bóng: ${selectedName}`);
@@ -985,6 +1379,7 @@
                     else { cs.t2Left = selectedName; cs.t2Right = partner; }
                 }
             }
+            recordMatchLog(m, 'SERVE_CHANGE', `Chọn người đỡ bóng: ${selectedName}`);
             saveState();
             renderRefereeApp();
             showToast(`🛡️ Người đỡ bóng: ${selectedName}`);
@@ -993,15 +1388,18 @@
         function selectMatchForScoreboard(matchId) {
             if (!enforceRefereeSecurityLock()) return;
             state.activeLiveMatchId = matchId;
+            __lastPromptedTossMatchId = null;
             saveState();
             renderRefereeApp();
             const { match: m } = findMatchById(matchId);
-            if (m && m.status !== 'SKIPPED') {
+            if (m && m.status !== 'SKIPPED' && m.status !== 'FINISHED') {
                 const req = getRequiredPlayerCount(m);
                 if ((m.team1PlayerIds || []).length < req) {
                     openRefereePlayerSetupModal(1);
                 } else if ((m.team2PlayerIds || []).length < req) {
                     openRefereePlayerSetupModal(2);
+                } else if (isCoinTossRequiredForMatch(m)) {
+                    openCoinTossModal(true);
                 }
             }
         }
@@ -1148,7 +1546,7 @@
                     </div>
                     <button type="button" onclick="finishBothTeamsSetup()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs uppercase shadow-md flex items-center justify-center gap-1.5">
                         <i class="fa-solid fa-check-double"></i>
-                        <span>Hoàn tất Đội hình Cả 5 Trận</span>
+                        <span>Hoàn tất Đội hình & Bốc Thăm</span>
                     </button>
                 </div>
             `;
@@ -1274,10 +1672,20 @@
                     return;
                 }
             }
-            activeTieMatches.forEach(m => { m.team2Confirmed = true; });
+            activeTieMatches.forEach(m => {
+                m.team2Confirmed = true;
+                recordMatchLog(m, 'SERVE_CHANGE', `Chốt đội hình: ${m.team1Name} vs ${m.team2Name}`);
+            });
             saveState();
             forceCloseSetupModal();
-            showToast('✅ Đã chốt đủ đội hình thi đấu cả 5 nội dung cho 2 CLB!');
+            renderRefereeApp();
+
+            const { match: curM } = findMatchById(state.activeLiveMatchId);
+            if (curM && isCoinTossRequiredForMatch(curM)) {
+                openCoinTossModal(true);
+            } else {
+                showToast('✅ Đã chốt đủ đội hình thi đấu cả 5 nội dung!');
+            }
         }
 
         function forceCloseSetupModal() {
@@ -1306,6 +1714,12 @@
                 return;
             }
 
+            // BẮT BUỘC BỐC THĂM CHỌN SÂN / BÓNG TRƯỚC KHI BẤM ĐIỂM ĐẦU TIÊN
+            if (isCoinTossRequiredForMatch(m)) {
+                openCoinTossModal(true);
+                return;
+            }
+
             const curScore = teamNum === 1 ? (parseInt(m.score1) || 0) : (parseInt(m.score2) || 0);
             if (delta < 0 && curScore <= 0) return;
 
@@ -1321,6 +1735,9 @@
                 if (cs && !isSingles) { const tmp = cs.t2Left; cs.t2Left = cs.t2Right; cs.t2Right = tmp; }
             }
 
+            const scorerClub = getClubById(teamNum === 1 ? m.club1Id : m.club2Id).name;
+            recordMatchLog(m, 'SCORE', `${delta > 0 ? '+1 điểm' : '-1 điểm'} cho ${scorerClub}`);
+
             const s1 = parseInt(m.score1) || 0;
             const s2 = parseInt(m.score2) || 0;
             const maxTeamScore = Math.max(s1, s2);
@@ -1332,6 +1749,7 @@
                 cs.swappedEnds = !cs.swappedEnds;
                 m.swappedAtMid = true;
                 __courtSwapFreezeUntil = Date.now() + 1200;
+                recordMatchLog(m, 'SERVE_CHANGE', `Chạm ${switchScoreThreshold} điểm: Hai đội tự động đổi sân`);
                 showToast(`🔄 Chạm ${switchScoreThreshold} điểm: Hai đội đổi sân!`);
             }
 
@@ -1339,6 +1757,7 @@
                 syncMatchCourtStateFromLineup(m, false);
                 if (delta > 0 && currentTotalScore > 0 && currentTotalScore % 4 === 0 && maxTeamScore < target) {
                     const nextSlot = (Math.floor(currentTotalScore / 4) % 4) + 1;
+                    recordMatchLog(m, 'SERVE_CHANGE', `Tổng điểm ${currentTotalScore}: Luân phiên sang VĐV số #${nextSlot}/4`);
                     showToast(`🔁 Tổng điểm ${currentTotalScore}: Đổi sang VĐV số #${nextSlot}/4!`);
                 }
             }
@@ -1346,6 +1765,7 @@
             const res = evaluateMatchWinCondition(m);
             if (res.isWon) {
                 m.status = 'FINISHED';
+                recordMatchLog(m, 'FINISH', `🏁 Kết thúc nội dung (${res.winnerScore}-${res.loserScore}) - Thắng: ${scorerClub}`);
                 saveState();
                 autoAdvanceToNextMatchOrTie(m, res);
             } else {
@@ -1354,35 +1774,69 @@
             renderRefereeApp();
         }
 
+        // =========================================================================
+        // CHUYỂN NỘI DUNG TRONG CÙNG CẶP ĐẤU TRÊN SÂN HIỆN TẠI (KHÔNG NHẢY SANG SÂN KHÁC)
+        // =========================================================================
         function autoAdvanceToNextMatchOrTie(finishedMatch, winRes = null) {
             const { tie } = findMatchById(finishedMatch.id);
             const tieMatches = tie ? (tie.matches || []) : getActiveTieMatchesForCourt(currentAssignedCourt);
             const tieSt = evaluateTieStatus(tieMatches);
 
-            if (tieSt.isClinched) {
+            if (tieSt.isClinched || tieSt.isCompleted) {
                 const winnerClubName = getClubById(tieSt.winnerSide === 1 ? finishedMatch.club1Id : finishedMatch.club2Id).name;
-                showToast(`🏆 ${winnerClubName} đạt ${WINS_TO_CLINCH_TIE} trận thắng (${tieSt.c1Wins}-${tieSt.c2Wins})! Kết thúc cặp đấu!`);
-
-                const nextTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
-                const nextTieSt = evaluateTieStatus(nextTieMatches);
-                if (nextTieMatches.length > 0 && !nextTieSt.isCompleted) {
-                    const firstSub = nextTieMatches.find(x => x.status !== 'FINISHED' && x.status !== 'SKIPPED') || nextTieMatches[0];
-                    state.activeLiveMatchId = firstSub.id;
-                    saveState();
-                }
+                recordMatchLog(finishedMatch, 'FINISH', `🏆 KẾT THÚC CẶP ĐẤU trên ${currentAssignedCourt}: ${winnerClubName} thắng ${tieSt.c1Wins}-${tieSt.c2Wins}`);
+                saveState();
+                showToast(`🏆 ${winnerClubName} thắng ${tieSt.c1Wins}-${tieSt.c2Wins}! Đã hoàn thành ${currentAssignedCourt}.`);
+                // Giữ nguyên sân hiện tại, KHÔNG tự nhảy sang sân khác
                 return;
             }
 
             const nextUnfinished = tieMatches.find(x => x.id !== finishedMatch.id && x.status !== 'FINISHED' && x.status !== 'SKIPPED');
             if (nextUnfinished) {
                 state.activeLiveMatchId = nextUnfinished.id;
+                __lastPromptedTossMatchId = null;
                 saveState();
                 if (winRes) {
-                    showToast(`✅ Kết thúc trận (${winRes.winnerScore}-${winRes.loserScore})! Sang nội dung tiếp theo.`);
+                    showToast(`✅ Xong trận (${winRes.winnerScore}-${winRes.loserScore})! Sang nội dung tiếp theo.`);
                 } else {
                     showToast('Chuyển sang nội dung tiếp theo!');
                 }
             }
+        }
+
+        // Kết thúc toàn bộ các nội dung trong cặp đấu trên sân hiện tại
+        function finishEntireTieOnCourt() {
+            if (!enforceRefereeSecurityLock()) return;
+            const activeTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
+            if (!activeTieMatches.length) return;
+
+            const tieSt = evaluateTieStatus(activeTieMatches);
+            if (tieSt.isCompleted) {
+                showToast(`✅ Cặp đấu trên ${currentAssignedCourt} đã kết thúc trước đó!`);
+                return;
+            }
+
+            activeTieMatches.forEach(m => {
+                if (m.status !== 'FINISHED' && m.status !== 'SKIPPED') {
+                    const s1 = parseInt(m.score1) || 0;
+                    const s2 = parseInt(m.score2) || 0;
+                    if (s1 > 0 || s2 > 0) {
+                        m.status = 'FINISHED';
+                    } else {
+                        m.status = 'SKIPPED';
+                    }
+                }
+            });
+
+            const finalSt = evaluateTieStatus(activeTieMatches);
+            const firstM = activeTieMatches[0];
+            const c1 = getClubById(firstM.club1Id).name;
+            const c2 = getClubById(firstM.club2Id).name;
+            recordMatchLog(firstM, 'FINISH', `🔒 Trọng tài kết thúc toàn bộ các nội dung trên ${currentAssignedCourt}: ${c1} (${finalSt.c1Wins}) - (${finalSt.c2Wins}) ${c2}`);
+
+            saveState();
+            renderRefereeApp();
+            showToast(`🔒 Đã kết thúc toàn bộ nội dung trên ${currentAssignedCourt}!`);
         }
 
         function triggerSideOutOrNextServer() {
@@ -1392,7 +1846,7 @@
             __lastScoreTapAt = now;
 
             const { match: m } = findMatchById(state.activeLiveMatchId);
-            if (!m) return;
+            if (!m || m.status === 'FINISHED' || m.status === 'SKIPPED') return;
             const isSingles = (m.catKey === 'DON');
             if (!m.courtState) syncMatchCourtStateFromLineup(m, false);
 
@@ -1400,6 +1854,7 @@
                 m.servingTeam = (m.servingTeam || 1) === 1 ? 2 : 1;
                 m.serverNum = 1;
                 const newServerClub = getClubById(m.servingTeam === 1 ? m.club1Id : m.club2Id).name;
+                recordMatchLog(m, 'SERVE_CHANGE', `Đổi giao bóng sang ${newServerClub}`);
                 showToast(`🔄 Đổi giao bóng sang ${newServerClub}!`);
             } else {
                 const curServerNum = m.serverNum || 2;
@@ -1407,11 +1862,13 @@
 
                 if (curServerNum === 1) {
                     m.serverNum = 2;
+                    recordMatchLog(m, 'SERVE_CHANGE', `Chuyển sang người giao bóng số 2`);
                     showToast(`2️⃣ Người giao bóng số 2 (Ô còn lại)!`);
                 } else {
                     m.servingTeam = curTeam === 1 ? 2 : 1;
                     m.serverNum = 1;
                     const newServerClub = getClubById(m.servingTeam === 1 ? m.club1Id : m.club2Id).name;
+                    recordMatchLog(m, 'SERVE_CHANGE', `Đổi giao bóng sang ${newServerClub} (Lượt 1)`);
                     showToast(`🔄 Đổi giao bóng sang ${newServerClub} (Lượt 1)!`);
                 }
             }
@@ -1425,6 +1882,7 @@
             const { match: m } = findMatchById(state.activeLiveMatchId);
             if (!m || m.status === 'SKIPPED') return;
             m.status = 'FINISHED';
+            recordMatchLog(m, 'FINISH', `Chốt kết thúc nội dung (${m.score1 || 0}-${m.score2 || 0})`);
             saveState();
             autoAdvanceToNextMatchOrTie(m);
             renderRefereeApp();
@@ -1432,12 +1890,17 @@
 
         function reopenFinishedMatch() {
             if (!enforceRefereeSecurityLock()) return;
+            if (!isAdminRole()) {
+                showToast('🔒 Trận đã chốt xong! Chỉ Admin mới có quyền mở lại.');
+                return;
+            }
             const { match: m } = findMatchById(state.activeLiveMatchId);
             if (!m) return;
             m.status = 'LIVE';
+            recordMatchLog(m, 'SERVE_CHANGE', `Admin mở lại nội dung thi đấu`);
             saveState();
             renderRefereeApp();
-            showToast('🔓 Đã mở lại nội dung thi đấu!');
+            showToast('🔓 Admin đã mở lại nội dung thi đấu!');
         }
 
         function swapCourtEnds() {
@@ -1446,6 +1909,7 @@
             if (!m || !m.courtState) return;
             m.courtState.swappedEnds = !m.courtState.swappedEnds;
             __courtSwapFreezeUntil = Date.now() + 800;
+            recordMatchLog(m, 'SERVE_CHANGE', `Đổi bên sân thủ công`);
             saveState();
             renderRefereeApp();
             showToast('🔄 Đã đổi bên sân & đổi vị trí bảng điểm!');
@@ -1503,21 +1967,39 @@
             if (m.serverNum === undefined) m.serverNum = isSingles ? 1 : 2;
 
             const isMatchFinished = (m.status === 'FINISHED' || m.status === 'SKIPPED');
+            const needToss = isCoinTossRequiredForMatch(m);
+
+            // Banner bắt buộc bốc thăm trước trận
+            const tossBannerEl = document.getElementById('mandatoryCoinTossBanner');
+            if (tossBannerEl) {
+                tossBannerEl.classList.toggle('hidden', !needToss);
+            }
+
+            // Tự động mở popup bốc thăm 1 lần khi sang trận mới chưa bốc thăm
+            if (needToss && isRefereeAuthorized() && __lastPromptedTossMatchId !== m.id && document.getElementById('refereePlayerSetupModal').classList.contains('hidden')) {
+                __lastPromptedTossMatchId = m.id;
+                setTimeout(() => openCoinTossModal(true), 120);
+            }
+
             const bannerEl = document.getElementById('matchFinishedCelebrationBanner');
             const bannerTextEl = document.getElementById('finishedBannerText');
+            const reopenBtn = document.getElementById('reopenMatchBtn');
             bannerEl.classList.toggle('hidden', !isMatchFinished);
             if (isMatchFinished && bannerTextEl) {
-                if (tieSt.isClinched) {
+                if (tieSt.isCompleted) {
                     const winClub = getClubById(tieSt.winnerSide === 1 ? m.club1Id : m.club2Id).name;
-                    bannerTextEl.textContent = `🏆 ${winClub} thắng chung cuộc ${tieSt.c1Wins}-${tieSt.c2Wins} (Chạm ${WINS_TO_CLINCH_TIE} trận)!`;
+                    bannerTextEl.textContent = `🏆 Hoàn thành ${currentAssignedCourt}: ${winClub} thắng ${tieSt.c1Wins}-${tieSt.c2Wins}`;
                 } else {
-                    bannerTextEl.textContent = '🏆 Nội dung đã hoàn tất!';
+                    bannerTextEl.textContent = '🏆 Nội dung này đã chốt xong!';
+                }
+                if (reopenBtn) {
+                    reopenBtn.classList.toggle('hidden', !isAdminRole());
                 }
             }
 
             const totalScore = (parseInt(m.score1) || 0) + (parseInt(m.score2) || 0);
             const rotBanner = document.getElementById('singlesRotationBanner');
-            if (isSingles && !isMatchFinished) {
+            if (isSingles && !isMatchFinished && !needToss) {
                 const rotIdx = (Math.floor(totalScore / 4) % 4) + 1;
                 const nextSwapAt = (Math.floor(totalScore / 4) + 1) * 4;
                 document.getElementById('singlesRotationText').textContent = `VĐV #${rotIdx}/4 đang đánh • Đổi VĐV ở tổng ${nextSwapAt}đ (11đ đổi sân • Chạm 21)`;
@@ -1575,7 +2057,9 @@
                 if (m.status === 'SKIPPED') {
                     actionEl.innerHTML = `<div class="col-span-4 ref-score-btn rounded-lg bg-stone-100 border border-stone-200 text-stone-500 font-extrabold text-[11px] flex items-center justify-center">⏭️ Không đấu</div>`;
                 } else if (m.status === 'FINISHED') {
-                    actionEl.innerHTML = `<div class="col-span-4 ref-score-btn rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-800 font-extrabold text-xs flex items-center justify-center">🏆 XONG</div>`;
+                    actionEl.innerHTML = `<div class="col-span-4 ref-score-btn rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-800 font-extrabold text-xs flex items-center justify-center"><i class="fa-solid fa-lock mr-1"></i> ĐÃ XONG</div>`;
+                } else if (needToss) {
+                    actionEl.innerHTML = `<button type="button" onclick="openCoinTossModal(true)" class="col-span-4 ref-score-btn rounded-lg bg-amber-100 border border-amber-400 text-amber-900 font-extrabold text-[11px] flex items-center justify-center gap-1"><i class="fa-solid fa-coins text-orange-600"></i> Bốc thăm trước</button>`;
                 } else if (isServing) {
                     const btnGradient = isT1 ? 'from-brand-600 to-orange-500 text-white' : 'from-emerald-600 to-teal-500 text-white';
                     actionEl.innerHTML = `
