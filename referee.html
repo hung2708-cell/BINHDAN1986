@@ -6,7 +6,6 @@
     <meta name="theme-color" content="#FFF9F2">
     <title>TRỌNG TÀI - BÍNH DẦN 1986</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,600;0,700;1,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -161,7 +160,7 @@
                         <img src="logo_tiger_2.jpg" alt="Logo Bính Dần" class="w-full h-full object-cover">
                     </div>
                     <div class="min-w-0">
-                        <div class="text-[9px] text-brand-600 font-extrabold uppercase tracking-wide truncate leading-tight">Trọng Tài Bính Dần</div>
+                        <div class="text-[9px] text-brand-600 font-extrabold uppercase tracking-wide truncate leading-tight">Trọng Tài • Firebase Cloud</div>
                         <div class="flex items-center gap-1 truncate mt-0.5">
                             <span id="syncStatusDot" class="w-2 h-2 rounded-full bg-amber-500 live-dot shrink-0"></span>
                             <span class="text-[10px] font-extrabold text-stone-800 truncate leading-tight" id="refereeCourtTitle">Đang chọn sân...</span>
@@ -312,7 +311,7 @@
                 </div>
             </div>
 
-            <!-- HÀNG NÚT ĐIỀU KHIỂN (ĐỔI PHÁT / ĐỔI SÂN / CHỐT TRẬN / KẾT THÚC CẶP ĐẤU) -->
+            <!-- HÀNG NÚT ĐIỀU KHIỂN -->
             <div class="grid grid-cols-4 gap-1 shrink-0">
                 <button type="button" onclick="triggerSideOutOrNextServer()" class="py-2 rounded-lg bg-amber-50 border border-amber-300 text-amber-900 font-extrabold text-[10px] shadow-2xs hover:bg-amber-100 transition flex flex-col items-center justify-center leading-tight">
                     <i class="fa-solid fa-arrows-rotate text-orange-600 mb-0.5"></i><span>Đổi Phát</span>
@@ -329,7 +328,7 @@
             </div>
         </div>
 
-        <!-- BANNER HOÀN TẤT (GIỮ NGUYÊN SÂN, KHÔNG TỰ NHẢY SANG SÂN KHÁC) -->
+        <!-- BANNER HOÀN TẤT -->
         <div id="matchFinishedCelebrationBanner" class="hidden px-2.5 py-1.5 rounded-xl bg-emerald-100 border border-emerald-400 text-emerald-900 text-[10.5px] font-extrabold flex items-center justify-between gap-2 shadow-sm shrink-0">
             <span id="finishedBannerText" class="truncate">🏆 Nội dung đã hoàn tất!</span>
             <button type="button" id="reopenMatchBtn" onclick="reopenFinishedMatch()" class="px-2 py-0.5 rounded bg-emerald-700 text-white text-[10px] shrink-0">Mở lại</button>
@@ -539,13 +538,18 @@
     <div id="toastContainer" class="fixed top-12 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-1.5 pointer-events-none w-[90%] max-w-sm items-center"></div>
 
     <script>
+        // =========================================================================
+        // KẾT NỐI FIREBASE REALTIME DATABASE CỦA BẠN
+        // =========================================================================
+        const FIREBASE_DB_URL = "https://pickleball1986-cb6c5-default-rtdb.asia-southeast1.firebasedatabase.app";
+        const FIREBASE_ACTIVE_NODE = `${FIREBASE_DB_URL}/active_tournament.json`;
+
         const ADMIN_PASSWORD = "1986";
         const REFEREE_PASSWORD = "86";
         const STORAGE_KEY = 'CAY_COI_TEAM_LINEUP_V28_PERMANENT';
         const ALL_COURTS = ['Sân 1', 'Sân 2', 'Sân 3', 'Sân 4', 'Sân 5', 'Sân 6', 'Sân 7', 'Sân 8'];
         const WINS_TO_CLINCH_TIE = 3;
         window.__deviceClientId = 'REF_' + Math.random().toString(36).slice(2, 9);
-        window.__currentSyncRoomCode = 'BINHDAN';
         let currentSetupStep = 1;
         let tempTossServeTeam = 1;
         let tempTossSwapped = false;
@@ -678,6 +682,84 @@
 
         const urlParams = new URLSearchParams(window.location.search);
         let currentAssignedCourt = urlParams.get('court') || localStorage.getItem('REF_STANDALONE_COURT') || 'Sân 1';
+
+        // =========================================================================
+        // ĐỒNG BỘ DỮ LIỆU TRỰC TIẾP VỚI FIREBASE REALTIME DATABASE
+        // =========================================================================
+        let __firebaseSaveTimer = null;
+        function saveState() {
+            if (!isRefereeAuthorized()) return;
+            try {
+                __lastLocalMutationAt = Date.now();
+                state.__updatedAt = __lastLocalMutationAt;
+                enforceTieClinchRules();
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+
+                clearTimeout(__firebaseSaveTimer);
+                __firebaseSaveTimer = setTimeout(async () => {
+                    try {
+                        const res = await fetch(FIREBASE_ACTIVE_NODE, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(state)
+                        });
+                        const dot = document.getElementById('syncStatusDot');
+                        if (dot) {
+                            dot.className = res.ok
+                                ? 'w-2 h-2 rounded-full bg-emerald-500 live-dot shrink-0'
+                                : 'w-2 h-2 rounded-full bg-amber-500 live-dot shrink-0';
+                        }
+                    } catch (err) {
+                        const dot = document.getElementById('syncStatusDot');
+                        if (dot) dot.className = 'w-2 h-2 rounded-full bg-amber-500 live-dot shrink-0';
+                    }
+                }, 150);
+            } catch (e) {}
+        }
+
+        async function connectRealtimeSync() {
+            const pullFromFirebase = async (isFirst = false) => {
+                if (!isFirst && Date.now() - __lastLocalMutationAt < 2500) return;
+                try {
+                    const res = await fetch(FIREBASE_ACTIVE_NODE, { cache: 'no-store' });
+                    if (!res.ok) return;
+                    const cloudData = await res.json();
+                    if (cloudData && cloudData.ties) {
+                        const localTime = state.__updatedAt || 0;
+                        const cloudTime = cloudData.__updatedAt || 0;
+                        if (cloudTime > localTime || isFirst) {
+                            state = cloudData;
+                            if (!Array.isArray(state.matchLogs)) state.matchLogs = [];
+                            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                            renderRefereeApp();
+                        }
+                    }
+                    const dot = document.getElementById('syncStatusDot');
+                    if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-500 live-dot shrink-0';
+                } catch (e) {
+                    const dot = document.getElementById('syncStatusDot');
+                    if (dot) dot.className = 'w-2 h-2 rounded-full bg-amber-500 live-dot shrink-0';
+                }
+            };
+
+            await pullFromFirebase(true);
+            setInterval(() => pullFromFirebase(false), 2500);
+        }
+
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'PICKLEBALL_USER_ROLE' || e.key === 'PICKLEBALL_REFEREE_UNLOCKED') {
+                enforceRefereeSecurityLock('Phiên làm việc đã được đăng xuất. Vui lòng nhập mật khẩu để tiếp tục.');
+                return;
+            }
+            if (e.key === STORAGE_KEY && e.newValue) {
+                if (Date.now() - __lastLocalMutationAt < 1000) return;
+                try {
+                    state = JSON.parse(e.newValue);
+                    if (!Array.isArray(state.matchLogs)) state.matchLogs = [];
+                    renderRefereeApp();
+                } catch (err) {}
+            }
+        });
 
         // =========================================================================
         // GHI NHẬT KÝ (LOG) CHI TIẾT CỦA TỪNG TRẬN ĐẤU & TOÀN GIẢI
@@ -913,69 +995,6 @@
             el.textContent = msg;
             c.appendChild(el);
             setTimeout(() => el.remove(), 2400);
-        }
-
-        let mqttClient = null;
-        function connectRealtimeSync() {
-            if (typeof mqtt === 'undefined') return;
-            mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt', { clientId: 'ref_' + window.__deviceClientId, clean: true });
-            mqttClient.on('connect', () => {
-                const dot = document.getElementById('syncStatusDot');
-                if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-500 live-dot';
-                mqttClient.subscribe(`caycoi/pickleball/v28/${window.__currentSyncRoomCode}/state`, { qos: 1 });
-            });
-            mqttClient.on('message', (topic, message) => {
-                try {
-                    const pkt = JSON.parse(message.toString());
-                    if (!pkt || pkt.sender === window.__deviceClientId) return;
-                    if (Date.now() - __lastLocalMutationAt < 2500) return;
-                    if (pkt.updatedAt && state.__updatedAt && pkt.updatedAt < state.__updatedAt) return;
-
-                    if (pkt.state) {
-                        state = pkt.state;
-                        if (!Array.isArray(state.matchLogs)) state.matchLogs = [];
-                        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-                        renderRefereeApp();
-                    }
-                } catch (e) {}
-            });
-        }
-
-        window.addEventListener('storage', (e) => {
-            if (e.key === 'PICKLEBALL_USER_ROLE' || e.key === 'PICKLEBALL_REFEREE_UNLOCKED') {
-                enforceRefereeSecurityLock('Phiên làm việc đã được đăng xuất. Vui lòng nhập mật khẩu để tiếp tục.');
-                return;
-            }
-            if (e.key === STORAGE_KEY && e.newValue) {
-                if (Date.now() - __lastLocalMutationAt < 1000) return;
-                try {
-                    state = JSON.parse(e.newValue);
-                    if (!Array.isArray(state.matchLogs)) state.matchLogs = [];
-                    renderRefereeApp();
-                } catch (err) {}
-            }
-        });
-
-        let __mqttPublishTimer = null;
-        function saveState() {
-            if (!isRefereeAuthorized()) return;
-            try {
-                __lastLocalMutationAt = Date.now();
-                state.__updatedAt = __lastLocalMutationAt;
-                enforceTieClinchRules();
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-
-                clearTimeout(__mqttPublishTimer);
-                __mqttPublishTimer = setTimeout(() => {
-                    if (mqttClient && mqttClient.connected) {
-                        mqttClient.publish(
-                            `caycoi/pickleball/v28/${window.__currentSyncRoomCode}/state`,
-                            JSON.stringify({ sender: window.__deviceClientId, updatedAt: state.__updatedAt, state }),
-                            { qos: 1, retain: true }
-                        );
-                    }
-                }, 200);
-            } catch (e) {}
         }
 
         function isPlayerFemale(p) {
@@ -1756,7 +1775,7 @@
                 __lastPromptedTossMatchId = curM.id;
                 openCoinTossModal(true);
             } else {
-                showToast('✅ Đã chốt đủ đội hình thi đấu cả 5 nội dung!');
+                showToast('✅ Đã chốt đủ đội hình & đồng bộ lên Firebase!');
             }
         }
 
@@ -1854,7 +1873,7 @@
                 const winnerClubName = getClubById(tieSt.winnerSide === 1 ? finishedMatch.club1Id : finishedMatch.club2Id).name;
                 recordMatchLog(finishedMatch, 'FINISH', `🏆 KẾT THÚC CẶP ĐẤU trên ${currentAssignedCourt}: ${winnerClubName} thắng ${tieSt.c1Wins}-${tieSt.c2Wins}`);
                 saveState();
-                showToast(`🏆 ${winnerClubName} thắng ${tieSt.c1Wins}-${tieSt.c2Wins}! Đã hoàn thành ${currentAssignedCourt}.`);
+                showToast(`🏆 ${winnerClubName} thắng ${tieSt.c1Wins}-${tieSt.c2Wins}! Đã lưu lên Firebase.`);
                 return;
             }
 
