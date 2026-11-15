@@ -1477,11 +1477,10 @@
         }
 
         function runFullTournamentAutomation() {
-            enforceTieClinchRules();
-            const advanced = autoAdvanceTournamentRounds();
-            const compacted = rebalanceEmptyCourts();
-            return advanced || compacted;
-        }
+    enforceTieClinchRules();
+    const advanced = autoAdvanceTournamentRounds();
+    return advanced;
+}
 
         function manualTriggerAdvanceAndCompact() {
             if (!isAdminLoggedIn()) { openLoginModal(); return; }
