@@ -17,21 +17,10 @@
                     fontFamily: { sans: ['Inter', 'sans-serif'], score: ['Chakra Petch', 'sans-serif'] },
                     colors: {
                         brand: {
-                            50: '#fff1f2',
-                            100: '#ffe4e6',
-                            200: '#fecdd3',
-                            400: '#fb7185',
-                            500: '#f43f5e',
-                            600: '#e11d48',
-                            700: '#be123c',
-                            900: '#881337'
+                            50: '#fff1f2', 100: '#ffe4e6', 200: '#fecdd3', 400: '#fb7185',
+                            500: '#f43f5e', 600: '#e11d48', 700: '#be123c', 900: '#881337'
                         },
-                        fengshui: {
-                            wood: '#059669',
-                            woodLight: '#d1fae5',
-                            fire: '#ea580c',
-                            gold: '#d97706'
-                        }
+                        fengshui: { wood: '#059669', woodLight: '#d1fae5', fire: '#ea580c', gold: '#d97706' }
                     }
                 }
             }
@@ -160,7 +149,7 @@
                         <img src="logo_tiger_2.jpg" alt="Logo Bính Dần" class="w-full h-full object-cover">
                     </div>
                     <div class="min-w-0">
-                        <div class="text-[9px] text-brand-600 font-extrabold uppercase tracking-wide truncate leading-tight">Trọng Tài • Firebase Cloud</div>
+                        <div class="text-[9px] text-brand-600 font-extrabold uppercase tracking-wide truncate leading-tight">Trọng Tài Độc Lập • Cloud</div>
                         <div class="flex items-center gap-1 truncate mt-0.5">
                             <span id="syncStatusDot" class="w-2 h-2 rounded-full bg-amber-500 live-dot shrink-0"></span>
                             <span class="text-[10px] font-extrabold text-stone-800 truncate leading-tight" id="refereeCourtTitle">Đang chọn sân...</span>
@@ -681,22 +670,22 @@
         if (!Array.isArray(state.matchLogs)) state.matchLogs = [];
 
         const urlParams = new URLSearchParams(window.location.search);
-        let currentAssignedCourt = urlParams.get('court') || localStorage.getItem('REF_STANDALONE_COURT') || 'Sân 1';
+        const lockedUrlCourt = urlParams.get('court');
+        let currentAssignedCourt = lockedUrlCourt || localStorage.getItem('REF_STANDALONE_COURT') || 'Sân 1';
 
-        // Lưu & đọc trận đang chọn riêng cho từng sân (tránh sân này làm nhảy trận sân khác)
         function getCourtSelectedMatchId(courtName) {
-            return localStorage.getItem(`REF_SELECTED_MATCH_${courtName}`) || state.activeLiveMatchId || '';
+            return localStorage.getItem(`REF_SELECTED_MATCH_${courtName}`) || '';
         }
 
         function setCourtSelectedMatchId(courtName, matchId) {
             if (courtName && matchId) {
                 localStorage.setItem(`REF_SELECTED_MATCH_${courtName}`, matchId);
             }
-            state.activeLiveMatchId = matchId;
         }
 
         // =========================================================================
-        // ĐỒNG BỘ DỮ LIỆU TRỰC TIẾP VỚI FIREBASE REALTIME DATABASE
+        // GHI ĐỘC LẬP TỪNG SÂN LÊN FIREBASE (PATCH ĐÚNG CẶP ĐẤU CỦA SÂN ĐÓ)
+        // KHÔNG GHI ĐÈ SÂN KHÁC KHI 8 SÂN CÙNG BẤM ĐIỂM ĐỒNG THỜI
         // =========================================================================
         let __firebaseSaveTimer = null;
         function saveState() {
@@ -710,28 +699,60 @@
                 clearTimeout(__firebaseSaveTimer);
                 __firebaseSaveTimer = setTimeout(async () => {
                     try {
-                        const res = await fetch(FIREBASE_ACTIVE_NODE, {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(state)
-                        });
-                        const dot = document.getElementById('syncStatusDot');
-                        if (dot) {
-                            dot.className = res.ok
-                                ? 'w-2 h-2 rounded-full bg-emerald-500 live-dot shrink-0'
-                                : 'w-2 h-2 rounded-full bg-amber-500 live-dot shrink-0';
+                        const activeId = getCourtSelectedMatchId(currentAssignedCourt);
+                        const tieIdx = (state.ties || []).findIndex(t =>
+                            (t.court || t.matches?.[0]?.court || 'Sân 1') === currentAssignedCourt &&
+                            (t.matches || []).some(m => m.id === activeId)
+                        );
+
+                        if (tieIdx !== -1) {
+                            const targetTie = state.ties[tieIdx];
+                            targetTie.__updatedAt = Date.now();
+
+                            // Gửi PATCH độc lập riêng nhánh của cặp đấu trên sân này & timestamp tổng
+                            const [resTie, resMeta] = await Promise.all([
+                                fetch(`${FIREBASE_DB_URL}/active_tournament/ties/${tieIdx}.json`, {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(targetTie)
+                                }),
+                                fetch(FIREBASE_ACTIVE_NODE, {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        __updatedAt: targetTie.__updatedAt,
+                                        matchLogs: (state.matchLogs || []).slice(0, 150)
+                                    })
+                                })
+                            ]);
+
+                            const dot = document.getElementById('syncStatusDot');
+                            if (dot) {
+                                dot.className = (resTie.ok && resMeta.ok)
+                                    ? 'w-2 h-2 rounded-full bg-emerald-500 live-dot shrink-0'
+                                    : 'w-2 h-2 rounded-full bg-amber-500 live-dot shrink-0';
+                            }
+                        } else {
+                            // Dự phòng nếu chưa tìm thấy index cặp đấu
+                            const res = await fetch(FIREBASE_ACTIVE_NODE, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ __updatedAt: state.__updatedAt, ties: state.ties })
+                            });
+                            const dot = document.getElementById('syncStatusDot');
+                            if (dot) dot.className = res.ok ? 'w-2 h-2 rounded-full bg-emerald-500 live-dot shrink-0' : 'w-2 h-2 rounded-full bg-amber-500 live-dot shrink-0';
                         }
                     } catch (err) {
                         const dot = document.getElementById('syncStatusDot');
                         if (dot) dot.className = 'w-2 h-2 rounded-full bg-amber-500 live-dot shrink-0';
                     }
-                }, 150);
+                }, 120);
             } catch (e) {}
         }
 
         async function connectRealtimeSync() {
             const pullFromFirebase = async (isFirst = false) => {
-                if (!isFirst && Date.now() - __lastLocalMutationAt < 2500) return;
+                if (!isFirst && Date.now() - __lastLocalMutationAt < 2000) return;
                 try {
                     const res = await fetch(FIREBASE_ACTIVE_NODE, { cache: 'no-store' });
                     if (!res.ok) return;
@@ -739,13 +760,22 @@
                     if (cloudData && cloudData.ties) {
                         const localTime = state.__updatedAt || 0;
                         const cloudTime = cloudData.__updatedAt || 0;
+
                         if (cloudTime > localTime || isFirst) {
-                            const keptCourtMatchId = getCourtSelectedMatchId(currentAssignedCourt);
+                            // Giữ nguyên dữ liệu cục bộ của sân đang chấm nếu vừa mới thao tác, chỉ cập nhật các sân khác & danh sách CLB
+                            const myCourtTiesBackup = (state.ties || []).filter(t => (t.court || t.matches?.[0]?.court || 'Sân 1') === currentAssignedCourt);
+                            const isRecentLocal = (Date.now() - __lastLocalMutationAt < 4000) && myCourtTiesBackup.length > 0;
+
                             state = cloudData;
                             if (!Array.isArray(state.matchLogs)) state.matchLogs = [];
-                            if (keptCourtMatchId) {
-                                state.activeLiveMatchId = keptCourtMatchId;
+
+                            if (isRecentLocal) {
+                                state.ties = (state.ties || []).map(ct => {
+                                    const localMatchTie = myCourtTiesBackup.find(lt => lt.id === ct.id);
+                                    return localMatchTie ? localMatchTie : ct;
+                                });
                             }
+
                             localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
                             renderRefereeApp();
                         }
@@ -770,10 +800,8 @@
             if (e.key === STORAGE_KEY && e.newValue) {
                 if (Date.now() - __lastLocalMutationAt < 1000) return;
                 try {
-                    const keptCourtMatchId = getCourtSelectedMatchId(currentAssignedCourt);
                     state = JSON.parse(e.newValue);
                     if (!Array.isArray(state.matchLogs)) state.matchLogs = [];
-                    if (keptCourtMatchId) state.activeLiveMatchId = keptCourtMatchId;
                     renderRefereeApp();
                 } catch (err) {}
             }
@@ -980,12 +1008,15 @@
             }
 
             courtSel.classList.remove('opacity-60');
-            if (!activeCourts.includes(currentAssignedCourt)) {
+            if (!lockedUrlCourt && !activeCourts.includes(currentAssignedCourt)) {
                 currentAssignedCourt = activeCourts[0];
                 localStorage.setItem('REF_STANDALONE_COURT', currentAssignedCourt);
             }
 
-            courtSel.innerHTML = activeCourts.map(c => `<option value="${c}">${c}</option>`).join('');
+            // Nếu trọng tài vào từ link cố định ?court=Sân X thì khóa cứng sân đó (chỉ Admin mới đổi được)
+            const isLockedToUrlCourt = Boolean(lockedUrlCourt) && !isAdminRole();
+            courtSel.disabled = isLockedToUrlCourt;
+            courtSel.innerHTML = (isLockedToUrlCourt ? [currentAssignedCourt] : activeCourts).map(c => `<option value="${c}">${c}</option>`).join('');
             courtSel.value = currentAssignedCourt;
             document.getElementById('refereeCourtTitle').textContent = `Cố định: ${currentAssignedCourt}`;
             document.getElementById('liveCurrentCourtBadge').textContent = currentAssignedCourt;
@@ -993,6 +1024,10 @@
 
         function changeRefereeCourt(courtName) {
             if (!enforceRefereeSecurityLock()) return;
+            if (lockedUrlCourt && !isAdminRole()) {
+                showToast(`🔒 Bạn đang được phân công cố định tại ${lockedUrlCourt}!`);
+                return;
+            }
             if (!courtName) return;
             currentAssignedCourt = courtName;
             localStorage.setItem('REF_STANDALONE_COURT', courtName);
@@ -1047,8 +1082,7 @@
         }
 
         // =========================================================================
-        // TRỌNG TÀI SÂN NÀO SÂN ĐẤY: CHỈ LẤY CẶP ĐẤU ĐƯỢC XẾP TRÊN ĐÚNG SÂN NÀY
-        // KHÔNG TỰ KÉO CẶP TỪ SÂN KHÁC HAY TỰ NHẢY SANG TRẬN SAU KHI KẾT THÚC
+        // TRỌNG TÀI SÂN NÀO SÂN ĐẤY: CHỈ LẤY CẶP ĐẤU CỦA ĐÚNG SÂN NÀY
         // =========================================================================
         function getActiveTieMatchesForCourt(courtName) {
             enforceTieClinchRules();
@@ -1057,7 +1091,6 @@
                 .sort((a, b) => (a.wave || a.matches?.[0]?.wave || 1) - (b.wave || b.matches?.[0]?.wave || 1));
 
             if (courtTies.length > 0) {
-                // Nếu sân đang chọn sẵn một trận cụ thể thuộc một cặp trên sân này, ưu tiên giữ nguyên cặp đó
                 const selectedMatchId = getCourtSelectedMatchId(courtName);
                 if (selectedMatchId) {
                     const tieContainingSelected = courtTies.find(t => (t.matches || []).some(m => m.id === selectedMatchId));
@@ -1117,7 +1150,7 @@
         }
 
         // =========================================================================
-        // BẮT BUỘC BỐC THĂM CHỌN SÂN / BÓNG KHI VÀO TỪNG TRẬN (HIỂN THỊ TÊN VĐV 2 ĐỘI)
+        // BẮT BUỘC BỐC THĂM CHỌN SÂN / BÓNG KHI VÀO TỪNG TRẬN
         // =========================================================================
         function isCoinTossRequiredForMatch(m) {
             if (!m) return false;
@@ -1822,7 +1855,7 @@
                 __lastPromptedTossMatchId = curM.id;
                 openCoinTossModal(true);
             } else {
-                showToast('✅ Đã chốt đủ đội hình & đồng bộ lên Firebase!');
+                showToast('✅ Đã chốt đủ đội hình & gửi lên Firebase!');
             }
         }
 
