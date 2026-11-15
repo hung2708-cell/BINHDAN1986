@@ -92,7 +92,7 @@
         .hero-fluid-title { font-size: clamp(1.2rem, 5vw, 1.95rem); line-height: 1.22; }
         .stat-fluid-num { font-size: clamp(1.3rem, 4.6vw, 1.75rem); line-height: 1.1; }
 
-        /* Đường nối sơ đồ cây vuông góc giống mẫu */
+        /* Đường nối sơ đồ cây vuông góc */
         .bracket-pair {
             position: relative;
             display: flex;
@@ -281,20 +281,20 @@
 
             <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-amber-200/80 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div class="min-w-0">
-                    <h2 class="text-[15px] sm:text-xl font-extrabold text-stone-900 flex items-center truncate"><i class="fa-solid fa-sitemap text-brand-600 mr-2 shrink-0"></i> Sơ Đồ Cây Thi Đấu (Tứ Kết → Bán Kết → Chung Kết)</h2>
-                    <p id="bracket-structure-subtitle" class="text-[11px] sm:text-xs text-stone-500 mt-0.5">Bấm trực tiếp vào tên đội trên sơ đồ cây để xem toàn bộ lịch sử các trận đã đấu của đội đó.</p>
+                    <h2 class="text-[15px] sm:text-xl font-extrabold text-stone-900 flex items-center truncate"><i class="fa-solid fa-sitemap text-brand-600 mr-2 shrink-0"></i> Sơ Đồ Cây Thi Đấu (Từ Vòng Bảng → Chung Kết)</h2>
+                    <p id="bracket-structure-subtitle" class="text-[11px] sm:text-xs text-stone-500 mt-0.5">Bấm trực tiếp vào tên bất kỳ đội nào từ Vòng bảng đến Chung kết để xem toàn bộ trận đã đấu.</p>
                 </div>
                 <div id="bracket-action-toolbar" class="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
                     <button onclick="renderBracket()" class="shrink-0 px-3 py-2 sm:py-1.5 rounded-xl bg-stone-100 hover:bg-amber-50 active:scale-95 text-stone-700 font-semibold transition text-xs border border-stone-200"><i class="fa-solid fa-rotate mr-1"></i> Làm mới</button>
                 </div>
             </div>
 
-            <!-- SƠ ĐỒ CÂY TRỰC QUAN DẠNG NHÁNH NGANG VUÔNG GÓC -->
+            <!-- SƠ ĐỒ CÂY TRỰC QUAN TOÀN GIẢI TỪ VÒNG BẢNG -->
             <div class="bg-white border-2 border-brand-200 p-4 sm:p-6 rounded-2xl shadow-md space-y-4">
                 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-rose-100 pb-3 gap-2">
                     <div class="flex items-center gap-2 flex-wrap">
                         <h3 class="font-black text-brand-700 text-sm sm:text-base uppercase flex items-center">
-                            <i class="fa-solid fa-diagram-project mr-2 text-amber-500"></i> Sơ Đồ Nhánh Đấu
+                            <i class="fa-solid fa-diagram-project mr-2 text-amber-500"></i> Sơ Đồ Nhánh Đấu Toàn Giải
                         </h3>
                         <div class="flex items-center gap-1 bg-stone-100 p-1 rounded-xl border border-stone-200">
                             <button type="button" id="tree-series-btn-A" onclick="switchTreeSeries('A')" class="px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-brand-600 text-white shadow-2xs transition">Nhánh Serie A (Cúp Vàng)</button>
@@ -2450,7 +2450,7 @@
         }
 
         // =========================================================================
-        // SƠ ĐỒ CÂY NHÁNH ĐẤU VUÔNG GÓC GIỐNG MẪU & POPUP LỊCH SỬ TRẬN ĐÃ ĐẤU CỦA ĐỘI
+        // SƠ ĐỒ CÂY TOÀN GIẢI BẮT ĐẦU TỪ VÒNG BẢNG -> TỨ KẾT -> BÁN KẾT -> CHUNG KẾT
         // =========================================================================
         function switchTreeSeries(ser) {
             currentTreeSeries = ser;
@@ -2552,11 +2552,51 @@
 
             const allTies = getAllStructuredTies();
             const koTies = allTies.filter(t => t.knockoutRound && t.series === currentTreeSeries);
+            const groupedStandings = calculateStandingsByGroup();
             const plan = buildKnockoutSeedPlan();
             const seedItems = currentTreeSeries === 'A' ? plan.serieA : plan.serieB;
             const isSerieA = currentTreeSeries === 'A';
             const branchColor = isSerieA ? '#ea580c' : '#059669';
 
+            // 1. CỘT ĐẦU TIÊN: VÒNG BẢNG (XẾP HẠNG & CÁC CẶP ĐẤU VÒNG BẢNG)
+            const groupEntries = Object.entries(groupedStandings);
+            const groupStageCardsHtml = groupEntries.length > 0 ? groupEntries.map(([gName, list]) => {
+                const teamsRows = list.map((st, idx) => {
+                    const isQualified = isSerieA ? (idx < 2) : (idx >= 2 && idx < 4);
+                    const isSelected = selectedTeamFilterForBracket === st.id;
+                    const rowStyle = isSelected
+                        ? 'bg-amber-200 ring-1 ring-amber-500 font-black text-stone-950'
+                        : (isQualified
+                            ? (isSerieA ? 'bg-rose-50/90 text-brand-900 font-extrabold hover:bg-rose-100' : 'bg-emerald-50/90 text-emerald-900 font-extrabold hover:bg-emerald-100')
+                            : 'bg-stone-50/70 text-stone-500 font-medium hover:bg-stone-100');
+                    const rankColor = idx === 0 ? 'bg-amber-500 text-white' : (idx === 1 ? 'bg-brand-600 text-white' : 'bg-stone-200 text-stone-700');
+
+                    return `
+                        <div onclick="openTeamJourneyModal('${st.id}', '${st.name.replace(/'/g, "\\'")}')" 
+                             class="cursor-pointer flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg text-xs transition ${rowStyle}">
+                            <div class="flex items-center gap-1.5 min-w-0">
+                                <span class="w-4 h-4 rounded text-[9px] font-black flex items-center justify-center shrink-0 ${rankColor}">${idx + 1}</span>
+                                <span class="truncate">${st.name}</span>
+                            </div>
+                            <span class="font-score text-[11px] font-black shrink-0">${st.points}đ</span>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="bg-white border-2 ${isSerieA ? 'border-rose-200' : 'border-emerald-200'} rounded-xl p-2.5 w-60 shadow-sm space-y-1.5">
+                        <div class="flex items-center justify-between text-[10px] font-black uppercase border-b border-stone-100 pb-1">
+                            <span class="${isSerieA ? 'text-brand-700' : 'text-emerald-700'}"><i class="fa-solid fa-layer-group mr-1"></i>${gName}</span>
+                            <span class="text-stone-400 text-[9px]">${isSerieA ? 'Top 1-2 đi tiếp' : 'Hạng 3-4 đi tiếp'}</span>
+                        </div>
+                        <div class="space-y-1">
+                            ${teamsRows}
+                        </div>
+                    </div>
+                `;
+            }).join('') : `<div class="bg-stone-50 border border-stone-200 rounded-xl p-4 w-56 text-center text-xs text-stone-400">Chưa có bảng đấu</div>`;
+
+            // Hàm dựng thẻ trận đấu Knock-out giống ảnh mẫu
             const buildTreeCard = (tieObj, placeholderLabel, c1NameFallback, c2NameFallback) => {
                 if (!tieObj) {
                     return `
@@ -2622,9 +2662,23 @@
                 }
             }
 
-            let columnsHtml = '';
+            // BẮT ĐẦU GHÉP CÁC CỘT TỪ VÒNG BẢNG -> TỨ KẾT -> BÁN KẾT -> CHUNG KẾT -> VÔ ĐỊCH
+            let columnsHtml = `
+                <div class="flex flex-col justify-between space-y-4">
+                    <div class="text-xs font-black text-amber-800 uppercase tracking-wider text-center bg-amber-100/80 py-1 px-2 rounded-lg border border-amber-200">1. VÒNG BẢNG</div>
+                    <div class="flex-1 flex flex-col justify-center space-y-3">
+                        ${groupStageCardsHtml}
+                    </div>
+                </div>
+                <div class="flex flex-col justify-center items-center text-stone-400 px-1 pt-6">
+                    <div class="flex items-center">
+                        <div class="w-4 h-[2.5px]" style="background-color: ${branchColor};"></div>
+                        <i class="fa-solid fa-angles-right text-base" style="color: ${branchColor};"></i>
+                    </div>
+                </div>
+            `;
 
-            // CỘT TỨ KẾT
+            // CỘT TỨ KẾT (Nếu có)
             if (plan.startStage === 'QF' && seedItems.some(i => i.label.includes('Tứ Kết'))) {
                 const qfCards = [0, 1, 2, 3].map(idx => {
                     const seed = seedItems[idx];
@@ -2632,8 +2686,8 @@
                 });
                 columnsHtml += `
                     <div class="flex flex-col justify-between space-y-4">
-                        <div class="text-xs font-black text-stone-700 uppercase tracking-wider text-center">TỨ KẾT</div>
-                        <div class="space-y-6">
+                        <div class="text-xs font-black text-stone-700 uppercase tracking-wider text-center bg-stone-100 py-1 px-2 rounded-lg">TỨ KẾT</div>
+                        <div class="flex-1 flex flex-col justify-center space-y-6">
                             <div class="bracket-pair">${qfCards[0]}${qfCards[1]}</div>
                             <div class="bracket-pair">${qfCards[2]}${qfCards[3]}</div>
                         </div>
@@ -2650,7 +2704,7 @@
                 });
                 columnsHtml += `
                     <div class="flex flex-col justify-between space-y-4">
-                        <div class="text-xs font-black text-stone-700 uppercase tracking-wider text-center">BÁN KẾT</div>
+                        <div class="text-xs font-black text-stone-700 uppercase tracking-wider text-center bg-stone-100 py-1 px-2 rounded-lg">BÁN KẾT</div>
                         <div class="flex-1 flex flex-col justify-center">
                             <div class="bracket-pair" style="gap: 48px;">${sfCards[0]}${sfCards[1]}</div>
                         </div>
@@ -2664,7 +2718,7 @@
             const finalCard = buildTreeCard(serF[0], 'Chung kết', finalSeed?.c1?.name || 'Thắng Bán kết 1', finalSeed?.c2?.name || 'Thắng Bán kết 2');
             columnsHtml += `
                 <div class="flex flex-col justify-between space-y-4">
-                    <div class="text-xs font-black text-stone-700 uppercase tracking-wider text-center">CHUNG KẾT</div>
+                    <div class="text-xs font-black text-stone-700 uppercase tracking-wider text-center bg-stone-100 py-1 px-2 rounded-lg">CHUNG KẾT</div>
                     <div class="flex-1 flex items-center">${finalCard}</div>
                 </div>
                 <div class="flex items-center pt-6"><div class="bracket-connector-line"></div></div>
@@ -2676,7 +2730,7 @@
                 : 'bg-gradient-to-br from-emerald-100 via-teal-50 to-emerald-50 border-emerald-400 text-emerald-900';
             columnsHtml += `
                 <div class="flex flex-col justify-between space-y-4">
-                    <div class="text-xs font-black text-stone-700 uppercase tracking-wider text-center">VÔ ĐỊCH</div>
+                    <div class="text-xs font-black text-stone-700 uppercase tracking-wider text-center bg-amber-100/70 py-1 px-2 rounded-lg">VÔ ĐỊCH</div>
                     <div class="flex-1 flex items-center">
                         <div class="${champCardBg} border-2 rounded-2xl p-4 w-56 text-center shadow-md space-y-1.5">
                             <div class="w-11 h-11 mx-auto rounded-full bg-amber-400/20 flex items-center justify-center text-2xl text-amber-500">
