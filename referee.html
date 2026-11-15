@@ -379,15 +379,28 @@
     <!-- MODAL BẮT BUỘC BỐC THĂM CHỌN SÂN / CHỌN BÓNG KHI VÀO TỪNG TRẬN -->
     <div id="coinTossModal" onclick="if(event.target === this && !isMandatoryCoinTossOpen) closeCoinTossModal()" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-900/65 p-3 backdrop-blur-sm">
         <div class="bg-[#FFFDF9] border-2 border-amber-400 rounded-2xl max-w-sm w-full p-4 space-y-3 shadow-2xl max-h-[92dvh] overflow-y-auto animate-modal-pop">
-            <div class="flex justify-between items-center border-b border-amber-200 pb-2">
-                <div class="flex items-center gap-2">
-                    <div class="w-7 h-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center border border-amber-300"><i class="fa-solid fa-coins"></i></div>
-                    <div>
+            <div class="flex justify-between items-start border-b border-amber-200 pb-2 gap-2">
+                <div class="flex items-start gap-2 min-w-0">
+                    <div class="w-7 h-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center border border-amber-300 shrink-0 mt-0.5"><i class="fa-solid fa-coins"></i></div>
+                    <div class="min-w-0">
                         <h3 class="text-xs font-extrabold text-stone-900 uppercase">Bốc Thăm Chọn Sân & Bóng</h3>
-                        <p id="coinTossModalSub" class="text-[10px] text-rose-600 font-bold">Bắt buộc xác nhận trước khi bắt đầu trận đấu</p>
+                        <p id="coinTossCategoryLabel" class="text-[11px] font-black text-orange-700 truncate mt-0.5">Nội dung: ---</p>
+                        <p id="coinTossModalSub" class="text-[10px] text-rose-600 font-bold mt-0.5">Bắt buộc xác nhận trước khi bắt đầu trận đấu</p>
                     </div>
                 </div>
-                <button type="button" id="closeCoinTossBtn" onclick="closeCoinTossModal()" class="w-7 h-7 rounded-lg bg-stone-100 text-stone-500 hover:text-brand-600 flex items-center justify-center"><i class="fa-solid fa-xmark text-sm"></i></button>
+                <button type="button" id="closeCoinTossBtn" onclick="closeCoinTossModal()" class="w-7 h-7 rounded-lg bg-stone-100 text-stone-500 hover:text-brand-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-xmark text-sm"></i></button>
+            </div>
+
+            <!-- HIỂN THỊ ĐỘI HÌNH VĐV CỦA CẢ 2 ĐỘI TRONG NỘI DUNG NÀY -->
+            <div class="grid grid-cols-2 gap-2 bg-stone-50 border border-stone-200 rounded-xl p-2 text-[11px]">
+                <div class="bg-white border border-rose-200 rounded-lg p-2 min-w-0">
+                    <div id="tossTeam1ClubHeader" class="text-[9.5px] font-extrabold text-brand-700 uppercase truncate">Đội 1</div>
+                    <div id="tossTeam1PlayersText" class="text-xs font-black text-stone-900 leading-snug mt-0.5 break-words">---</div>
+                </div>
+                <div class="bg-white border border-emerald-200 rounded-lg p-2 min-w-0">
+                    <div id="tossTeam2ClubHeader" class="text-[9.5px] font-extrabold text-emerald-700 uppercase truncate">Đội 2</div>
+                    <div id="tossTeam2PlayersText" class="text-xs font-black text-stone-900 leading-snug mt-0.5 break-words">---</div>
+                </div>
             </div>
 
             <div class="bg-amber-50/70 border border-amber-200 rounded-xl p-2.5 text-center space-y-1.5">
@@ -404,18 +417,18 @@
                 <div class="space-y-1">
                     <label class="block text-[10px] font-extrabold text-amber-800 uppercase">1. Đội giao bóng đầu tiên (Chọn Bóng):</label>
                     <div class="grid grid-cols-2 gap-2">
-                        <button type="button" id="tossServeTeam1Btn" onclick="setTossServeTeam(1)" class="py-2 px-2 rounded-xl border font-bold text-xs truncate transition">Đội 1</button>
-                        <button type="button" id="tossServeTeam2Btn" onclick="setTossServeTeam(2)" class="py-2 px-2 rounded-xl border font-bold text-xs truncate transition">Đội 2</button>
+                        <button type="button" id="tossServeTeam1Btn" onclick="setTossServeTeam(1)" class="py-2 px-2 rounded-xl border font-bold text-xs leading-tight transition">Đội 1</button>
+                        <button type="button" id="tossServeTeam2Btn" onclick="setTossServeTeam(2)" class="py-2 px-2 rounded-xl border font-bold text-xs leading-tight transition">Đội 2</button>
                     </div>
                 </div>
 
                 <div class="space-y-1">
                     <label class="block text-[10px] font-extrabold text-emerald-800 uppercase">2. Vị trí đứng hai đội (Chọn Sân):</label>
                     <div class="grid grid-cols-2 gap-2">
-                        <button type="button" id="tossSideNormalBtn" onclick="setTossCourtSide(false)" class="py-2 px-2 rounded-xl border font-bold text-[11px] leading-tight transition">
+                        <button type="button" id="tossSideNormalBtn" onclick="setTossCourtSide(false)" class="py-2 px-2 rounded-xl border font-bold text-[10.5px] leading-tight transition">
                             Đội 1 Trái • Đội 2 Phải
                         </button>
-                        <button type="button" id="tossSideSwappedBtn" onclick="setTossCourtSide(true)" class="py-2 px-2 rounded-xl border font-bold text-[11px] leading-tight transition">
+                        <button type="button" id="tossSideSwappedBtn" onclick="setTossCourtSide(true)" class="py-2 px-2 rounded-xl border font-bold text-[10.5px] leading-tight transition">
                             Đội 2 Trái • Đội 1 Phải
                         </button>
                     </div>
@@ -1023,9 +1036,6 @@
             return { tie: firstTie, match: firstTie?.matches?.[0] || null };
         }
 
-        // =========================================================================
-        // KIỂM TRA ĐÃ CHỌN ĐỦ VĐV CHO TRẬN ĐẤU CHƯA (BƯỚC 1)
-        // =========================================================================
         function hasMatchFullLineup(m) {
             if (!m) return false;
             const req = getRequiredPlayerCount(m);
@@ -1043,13 +1053,19 @@
             }
         }
 
+        function getMatchPlayersDisplayString(m, side) {
+            const clubId = side === 1 ? m.club1Id : m.club2Id;
+            const pIds = side === 1 ? (m.team1PlayerIds || []) : (m.team2PlayerIds || []);
+            const names = pIds.map(pid => getPlayerById(clubId, pid)?.name).filter(Boolean);
+            return names.length > 0 ? names.join(' / ') : 'Chưa chọn VĐV';
+        }
+
         // =========================================================================
-        // BẮT BUỘC BỐC THĂM CHỌN SÂN / BÓNG KHI VÀO TỪNG TRẬN (BƯỚC 2 - SAU KHI CHỌN VĐV)
+        // BẮT BUỘC BỐC THĂM CHỌN SÂN / BÓNG KHI VÀO TỪNG TRẬN (HIỂN THỊ TÊN VĐV 2 ĐỘI)
         // =========================================================================
         function isCoinTossRequiredForMatch(m) {
             if (!m) return false;
             if (m.status === 'FINISHED' || m.status === 'SKIPPED') return false;
-            // Chỉ yêu cầu bốc thăm sau khi đã chọn đủ VĐV của trận đấu
             if (!hasMatchFullLineup(m)) return false;
             const s1 = parseInt(m.score1) || 0;
             const s2 = parseInt(m.score2) || 0;
@@ -1073,7 +1089,12 @@
             isMandatoryCoinTossOpen = Boolean(mandatory);
             const closeBtn = document.getElementById('closeCoinTossBtn');
             const subEl = document.getElementById('coinTossModalSub');
+            const catEl = document.getElementById('coinTossCategoryLabel');
             if (closeBtn) closeBtn.classList.toggle('hidden', isMandatoryCoinTossOpen);
+            if (catEl) {
+                const cleanCat = (m.catLabel || '').replace(/^(Bảng [^•]+•\s*)?(Lượt \d+\s*•\s*)?(Vòng \d+\s*•\s*)?/i, '');
+                catEl.textContent = cleanCat;
+            }
             if (subEl) {
                 subEl.textContent = isMandatoryCoinTossOpen
                     ? '⚠️ Bắt buộc bốc thăm chọn Sân & Bóng trước khi bắt đầu trận đấu!'
@@ -1085,11 +1106,19 @@
 
             const c1 = getClubById(m.club1Id).name;
             const c2 = getClubById(m.club2Id).name;
+            const p1Str = getMatchPlayersDisplayString(m, 1);
+            const p2Str = getMatchPlayersDisplayString(m, 2);
 
-            document.getElementById('tossServeTeam1Btn').textContent = c1;
-            document.getElementById('tossServeTeam2Btn').textContent = c2;
-            document.getElementById('tossSideNormalBtn').innerHTML = `${c1} (Trái)<br><span class="text-[9px] font-normal opacity-80">${c2} (Phải)</span>`;
-            document.getElementById('tossSideSwappedBtn').innerHTML = `${c2} (Trái)<br><span class="text-[9px] font-normal opacity-80">${c1} (Phải)</span>`;
+            document.getElementById('tossTeam1ClubHeader').textContent = c1;
+            document.getElementById('tossTeam1PlayersText').textContent = p1Str;
+            document.getElementById('tossTeam2ClubHeader').textContent = c2;
+            document.getElementById('tossTeam2PlayersText').textContent = p2Str;
+
+            document.getElementById('tossServeTeam1Btn').innerHTML = `<div class="truncate">${c1}</div><div class="text-[10px] font-semibold opacity-90 truncate mt-0.5">${p1Str}</div>`;
+            document.getElementById('tossServeTeam2Btn').innerHTML = `<div class="truncate">${c2}</div><div class="text-[10px] font-semibold opacity-90 truncate mt-0.5">${p2Str}</div>`;
+
+            document.getElementById('tossSideNormalBtn').innerHTML = `<div class="truncate">Trái: ${p1Str}</div><div class="text-[9.5px] font-normal opacity-80 truncate mt-0.5">Phải: ${p2Str}</div>`;
+            document.getElementById('tossSideSwappedBtn').innerHTML = `<div class="truncate">Trái: ${p2Str}</div><div class="text-[9.5px] font-normal opacity-80 truncate mt-0.5">Phải: ${p1Str}</div>`;
             document.getElementById('coinTossResultText').textContent = 'Bấm tung đồng xu để xác định đội ưu tiên';
 
             updateCoinTossButtonsUI();
@@ -1112,6 +1141,8 @@
             if (!m) return;
             const c1 = getClubById(m.club1Id).name;
             const c2 = getClubById(m.club2Id).name;
+            const p1Str = getMatchPlayersDisplayString(m, 1);
+            const p2Str = getMatchPlayersDisplayString(m, 2);
 
             const coinEl = document.getElementById('coinVisualIcon');
             coinEl.classList.remove('animate-coin');
@@ -1119,7 +1150,7 @@
             coinEl.classList.add('animate-coin');
 
             const winnerTeam = Math.random() < 0.5 ? 1 : 2;
-            const winnerName = winnerTeam === 1 ? c1 : c2;
+            const winnerName = winnerTeam === 1 ? `${p1Str} (${c1})` : `${p2Str} (${c2})`;
             tempTossServeTeam = winnerTeam;
             updateCoinTossButtonsUI();
 
@@ -1142,11 +1173,11 @@
             const sideNormBtn = document.getElementById('tossSideNormalBtn');
             const sideSwapBtn = document.getElementById('tossSideSwappedBtn');
 
-            s1Btn.className = `py-2 px-2 rounded-xl border font-extrabold text-xs truncate transition ${tempTossServeTeam === 1 ? 'bg-brand-600 text-white border-brand-500 shadow-sm' : 'bg-stone-50 text-stone-600 border-stone-200'}`;
-            s2Btn.className = `py-2 px-2 rounded-xl border font-extrabold text-xs truncate transition ${tempTossServeTeam === 2 ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-stone-50 text-stone-600 border-stone-200'}`;
+            s1Btn.className = `py-2 px-2 rounded-xl border font-extrabold text-xs leading-tight transition ${tempTossServeTeam === 1 ? 'bg-brand-600 text-white border-brand-500 shadow-sm' : 'bg-stone-50 text-stone-700 border-stone-200'}`;
+            s2Btn.className = `py-2 px-2 rounded-xl border font-extrabold text-xs leading-tight transition ${tempTossServeTeam === 2 ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-stone-50 text-stone-700 border-stone-200'}`;
 
-            sideNormBtn.className = `py-2 px-2 rounded-xl border font-bold text-[11px] leading-tight transition ${!tempTossSwapped ? 'bg-amber-100 text-amber-900 border-amber-400 shadow-sm' : 'bg-stone-50 text-stone-600 border-stone-200'}`;
-            sideSwapBtn.className = `py-2 px-2 rounded-xl border font-bold text-[11px] leading-tight transition ${tempTossSwapped ? 'bg-amber-100 text-amber-900 border-amber-400 shadow-sm' : 'bg-stone-50 text-stone-600 border-stone-200'}`;
+            sideNormBtn.className = `py-2 px-2 rounded-xl border font-bold text-[10.5px] leading-tight transition ${!tempTossSwapped ? 'bg-amber-100 text-amber-900 border-amber-400 shadow-sm' : 'bg-stone-50 text-stone-600 border-stone-200'}`;
+            sideSwapBtn.className = `py-2 px-2 rounded-xl border font-bold text-[10.5px] leading-tight transition ${tempTossSwapped ? 'bg-amber-100 text-amber-900 border-amber-400 shadow-sm' : 'bg-stone-50 text-stone-600 border-stone-200'}`;
         }
 
         function applyCoinTossSettings() {
@@ -1162,15 +1193,17 @@
 
             const c1 = getClubById(m.club1Id).name;
             const c2 = getClubById(m.club2Id).name;
-            const serverClub = tempTossServeTeam === 1 ? c1 : c2;
-            const sideDesc = tempTossSwapped ? `${c2} Sân Trái - ${c1} Sân Phải` : `${c1} Sân Trái - ${c2} Sân Phải`;
+            const p1Str = getMatchPlayersDisplayString(m, 1);
+            const p2Str = getMatchPlayersDisplayString(m, 2);
+            const serverLabel = tempTossServeTeam === 1 ? `${p1Str} (${c1})` : `${p2Str} (${c2})`;
+            const sideDesc = tempTossSwapped ? `Trái: ${p2Str} - Phải: ${p1Str}` : `Trái: ${p1Str} - Phải: ${p2Str}`;
 
-            recordMatchLog(m, 'COIN_TOSS', `Bốc thăm: ${serverClub} giao bóng trước (${sideDesc})`);
+            recordMatchLog(m, 'COIN_TOSS', `Bốc thăm: ${serverLabel} giao bóng trước (${sideDesc})`);
 
             saveState();
             closeCoinTossModal(true);
             renderRefereeApp();
-            showToast(`✅ ${serverClub} giao bóng trước (${tempTossSwapped ? 'Đổi bên sân' : 'Giữ bên sân'})!`);
+            showToast(`✅ ${serverLabel} giao bóng trước!`);
         }
 
         // =========================================================================
@@ -1718,7 +1751,6 @@
             forceCloseSetupModal();
             renderRefereeApp();
 
-            // Sau khi chọn VĐV xong, vào trận đấu mới bắt buộc bốc thăm chọn sân, bóng
             const { match: curM } = findMatchById(state.activeLiveMatchId);
             if (curM && isCoinTossRequiredForMatch(curM)) {
                 __lastPromptedTossMatchId = curM.id;
@@ -1754,7 +1786,6 @@
                 return;
             }
 
-            // Bước 2: Sau khi chọn đủ VĐV, vào trận đấu bắt buộc bốc thăm chọn sân, bóng
             if (isCoinTossRequiredForMatch(m)) {
                 openCoinTossModal(true);
                 return;
@@ -2004,13 +2035,11 @@
             const fullLineup = hasMatchFullLineup(m);
             const needToss = isCoinTossRequiredForMatch(m);
 
-            // Bước 1: Hiển thị banner nhắc chọn đủ VĐV nếu chưa đủ
             const missingLineupBannerEl = document.getElementById('missingLineupBanner');
             if (missingLineupBannerEl) {
                 missingLineupBannerEl.classList.toggle('hidden', isMatchFinished || fullLineup);
             }
 
-            // Bước 2: Chỉ hiển thị banner & tự động bật popup Bốc thăm SAU KHI ĐÃ CHỌN ĐỦ VĐV
             const tossBannerEl = document.getElementById('mandatoryCoinTossBanner');
             if (tossBannerEl) {
                 tossBannerEl.classList.toggle('hidden', !needToss);
