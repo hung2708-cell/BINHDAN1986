@@ -251,13 +251,22 @@
 
     <!-- CỘT PHẢI -->
     <div id="rightLandscapeCol" class="flex-1 min-h-0 flex flex-col justify-between gap-1.5">
-        <!-- BANNER CẢNH BÁO BẮT BUỘC BỐC THĂM TRƯỚC TRẬN -->
+        <!-- BANNER BƯỚC 1: CHƯA CHỌN ĐỦ VĐV -->
+        <div id="missingLineupBanner" class="hidden px-2.5 py-1.5 rounded-xl bg-rose-100 border-2 border-brand-400 text-brand-900 text-[10px] font-extrabold flex items-center justify-between gap-2 shadow-sm shrink-0">
+            <div class="flex items-center gap-1.5 min-w-0">
+                <i class="fa-solid fa-user-plus text-brand-600 text-xs shrink-0"></i>
+                <span class="truncate">Bước 1: Đăng ký đủ VĐV trước khi vào trận!</span>
+            </div>
+            <button type="button" onclick="openMissingLineupStep()" class="px-2.5 py-1 rounded-lg bg-brand-600 text-white font-extrabold text-[10px] shrink-0 shadow-xs">Chọn VĐV</button>
+        </div>
+
+        <!-- BANNER BƯỚC 2: BẮT BUỘC BỐC THĂM CHỌN SÂN & BÓNG KHI VÀO TRẬN -->
         <div id="mandatoryCoinTossBanner" class="hidden px-2.5 py-1.5 rounded-xl bg-amber-100 border-2 border-amber-400 text-amber-950 text-[10px] font-extrabold flex items-center justify-between gap-2 shadow-sm shrink-0">
             <div class="flex items-center gap-1.5 min-w-0">
                 <i class="fa-solid fa-coins text-orange-600 text-xs shrink-0 animate-bounce"></i>
-                <span class="truncate">Bắt buộc bốc thăm chọn Sân & Bóng trước trận!</span>
+                <span class="truncate">Bước 2: Bốc thăm chọn Sân & Bóng cho trận này!</span>
             </div>
-            <button type="button" onclick="openCoinTossModal(true)" class="px-2.5 py-1 rounded-lg bg-brand-600 text-white font-extrabold text-[10px] shrink-0 shadow-xs">Bốc thăm ngay</button>
+            <button type="button" onclick="openCoinTossModal(true)" class="px-2.5 py-1 rounded-lg bg-amber-600 text-white font-extrabold text-[10px] shrink-0 shadow-xs">Bốc thăm</button>
         </div>
 
         <!-- BANNER LUÂN PHIÊN 4 VĐV TRẬN ĐƠN -->
@@ -367,7 +376,7 @@
         </div>
     </div>
 
-    <!-- MODAL BẮT BUỘC BỐC THĂM CHỌN SÂN / CHỌN BÓNG TRƯỚC TRẬN -->
+    <!-- MODAL BẮT BUỘC BỐC THĂM CHỌN SÂN / CHỌN BÓNG KHI VÀO TỪNG TRẬN -->
     <div id="coinTossModal" onclick="if(event.target === this && !isMandatoryCoinTossOpen) closeCoinTossModal()" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-900/65 p-3 backdrop-blur-sm">
         <div class="bg-[#FFFDF9] border-2 border-amber-400 rounded-2xl max-w-sm w-full p-4 space-y-3 shadow-2xl max-h-[92dvh] overflow-y-auto animate-modal-pop">
             <div class="flex justify-between items-center border-b border-amber-200 pb-2">
@@ -878,6 +887,7 @@
             const activeTieMatches = getActiveTieMatchesForCourt(courtName);
             const active = activeTieMatches.find(x => x.status !== 'FINISHED' && x.status !== 'SKIPPED') || activeTieMatches[0];
             if (active) state.activeLiveMatchId = active.id;
+            __lastPromptedTossMatchId = null;
             renderRefereeApp();
         }
 
@@ -981,7 +991,6 @@
             return list;
         }
 
-        // Luôn bám sát đúng sân được giao (currentAssignedCourt), tuyệt đối không tự nhảy sang sân khác
         function getActiveTieMatchesForCourt(courtName) {
             enforceTieClinchRules();
             const courtTies = (state.ties || [])
@@ -1015,11 +1024,33 @@
         }
 
         // =========================================================================
-        // 1. BẮT BUỘC BỐC THĂM CHỌN SÂN / BÓNG TRƯỚC MỖI TRẬN ĐẤU
+        // KIỂM TRA ĐÃ CHỌN ĐỦ VĐV CHO TRẬN ĐẤU CHƯA (BƯỚC 1)
+        // =========================================================================
+        function hasMatchFullLineup(m) {
+            if (!m) return false;
+            const req = getRequiredPlayerCount(m);
+            return (m.team1PlayerIds || []).length >= req && (m.team2PlayerIds || []).length >= req;
+        }
+
+        function openMissingLineupStep() {
+            const { match: m } = findMatchById(state.activeLiveMatchId);
+            if (!m) return;
+            const req = getRequiredPlayerCount(m);
+            if ((m.team1PlayerIds || []).length < req) {
+                openRefereePlayerSetupModal(1);
+            } else {
+                openRefereePlayerSetupModal(2);
+            }
+        }
+
+        // =========================================================================
+        // BẮT BUỘC BỐC THĂM CHỌN SÂN / BÓNG KHI VÀO TỪNG TRẬN (BƯỚC 2 - SAU KHI CHỌN VĐV)
         // =========================================================================
         function isCoinTossRequiredForMatch(m) {
             if (!m) return false;
             if (m.status === 'FINISHED' || m.status === 'SKIPPED') return false;
+            // Chỉ yêu cầu bốc thăm sau khi đã chọn đủ VĐV của trận đấu
+            if (!hasMatchFullLineup(m)) return false;
             const s1 = parseInt(m.score1) || 0;
             const s2 = parseInt(m.score2) || 0;
             if (s1 > 0 || s2 > 0) return false;
@@ -1030,6 +1061,13 @@
             if (!enforceRefereeSecurityLock()) return;
             const { match: m } = findMatchById(state.activeLiveMatchId);
             if (!m) return;
+
+            if (!hasMatchFullLineup(m)) {
+                showToast('⚠️ Vui lòng chọn đủ VĐV cho 2 đội trước khi bốc thăm!');
+                openMissingLineupStep();
+                return;
+            }
+
             if (!m.courtState) syncMatchCourtStateFromLineup(m);
 
             isMandatoryCoinTossOpen = Boolean(mandatory);
@@ -1038,7 +1076,7 @@
             if (closeBtn) closeBtn.classList.toggle('hidden', isMandatoryCoinTossOpen);
             if (subEl) {
                 subEl.textContent = isMandatoryCoinTossOpen
-                    ? '⚠️ Bắt buộc bốc thăm chọn Sân & Bóng trước khi tính điểm!'
+                    ? '⚠️ Bắt buộc bốc thăm chọn Sân & Bóng trước khi bắt đầu trận đấu!'
                     : 'Tung đồng xu hoặc điều chỉnh quyền giao bóng / chọn sân';
             }
 
@@ -1136,7 +1174,7 @@
         }
 
         // =========================================================================
-        // 5. THAY VĐV Y TẾ TRONG TRẬN ĐẤU
+        // THAY VĐV Y TẾ TRONG TRẬN ĐẤU
         // =========================================================================
         function openMedicalSubModal() {
             if (!enforceRefereeSecurityLock()) return;
@@ -1246,7 +1284,6 @@
             if (idx !== -1) curList[idx] = inId;
             m[arrKey] = curList;
 
-            // Cập nhật trực tiếp tên trên sơ đồ 2D tại đúng ô VĐV vừa rời sân
             if (m.courtState) {
                 if (side === 1) {
                     if (m.courtState.t1Right === outPlayer.name) m.courtState.t1Right = inPlayer.name;
@@ -1399,6 +1436,7 @@
                 } else if ((m.team2PlayerIds || []).length < req) {
                     openRefereePlayerSetupModal(2);
                 } else if (isCoinTossRequiredForMatch(m)) {
+                    __lastPromptedTossMatchId = m.id;
                     openCoinTossModal(true);
                 }
             }
@@ -1546,7 +1584,7 @@
                     </div>
                     <button type="button" onclick="finishBothTeamsSetup()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs uppercase shadow-md flex items-center justify-center gap-1.5">
                         <i class="fa-solid fa-check-double"></i>
-                        <span>Hoàn tất Đội hình & Bốc Thăm</span>
+                        <span>Hoàn tất Chọn VĐV & Vào Bốc Thăm</span>
                     </button>
                 </div>
             `;
@@ -1680,8 +1718,10 @@
             forceCloseSetupModal();
             renderRefereeApp();
 
+            // Sau khi chọn VĐV xong, vào trận đấu mới bắt buộc bốc thăm chọn sân, bóng
             const { match: curM } = findMatchById(state.activeLiveMatchId);
             if (curM && isCoinTossRequiredForMatch(curM)) {
+                __lastPromptedTossMatchId = curM.id;
                 openCoinTossModal(true);
             } else {
                 showToast('✅ Đã chốt đủ đội hình thi đấu cả 5 nội dung!');
@@ -1709,12 +1749,12 @@
             const isSingles = (m.catKey === 'DON');
             const req = getRequiredPlayerCount(m);
             if ((m.team1PlayerIds || []).length < req || (m.team2PlayerIds || []).length < req) {
-                showToast(`⚠️ Nội dung này cần chọn đủ ${req} VĐV cho mỗi đội!`);
+                showToast(`⚠️ Bước 1: Cần chọn đủ ${req} VĐV cho mỗi đội trước!`);
                 openRefereePlayerSetupModal((m.team1PlayerIds || []).length < req ? 1 : 2);
                 return;
             }
 
-            // BẮT BUỘC BỐC THĂM CHỌN SÂN / BÓNG TRƯỚC KHI BẤM ĐIỂM ĐẦU TIÊN
+            // Bước 2: Sau khi chọn đủ VĐV, vào trận đấu bắt buộc bốc thăm chọn sân, bóng
             if (isCoinTossRequiredForMatch(m)) {
                 openCoinTossModal(true);
                 return;
@@ -1774,9 +1814,6 @@
             renderRefereeApp();
         }
 
-        // =========================================================================
-        // CHUYỂN NỘI DUNG TRONG CÙNG CẶP ĐẤU TRÊN SÂN HIỆN TẠI (KHÔNG NHẢY SANG SÂN KHÁC)
-        // =========================================================================
         function autoAdvanceToNextMatchOrTie(finishedMatch, winRes = null) {
             const { tie } = findMatchById(finishedMatch.id);
             const tieMatches = tie ? (tie.matches || []) : getActiveTieMatchesForCourt(currentAssignedCourt);
@@ -1787,7 +1824,6 @@
                 recordMatchLog(finishedMatch, 'FINISH', `🏆 KẾT THÚC CẶP ĐẤU trên ${currentAssignedCourt}: ${winnerClubName} thắng ${tieSt.c1Wins}-${tieSt.c2Wins}`);
                 saveState();
                 showToast(`🏆 ${winnerClubName} thắng ${tieSt.c1Wins}-${tieSt.c2Wins}! Đã hoàn thành ${currentAssignedCourt}.`);
-                // Giữ nguyên sân hiện tại, KHÔNG tự nhảy sang sân khác
                 return;
             }
 
@@ -1804,7 +1840,6 @@
             }
         }
 
-        // Kết thúc toàn bộ các nội dung trong cặp đấu trên sân hiện tại
         function finishEntireTieOnCourt() {
             if (!enforceRefereeSecurityLock()) return;
             const activeTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
@@ -1948,8 +1983,7 @@
             if (selector) {
                 selector.innerHTML = activeTieMatches.map(x => {
                     const cleanCat = (x.catLabel || '').replace(/^(Bảng [^•]+•\s*)?(Lượt \d+\s*•\s*)?(Vòng \d+\s*•\s*)?/i, '');
-                    const req = getRequiredPlayerCount(x);
-                    const hasFullLineup = (x.team1PlayerIds || []).length >= req && (x.team2PlayerIds || []).length >= req;
+                    const hasFullLineup = hasMatchFullLineup(x);
                     const statusIcon = x.status === 'FINISHED' ? '✅' : (x.status === 'SKIPPED' ? '⏭️' : (x.status === 'LIVE' ? '🔴' : (hasFullLineup ? '🟢' : '⏳')));
                     const suffix = x.status === 'SKIPPED' ? 'Không đấu' : `${x.score1 || 0}-${x.score2 || 0}`;
                     return `<option value="${x.id}">${statusIcon} ${cleanCat} (${suffix})</option>`;
@@ -1967,16 +2001,23 @@
             if (m.serverNum === undefined) m.serverNum = isSingles ? 1 : 2;
 
             const isMatchFinished = (m.status === 'FINISHED' || m.status === 'SKIPPED');
+            const fullLineup = hasMatchFullLineup(m);
             const needToss = isCoinTossRequiredForMatch(m);
 
-            // Banner bắt buộc bốc thăm trước trận
+            // Bước 1: Hiển thị banner nhắc chọn đủ VĐV nếu chưa đủ
+            const missingLineupBannerEl = document.getElementById('missingLineupBanner');
+            if (missingLineupBannerEl) {
+                missingLineupBannerEl.classList.toggle('hidden', isMatchFinished || fullLineup);
+            }
+
+            // Bước 2: Chỉ hiển thị banner & tự động bật popup Bốc thăm SAU KHI ĐÃ CHỌN ĐỦ VĐV
             const tossBannerEl = document.getElementById('mandatoryCoinTossBanner');
             if (tossBannerEl) {
                 tossBannerEl.classList.toggle('hidden', !needToss);
             }
 
-            // Tự động mở popup bốc thăm 1 lần khi sang trận mới chưa bốc thăm
-            if (needToss && isRefereeAuthorized() && __lastPromptedTossMatchId !== m.id && document.getElementById('refereePlayerSetupModal').classList.contains('hidden')) {
+            const isSetupModalClosed = document.getElementById('refereePlayerSetupModal').classList.contains('hidden');
+            if (needToss && fullLineup && isRefereeAuthorized() && __lastPromptedTossMatchId !== m.id && isSetupModalClosed) {
                 __lastPromptedTossMatchId = m.id;
                 setTimeout(() => openCoinTossModal(true), 120);
             }
@@ -1999,7 +2040,7 @@
 
             const totalScore = (parseInt(m.score1) || 0) + (parseInt(m.score2) || 0);
             const rotBanner = document.getElementById('singlesRotationBanner');
-            if (isSingles && !isMatchFinished && !needToss) {
+            if (isSingles && !isMatchFinished && fullLineup && !needToss) {
                 const rotIdx = (Math.floor(totalScore / 4) % 4) + 1;
                 const nextSwapAt = (Math.floor(totalScore / 4) + 1) * 4;
                 document.getElementById('singlesRotationText').textContent = `VĐV #${rotIdx}/4 đang đánh • Đổi VĐV ở tổng ${nextSwapAt}đ (11đ đổi sân • Chạm 21)`;
@@ -2058,8 +2099,10 @@
                     actionEl.innerHTML = `<div class="col-span-4 ref-score-btn rounded-lg bg-stone-100 border border-stone-200 text-stone-500 font-extrabold text-[11px] flex items-center justify-center">⏭️ Không đấu</div>`;
                 } else if (m.status === 'FINISHED') {
                     actionEl.innerHTML = `<div class="col-span-4 ref-score-btn rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-800 font-extrabold text-xs flex items-center justify-center"><i class="fa-solid fa-lock mr-1"></i> ĐÃ XONG</div>`;
+                } else if (!fullLineup) {
+                    actionEl.innerHTML = `<button type="button" onclick="openMissingLineupStep()" class="col-span-4 ref-score-btn rounded-lg bg-rose-50 border border-brand-300 text-brand-700 font-extrabold text-[11px] flex items-center justify-center gap-1"><i class="fa-solid fa-user-plus"></i> Chọn VĐV</button>`;
                 } else if (needToss) {
-                    actionEl.innerHTML = `<button type="button" onclick="openCoinTossModal(true)" class="col-span-4 ref-score-btn rounded-lg bg-amber-100 border border-amber-400 text-amber-900 font-extrabold text-[11px] flex items-center justify-center gap-1"><i class="fa-solid fa-coins text-orange-600"></i> Bốc thăm trước</button>`;
+                    actionEl.innerHTML = `<button type="button" onclick="openCoinTossModal(true)" class="col-span-4 ref-score-btn rounded-lg bg-amber-100 border border-amber-400 text-amber-900 font-extrabold text-[11px] flex items-center justify-center gap-1"><i class="fa-solid fa-coins text-orange-600"></i> Bốc thăm</button>`;
                 } else if (isServing) {
                     const btnGradient = isT1 ? 'from-brand-600 to-orange-500 text-white' : 'from-emerald-600 to-teal-500 text-white';
                     actionEl.innerHTML = `
