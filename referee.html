@@ -684,11 +684,9 @@
         }
 
         // =========================================================================
-        // GHI ĐỘC LẬP TỪNG SÂN LÊN FIREBASE (PATCH ĐÚNG CẶP ĐẤU CỦA SÂN ĐÓ)
-        // KHÔNG GHI ĐÈ SÂN KHÁC KHI 8 SÂN CÙNG BẤM ĐIỂM ĐỒNG THỜI
+        // GHI TRỰC TIẾP & TỨC THÌ LÊN FIREBASE (KHÔNG DELAY, KHÔNG ĐÈ SÂN KHÁC)
         // =========================================================================
-        let __firebaseSaveTimer = null;
-        function saveState() {
+        async function saveState() {
             if (!isRefereeAuthorized()) return;
             try {
                 __lastLocalMutationAt = Date.now();
@@ -696,89 +694,80 @@
                 enforceTieClinchRules();
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 
-                clearTimeout(__firebaseSaveTimer);
-                __firebaseSaveTimer = setTimeout(async () => {
-                    try {
-                        const activeId = getCourtSelectedMatchId(currentAssignedCourt);
-                        const tieIdx = (state.ties || []).findIndex(t =>
-                            (t.court || t.matches?.[0]?.court || 'Sân 1') === currentAssignedCourt &&
-                            (t.matches || []).some(m => m.id === activeId)
-                        );
+                const dot = document.getElementById('syncStatusDot');
+                if (dot) dot.className = 'w-2 h-2 rounded-full bg-amber-500 animate-ping shrink-0';
 
-                        if (tieIdx !== -1) {
-                            const targetTie = state.ties[tieIdx];
-                            targetTie.__updatedAt = Date.now();
+                const activeId = getCourtSelectedMatchId(currentAssignedCourt);
+                const tieIdx = (state.ties || []).findIndex(t =>
+                    (t.court || t.matches?.[0]?.court || 'Sân 1') === currentAssignedCourt &&
+                    (t.matches || []).some(m => m.id === activeId)
+                );
 
-                            // Gửi PATCH độc lập riêng nhánh của cặp đấu trên sân này & timestamp tổng
-                            const [resTie, resMeta] = await Promise.all([
-                                fetch(`${FIREBASE_DB_URL}/active_tournament/ties/${tieIdx}.json`, {
-                                    method: 'PUT',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify(targetTie)
-                                }),
-                                fetch(FIREBASE_ACTIVE_NODE, {
-                                    method: 'PATCH',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({
-                                        __updatedAt: targetTie.__updatedAt,
-                                        matchLogs: (state.matchLogs || []).slice(0, 150)
-                                    })
-                                })
-                            ]);
+                if (tieIdx !== -1) {
+                    const targetTie = state.ties[tieIdx];
+                    targetTie.__updatedAt = Date.now();
 
-                            const dot = document.getElementById('syncStatusDot');
-                            if (dot) {
-                                dot.className = (resTie.ok && resMeta.ok)
-                                    ? 'w-2 h-2 rounded-full bg-emerald-500 live-dot shrink-0'
-                                    : 'w-2 h-2 rounded-full bg-amber-500 live-dot shrink-0';
-                            }
-                        } else {
-                            // Dự phòng nếu chưa tìm thấy index cặp đấu
-                            const res = await fetch(FIREBASE_ACTIVE_NODE, {
-                                method: 'PATCH',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ __updatedAt: state.__updatedAt, ties: state.ties })
-                            });
-                            const dot = document.getElementById('syncStatusDot');
-                            if (dot) dot.className = res.ok ? 'w-2 h-2 rounded-full bg-emerald-500 live-dot shrink-0' : 'w-2 h-2 rounded-full bg-amber-500 live-dot shrink-0';
-                        }
-                    } catch (err) {
-                        const dot = document.getElementById('syncStatusDot');
-                        if (dot) dot.className = 'w-2 h-2 rounded-full bg-amber-500 live-dot shrink-0';
+                    const [resTie, resMeta] = await Promise.all([
+                        fetch(`${FIREBASE_DB_URL}/active_tournament/ties/${tieIdx}.json`, {
+                            method: 'PUT',
+                            keepalive: true,
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(targetTie)
+                        }),
+                        fetch(FIREBASE_ACTIVE_NODE, {
+                            method: 'PATCH',
+                            keepalive: true,
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                __updatedAt: targetTie.__updatedAt,
+                                matchLogs: (state.matchLogs || []).slice(0, 150)
+                            })
+                        })
+                    ]);
+
+                    if (dot) {
+                        dot.className = (resTie.ok && resMeta.ok)
+                            ? 'w-2 h-2 rounded-full bg-emerald-500 live-dot shrink-0'
+                            : 'w-2 h-2 rounded-full bg-rose-500 shrink-0';
                     }
-                }, 120);
-            } catch (e) {}
+                } else {
+                    const res = await fetch(FIREBASE_ACTIVE_NODE, {
+                        method: 'PATCH',
+                        keepalive: true,
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ __updatedAt: state.__updatedAt, ties: state.ties })
+                    });
+                    if (dot) dot.className = res.ok ? 'w-2 h-2 rounded-full bg-emerald-500 live-dot shrink-0' : 'w-2 h-2 rounded-full bg-rose-500 shrink-0';
+                }
+            } catch (e) {
+                const dot = document.getElementById('syncStatusDot');
+                if (dot) dot.className = 'w-2 h-2 rounded-full bg-rose-500 shrink-0';
+            }
         }
 
         async function connectRealtimeSync() {
             const pullFromFirebase = async (isFirst = false) => {
-                if (!isFirst && Date.now() - __lastLocalMutationAt < 2000) return;
+                if (!isFirst && Date.now() - __lastLocalMutationAt < 2500) return;
                 try {
                     const res = await fetch(FIREBASE_ACTIVE_NODE, { cache: 'no-store' });
                     if (!res.ok) return;
                     const cloudData = await res.json();
                     if (cloudData && cloudData.ties) {
-                        const localTime = state.__updatedAt || 0;
-                        const cloudTime = cloudData.__updatedAt || 0;
+                        const myCourtTiesBackup = (state.ties || []).filter(t => (t.court || t.matches?.[0]?.court || 'Sân 1') === currentAssignedCourt);
+                        const isRecentLocal = !isFirst && (Date.now() - __lastLocalMutationAt < 5000) && myCourtTiesBackup.length > 0;
 
-                        if (cloudTime > localTime || isFirst) {
-                            // Giữ nguyên dữ liệu cục bộ của sân đang chấm nếu vừa mới thao tác, chỉ cập nhật các sân khác & danh sách CLB
-                            const myCourtTiesBackup = (state.ties || []).filter(t => (t.court || t.matches?.[0]?.court || 'Sân 1') === currentAssignedCourt);
-                            const isRecentLocal = (Date.now() - __lastLocalMutationAt < 4000) && myCourtTiesBackup.length > 0;
+                        state = cloudData;
+                        if (!Array.isArray(state.matchLogs)) state.matchLogs = [];
 
-                            state = cloudData;
-                            if (!Array.isArray(state.matchLogs)) state.matchLogs = [];
-
-                            if (isRecentLocal) {
-                                state.ties = (state.ties || []).map(ct => {
-                                    const localMatchTie = myCourtTiesBackup.find(lt => lt.id === ct.id);
-                                    return localMatchTie ? localMatchTie : ct;
-                                });
-                            }
-
-                            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-                            renderRefereeApp();
+                        if (isRecentLocal) {
+                            state.ties = (state.ties || []).map(ct => {
+                                const localMatchTie = myCourtTiesBackup.find(lt => lt.id === ct.id);
+                                return localMatchTie ? localMatchTie : ct;
+                            });
                         }
+
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                        renderRefereeApp();
                     }
                     const dot = document.getElementById('syncStatusDot');
                     if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-500 live-dot shrink-0';
@@ -1013,7 +1002,6 @@
                 localStorage.setItem('REF_STANDALONE_COURT', currentAssignedCourt);
             }
 
-            // Nếu trọng tài vào từ link cố định ?court=Sân X thì khóa cứng sân đó (chỉ Admin mới đổi được)
             const isLockedToUrlCourt = Boolean(lockedUrlCourt) && !isAdminRole();
             courtSel.disabled = isLockedToUrlCourt;
             courtSel.innerHTML = (isLockedToUrlCourt ? [currentAssignedCourt] : activeCourts).map(c => `<option value="${c}">${c}</option>`).join('');
@@ -1081,9 +1069,6 @@
             return list;
         }
 
-        // =========================================================================
-        // TRỌNG TÀI SÂN NÀO SÂN ĐẤY: CHỈ LẤY CẶP ĐẤU CỦA ĐÚNG SÂN NÀY
-        // =========================================================================
         function getActiveTieMatchesForCourt(courtName) {
             enforceTieClinchRules();
             const courtTies = (state.ties || [])
@@ -1149,9 +1134,6 @@
             return names.length > 0 ? names.join(' / ') : 'Chưa chọn VĐV';
         }
 
-        // =========================================================================
-        // BẮT BUỘC BỐC THĂM CHỌN SÂN / BÓNG KHI VÀO TỪNG TRẬN
-        // =========================================================================
         function isCoinTossRequiredForMatch(m) {
             if (!m) return false;
             if (m.status === 'FINISHED' || m.status === 'SKIPPED') return false;
@@ -1298,9 +1280,6 @@
             showToast(`✅ ${serverLabel} giao bóng trước!`);
         }
 
-        // =========================================================================
-        // THAY VĐV Y TẾ TRONG TRẬN ĐẤU
-        // =========================================================================
         function openMedicalSubModal() {
             if (!enforceRefereeSecurityLock()) return;
             const activeId = getCourtSelectedMatchId(currentAssignedCourt);
@@ -1937,7 +1916,6 @@
             if (res.isWon) {
                 m.status = 'FINISHED';
                 recordMatchLog(m, 'FINISH', `🏁 Kết thúc nội dung (${res.winnerScore}-${res.loserScore}) - Thắng: ${scorerClub}`);
-                saveState();
                 onMatchOrTieFinishedStayOnCourt(m, res);
             } else {
                 saveState();
@@ -1945,9 +1923,6 @@
             renderRefereeApp();
         }
 
-        // =========================================================================
-        // KẾT THÚC TRẬN ĐẤU GIỮ NGUYÊN TẠI TRẬN ĐÓ & SÂN ĐÓ (KHÔNG TỰ NHẢY)
-        // =========================================================================
         function onMatchOrTieFinishedStayOnCourt(finishedMatch, winRes = null) {
             const { tie } = findMatchById(finishedMatch.id);
             const tieMatches = tie ? (tie.matches || []) : getActiveTieMatchesForCourt(currentAssignedCourt);
@@ -1959,13 +1934,13 @@
                 const winnerClubName = getClubById(tieSt.winnerSide === 1 ? finishedMatch.club1Id : finishedMatch.club2Id).name;
                 recordMatchLog(finishedMatch, 'FINISH', `🏆 KẾT THÚC CẶP ĐẤU trên ${currentAssignedCourt}: ${winnerClubName} thắng ${tieSt.c1Wins}-${tieSt.c2Wins}`);
                 saveState();
-                showToast(`🏆 ${winnerClubName} thắng ${tieSt.c1Wins}-${tieSt.c2Wins}! Đã chốt kết quả trên ${currentAssignedCourt}.`);
+                showToast(`🏆 ${winnerClubName} thắng ${tieSt.c1Wins}-${tieSt.c2Wins}! Đã gửi tỷ số lên bàn tổng.`);
             } else {
                 saveState();
                 if (winRes) {
-                    showToast(`✅ Đã chốt trận (${winRes.winnerScore}-${winRes.loserScore})! Chọn nội dung tiếp theo ở danh sách trên khi sẵn sàng.`);
+                    showToast(`✅ Đã chốt trận (${winRes.winnerScore}-${winRes.loserScore}) & gửi lên bàn tổng!`);
                 } else {
-                    showToast('✅ Đã chốt trận đấu!');
+                    showToast('✅ Đã chốt trận & gửi lên bàn tổng!');
                 }
             }
         }
@@ -1977,7 +1952,8 @@
 
             const tieSt = evaluateTieStatus(activeTieMatches);
             if (tieSt.isCompleted) {
-                showToast(`✅ Cặp đấu trên ${currentAssignedCourt} đã kết thúc trước đó!`);
+                saveState();
+                showToast(`✅ Cặp đấu trên ${currentAssignedCourt} đã kết thúc & đồng bộ lên bàn tổng!`);
                 return;
             }
 
@@ -2001,7 +1977,7 @@
 
             saveState();
             renderRefereeApp();
-            showToast(`🔒 Đã kết thúc cặp đấu ${c1} vs ${c2} trên ${currentAssignedCourt}!`);
+            showToast(`🔒 Đã chốt cặp đấu ${c1} vs ${c2} lên bàn tổng!`);
         }
 
         function triggerSideOutOrNextServer() {
@@ -2050,7 +2026,6 @@
             if (!m || m.status === 'SKIPPED') return;
             m.status = 'FINISHED';
             recordMatchLog(m, 'FINISH', `Chốt kết thúc nội dung (${m.score1 || 0}-${m.score2 || 0})`);
-            saveState();
             onMatchOrTieFinishedStayOnCourt(m);
             renderRefereeApp();
         }
