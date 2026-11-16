@@ -252,7 +252,7 @@
             <button type="button" onclick="openCoinTossModal(true)" class="px-2.5 py-1 rounded-lg bg-amber-600 text-white font-extrabold text-[10px] shrink-0 shadow-xs">Bốc thăm</button>
         </div>
 
-        <div id="singlesRotationBanner" class="hidden px-2.5 py-1 rounded-xl bg-amber-100 border border-amber-400 text-amber-950 text-[10px] font-extrabold flex items-center justify-between gap-2 shrink-0">
+        <div id="singlesRotationBanner" class="hidden px-2.5 py-1 rounded-xl bg-amber-100 border border-amber-400 text-amber-950 text-[10px] font-extrabold flex items-center justify-between gap-2 shadow-sm shrink-0">
             <div class="flex items-center gap-1.5 min-w-0">
                 <i class="fa-solid fa-people-arrows text-orange-600 text-xs shrink-0"></i>
                 <span id="singlesRotationText" class="truncate">VĐV #1/4 đang đánh (Đổi sau 4 điểm tổng)</span>
@@ -672,7 +672,7 @@
             }
         }
 
-                async function saveState(explicitTieId = null) {
+        async function saveState(explicitTieId = null) {
             if (!isRefereeAuthorized()) return;
             try {
                 __lastLocalMutationAt = Date.now();
@@ -723,15 +723,9 @@
             }
         }
 
-            } catch (e) {
-                const dot = document.getElementById('syncStatusDot');
-                if (dot) dot.className = 'w-2 h-2 rounded-full bg-rose-500 shrink-0';
-            }
-        }
-
         async function connectRealtimeSync() {
             const pullFromFirebase = async (isFirst = false) => {
-                if (!isFirst && Date.now() - __lastLocalMutationAt < 500) return;
+                if (!isFirst && Date.now() - __lastLocalMutationAt < 2500) return;
                 try {
                     const res = await fetch(FIREBASE_ACTIVE_NODE, { cache: 'no-store' });
                     if (!res.ok) return;
@@ -1928,7 +1922,7 @@
             renderRefereeApp();
         }
 
-                function onMatchOrTieFinishedStayOnCourt(finishedMatch, winRes = null) {
+        function onMatchOrTieFinishedStayOnCourt(finishedMatch, winRes = null) {
             const { tie } = findMatchById(finishedMatch.id);
             const tieMatches = tie ? (tie.matches || []) : getActiveTieMatchesForCourt(currentAssignedCourt);
             enforceTieClinchRules();
@@ -1959,10 +1953,11 @@
             const activeTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
             if (!activeTieMatches.length) return;
 
+            const { tie } = findMatchById(activeTieMatches[0].id);
             const tieSt = evaluateTieStatus(activeTieMatches);
             if (tieSt.isCompleted) {
+                saveState(tie?.id);
                 clearCourtSelectedMatchId(currentAssignedCourt);
-                saveState();
                 showToast(`✅ Cặp đấu trên ${currentAssignedCourt} đã kết thúc & đồng bộ lên bàn tổng!`);
                 return;
             }
@@ -1985,8 +1980,8 @@
             const c2 = getClubById(firstM.club2Id).name;
             recordMatchLog(firstM, 'FINISH', `🔒 Trọng tài kết thúc toàn bộ các nội dung trên ${currentAssignedCourt}: ${c1} (${finalSt.c1Wins}) - (${finalSt.c2Wins}) ${c2}`);
 
+            saveState(tie?.id);
             clearCourtSelectedMatchId(currentAssignedCourt);
-            saveState();
             renderRefereeApp();
             showToast(`🔒 Đã chốt cặp đấu ${c1} vs ${c2} lên bàn tổng!`);
         }
