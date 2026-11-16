@@ -673,87 +673,103 @@
         }
 
         async function saveState(explicitTieId = null) {
-            if (!isRefereeAuthorized()) return;
-            try {
-                __lastLocalMutationAt = Date.now();
-                state.__updatedAt = __lastLocalMutationAt;
-                enforceTieClinchRules();
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    if (!isRefereeAuthorized()) return;
+    try {
+        __lastLocalMutationAt = Date.now();
+        state.__updatedAt = __lastLocalMutationAt;
+        enforceTieClinchRules();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 
-                const dot = document.getElementById('syncStatusDot');
-                if (dot) dot.className = 'w-2 h-2 rounded-full bg-amber-500 animate-ping shrink-0';
+        const dot = document.getElementById('syncStatusDot');
+        if (dot) dot.className = 'w-2 h-2 rounded-full bg-amber-500 animate-ping shrink-0';
 
-                const activeId = getCourtSelectedMatchId(currentAssignedCourt);
-                const tieIdx = (state.ties || []).findIndex(t =>
-                    (explicitTieId && t.id === explicitTieId) ||
-                    ((t.court || t.matches?.[0]?.court || 'Sân 1') === currentAssignedCourt &&
-                    (t.matches || []).some(m => m.id === activeId))
-                );
+        const activeId = getCourtSelectedMatchId(currentAssignedCourt);
+        const tieIdx = (state.ties || []).findIndex(t =>
+            (explicitTieId && t.id === explicitTieId) ||
+            ((t.court || t.matches?.[0]?.court || 'Sân 1') === currentAssignedCourt &&
+            (t.matches || []).some(m => m.id === activeId))
+        );
 
-                if (tieIdx !== -1) {
-                    const targetTie = state.ties[tieIdx];
-                    targetTie.__updatedAt = __lastLocalMutationAt;
+        if (tieIdx !== -1) {
+            const targetTie = state.ties[tieIdx];
+            targetTie.__updatedAt = __lastLocalMutationAt;
 
-                    const resTie = await fetch(`${FIREBASE_DB_URL}/active_tournament/ties/${tieIdx}.json`, {
-                        method: 'PUT',
-                        keepalive: true,
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(targetTie)
-                    });
+            // 1. Chỉ cập nhật đúng nhánh tie của sân này, tránh ghi đè toàn bộ root
+            const resTie = await fetch(`${FIREBASE_DB_URL}/active_tournament/ties/${tieIdx}.json`, {
+                method: 'PATCH',
+                keepalive: true,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: targetTie.id,
+                    status: targetTie.status || 'LIVE',
+                    matches: targetTie.matches,
+                    __updatedAt: targetTie.__updatedAt,
+                    __updatedByCourt: currentAssignedCourt
+                })
+            });
 
-                    fetch(FIREBASE_ACTIVE_NODE, {
-                        method: 'PATCH',
-                        keepalive: true,
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            __updatedAt: targetTie.__updatedAt,
-                            matchLogs: (state.matchLogs || []).slice(0, 100)
-                        })
-                    });
+            // 2. Lưu log riêng theo từng sân để 2 trọng tài không ghi đè log của nhau
+            const safeCourtKey = currentAssignedCourt.replace(/\s+/g, '_');
+            fetch(`${FIREBASE_DB_URL}/court_logs/${safeCourtKey}.json`, {
+                method: 'PUT',
+                keepalive: true,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify((state.matchLogs || []).filter(l => l.court === currentAssignedCourt).slice(0, 80))
+            });
 
-                    if (dot) {
-                        dot.className = resTie.ok
-                            ? 'w-2 h-2 rounded-full bg-emerald-500 live-dot shrink-0'
-                            : 'w-2 h-2 rounded-full bg-rose-500 shrink-0';
-                    }
-                }
-            } catch (e) {
-                const dot = document.getElementById('syncStatusDot');
-                if (dot) dot.className = 'w-2 h-2 rounded-full bg-rose-500 shrink-0';
+            if (dot) {
+                dot.className = resTie.ok
+                    ? 'w-2 h-2 rounded-full bg-emerald-500 live-dot shrink-0'
+                    : 'w-2 h-2 rounded-full bg-rose-500 shrink-0';
             }
         }
+    } catch (e) {
+        const dot = document.getElementById('syncStatusDot');
+        if (dot) dot.className = 'w-2 h-2 rounded-full bg-rose-500 shrink-0';
+    }
+}
 
         async function connectRealtimeSync() {
             const pullFromFirebase = async (isFirst = false) => {
-                if (!isFirst && Date.now() - __lastLocalMutationAt < 2500) return;
-                try {
-                    const res = await fetch(FIREBASE_ACTIVE_NODE, { cache: 'no-store' });
-                    if (!res.ok) return;
-                    const cloudData = await res.json();
-                    if (cloudData && cloudData.ties) {
-                        const myCourtTiesBackup = (state.ties || []).filter(t => (t.court || t.matches?.[0]?.court || 'Sân 1') === currentAssignedCourt);
-                        const isRecentLocal = !isFirst && (Date.now() - __lastLocalMutationAt < 5000) && myCourtTiesBackup.length > 0;
+    if (!isFirst && Date.now() - __lastLocalMutationAt < 2500) return;
+    try {
+        const res = await fetch(FIREBASE_ACTIVE_NODE, { cache: 'no-store' });
+        if (!res.ok) return;
+        const cloudData = await res.json();
+        if (cloudData && cloudData.ties) {
+            // Lưu lại toàn bộ các cặp đấu thuộc Sân của trọng tài này đang quản lý
+            const myCourtTiesBackup = (state.ties || []).filter(
+                t => (t.court || t.matches?.[0]?.court || 'Sân 1') === currentAssignedCourt
+            );
 
-                        state = cloudData;
-                        if (!Array.isArray(state.matchLogs)) state.matchLogs = [];
+            state = cloudData;
+            if (!Array.isArray(state.matchLogs)) state.matchLogs = [];
 
-                        if (isRecentLocal) {
-                            state.ties = (state.ties || []).map(ct => {
-                                const localMatchTie = myCourtTiesBackup.find(lt => lt.id === ct.id);
-                                return localMatchTie ? localMatchTie : ct;
-                            });
-                        }
-
-                        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-                        renderRefereeApp();
+            // Nếu không phải lần tải đầu tiên và máy trọng tài đã có dữ liệu của sân mình,
+            // chỉ lấy danh sách CLB/cấu trúc mới từ cloud, giữ nguyên điểm số sân mình đang bấm
+            if (!isFirst && myCourtTiesBackup.length > 0) {
+                state.ties = (state.ties || []).map(ct => {
+                    const isMyCourt = (ct.court || ct.matches?.[0]?.court || 'Sân 1') === currentAssignedCourt;
+                    if (!isMyCourt) return ct;
+                    const localMatchTie = myCourtTiesBackup.find(lt => lt.id === ct.id);
+                    // Chỉ nhận dữ liệu từ cloud nếu cloud mới hơn máy trọng tài ít nhất 10 giây (trường hợp Admin sửa từ xa)
+                    if (localMatchTie && (localMatchTie.__updatedAt || 0) >= (ct.__updatedAt || 0) - 10000) {
+                        return localMatchTie;
                     }
-                    const dot = document.getElementById('syncStatusDot');
-                    if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-500 live-dot shrink-0';
-                } catch (e) {
-                    const dot = document.getElementById('syncStatusDot');
-                    if (dot) dot.className = 'w-2 h-2 rounded-full bg-amber-500 live-dot shrink-0';
-                }
-            };
+                    return ct;
+                });
+            }
+
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            renderRefereeApp();
+        }
+        const dot = document.getElementById('syncStatusDot');
+        if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-500 live-dot shrink-0';
+    } catch (e) {
+        const dot = document.getElementById('syncStatusDot');
+        if (dot) dot.className = 'w-2 h-2 rounded-full bg-amber-500 live-dot shrink-0';
+    }
+};
 
             await pullFromFirebase(true);
             setInterval(() => pullFromFirebase(false), 2500);
