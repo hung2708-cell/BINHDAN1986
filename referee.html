@@ -1051,6 +1051,7 @@
             if (courtTies.length > 0) {
                 let targetTie = null;
 
+                // 1. Ưu tiên cao nhất: URL chỉ định chính xác tieId hoặc wave
                 if (requestedUrlTieId) {
                     targetTie = courtTies.find(t => t.id === requestedUrlTieId);
                 }
@@ -1059,6 +1060,12 @@
                     targetTie = courtTies.find(t => (t.wave || t.matches?.[0]?.wave || 1) === requestedUrlWave);
                 }
 
+                // 2. Nếu không ép buộc qua URL -> Ưu tiên cặp đấu đang LIVE trên sân này
+                if (!targetTie) {
+                    targetTie = courtTies.find(t => evaluateTieStatus(t.matches).isLive);
+                }
+
+                // 3. Tiếp theo mới xét đến cặp đấu lưu tạm trong máy (nếu chưa xong)
                 if (!targetTie) {
                     const selectedMatchId = getCourtSelectedMatchId(courtName);
                     if (selectedMatchId) {
@@ -1069,16 +1076,22 @@
                     }
                 }
 
-                if (!targetTie) {
-                    targetTie = courtTies.find(t => evaluateTieStatus(t.matches).isLive);
-                }
-
+                // 4. Cuối cùng lấy cặp chưa đấu gần nhất hoặc cặp cuối cùng
                 if (!targetTie) {
                     targetTie = courtTies.find(t => !evaluateTieStatus(t.matches).isCompleted);
                 }
 
                 if (!targetTie) {
                     targetTie = courtTies[courtTies.length - 1];
+                }
+
+                // Đồng bộ lại trận đang chọn trong localStorage theo đúng targetTie vừa xác định
+                const currentSavedMatchId = getCourtSelectedMatchId(courtName);
+                if (targetTie && !(targetTie.matches || []).some(m => m.id === currentSavedMatchId)) {
+                    const nextUnfinished = (targetTie.matches || []).find(m => m.status !== 'FINISHED' && m.status !== 'SKIPPED') || targetTie.matches[0];
+                    if (nextUnfinished) {
+                        setCourtSelectedMatchId(courtName, nextUnfinished.id);
+                    }
                 }
 
                 return targetTie.matches || [];
@@ -2327,3 +2340,4 @@
     </script>
 </body>
 </html>
+
