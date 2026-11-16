@@ -3820,7 +3820,7 @@
                 initApp(); 
             }
             await pullStateFromFirebase(true);
-            setInterval(() => pullStateFromFirebase(false), 3000);
+            setInterval(() => pullStateFromFirebase(false), 800);
 
             let lastTab = localStorage.getItem('CAY_COI_ACTIVE_TAB') || 'home';
             if ((lastTab === 'admin' || lastTab === 'teams') && !isAdminLoggedIn()) {
