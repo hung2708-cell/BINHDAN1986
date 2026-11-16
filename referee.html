@@ -672,7 +672,7 @@
             }
         }
 
-        async function saveState() {
+                async function saveState(explicitTieId = null) {
             if (!isRefereeAuthorized()) return;
             try {
                 __lastLocalMutationAt = Date.now();
@@ -685,8 +685,9 @@
 
                 const activeId = getCourtSelectedMatchId(currentAssignedCourt);
                 const tieIdx = (state.ties || []).findIndex(t =>
-                    (t.court || t.matches?.[0]?.court || 'Sân 1') === currentAssignedCourt &&
-                    (t.matches || []).some(m => m.id === activeId)
+                    (explicitTieId && t.id === explicitTieId) ||
+                    ((t.court || t.matches?.[0]?.court || 'Sân 1') === currentAssignedCourt &&
+                    (t.matches || []).some(m => m.id === activeId))
                 );
 
                 if (tieIdx !== -1) {
@@ -716,6 +717,12 @@
                             : 'w-2 h-2 rounded-full bg-rose-500 shrink-0';
                     }
                 }
+            } catch (e) {
+                const dot = document.getElementById('syncStatusDot');
+                if (dot) dot.className = 'w-2 h-2 rounded-full bg-rose-500 shrink-0';
+            }
+        }
+
             } catch (e) {
                 const dot = document.getElementById('syncStatusDot');
                 if (dot) dot.className = 'w-2 h-2 rounded-full bg-rose-500 shrink-0';
@@ -1921,7 +1928,7 @@
             renderRefereeApp();
         }
 
-        function onMatchOrTieFinishedStayOnCourt(finishedMatch, winRes = null) {
+                function onMatchOrTieFinishedStayOnCourt(finishedMatch, winRes = null) {
             const { tie } = findMatchById(finishedMatch.id);
             const tieMatches = tie ? (tie.matches || []) : getActiveTieMatchesForCourt(currentAssignedCourt);
             enforceTieClinchRules();
@@ -1930,10 +1937,10 @@
             if (tieSt.isClinched || tieSt.isCompleted) {
                 const winnerClubName = getClubById(tieSt.winnerSide === 1 ? finishedMatch.club1Id : finishedMatch.club2Id).name;
                 recordMatchLog(finishedMatch, 'FINISH', `🏆 TỰ ĐỘNG KẾT THÚC CẶP ĐẤU trên ${currentAssignedCourt}: ${winnerClubName} thắng ${tieSt.c1Wins}-${tieSt.c2Wins}`);
+                saveState(tie?.id);
                 clearCourtSelectedMatchId(currentAssignedCourt);
                 requestedUrlTieId = '';
                 requestedUrlWave = 0;
-                saveState();
                 showToast(`🏆 ${winnerClubName} thắng ${tieSt.c1Wins}-${tieSt.c2Wins}! Đã tự động đẩy kết quả về bàn tổng hợp.`);
             } else {
                 const nextMatch = tieMatches.find(x => x.status !== 'FINISHED' && x.status !== 'SKIPPED');
@@ -1941,7 +1948,7 @@
                     setCourtSelectedMatchId(currentAssignedCourt, nextMatch.id);
                     __lastPromptedTossMatchId = null;
                 }
-                saveState();
+                saveState(tie?.id);
                 const scoreText = winRes ? ` (${winRes.winnerScore}-${winRes.loserScore})` : '';
                 showToast(`✅ Xong trận${scoreText}! Tự động chuyển sang nội dung tiếp theo.`);
             }
