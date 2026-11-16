@@ -733,7 +733,7 @@
 
         async function connectRealtimeSync() {
             const pullFromFirebase = async (isFirst = false) => {
-                if (!isFirst && Date.now() - __lastLocalMutationAt < 50) return;
+                if (!isFirst && Date.now() - __lastLocalMutationAt < 500) return;
                 try {
                     const res = await fetch(FIREBASE_ACTIVE_NODE, { cache: 'no-store' });
                     if (!res.ok) return;
