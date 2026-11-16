@@ -13,6 +13,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- Canvas Confetti cho hiệu ứng pháo giấy chúc mừng nhà vô địch -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- QRious Library để tạo mã QR Code sắc nét & tải ảnh PNG -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -133,7 +135,7 @@
             <div class="flex items-center justify-between h-14 sm:h-16 gap-2">
                 <div class="flex items-center space-x-2.5 cursor-pointer min-w-0 flex-1" onclick="switchTab('home')">
                     <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden bg-gradient-to-tr from-orange-600 via-amber-500 to-brand-600 flex items-center justify-center shadow-sm border border-amber-300 shrink-0">
-                        <img src="logo_tiger_2.jpg" alt="Logo Bính Dần" class="w-full h-full object-cover">
+                        <img src="logo_tiger_2.jpg" alt="Logo Bính Dần" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fa-solid fa-trophy text-white\'></i>'">
                     </div>
                     <div class="min-w-0">
                         <h1 class="font-extrabold text-[13px] min-[375px]:text-[14px] sm:text-base tracking-tight text-stone-900 leading-tight truncate">Pickleball Bính Dần 1986</h1>
@@ -143,6 +145,12 @@
                         </p>
                     </div>
                 </div>
+
+                <!-- NÚT MÃ QR NHANH TRÊN MOBILE -->
+                <button type="button" onclick="openSpectatorQrModal('ALL')" class="lg:hidden shrink-0 px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-xs font-extrabold flex items-center gap-1.5 shadow-2xs">
+                    <i class="fa-solid fa-qrcode text-brand-600"></i>
+                    <span>QR Xem</span>
+                </button>
 
                 <!-- MENU NGANG TRÊN MÁY TÍNH (DESKTOP NAV) -->
                 <nav class="hidden lg:flex items-center space-x-1 shrink-0">
@@ -164,7 +172,10 @@
                     <button id="nav-btn-admin" onclick="switchTab('admin')" data-tab="admin" class="desktop-nav-btn hidden px-3.5 py-2 rounded-xl text-xs font-semibold transition text-amber-700 hover:bg-amber-50">
                         <i class="fa-solid fa-gear mr-1.5"></i>Quản trị
                     </button>
-                    <button id="auth-nav-btn" onclick="openLoginModal()" class="px-3.5 py-2 rounded-xl text-xs font-bold transition bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-300 ml-2">
+                    <button type="button" onclick="openSpectatorQrModal('ALL')" class="px-3.5 py-2 rounded-xl text-xs font-extrabold transition bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 ml-1 flex items-center gap-1.5">
+                        <i class="fa-solid fa-qrcode text-brand-600"></i>QR Khán Giả
+                    </button>
+                    <button id="auth-nav-btn" onclick="openLoginModal()" class="px-3.5 py-2 rounded-xl text-xs font-bold transition bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-300 ml-1">
                         <i class="fa-solid fa-right-to-bracket mr-1.5"></i>Đăng nhập
                     </button>
                 </nav>
@@ -183,18 +194,23 @@
                 <div class="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                     <div class="space-y-1">
                         <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-white/20 text-white backdrop-blur-sm">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse mr-1.5"></span> Lưu trữ đám mây Firebase • Tự động tiến vòng & dồn sân trống
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse mr-1.5"></span> Cập nhật tỷ số trực tiếp • Tự động tiến vòng & dồn sân trống
                         </div>
                         <h2 id="activeTournamentTitleDisplay" class="hero-fluid-title font-extrabold tracking-tight text-white">
                             Trạng Thái Thi Đấu 8 Sân
                         </h2>
                         <p class="text-rose-50 text-[11px] sm:text-xs font-medium opacity-95">
-                            Đội thắng 3 trận chốt cặp ngay • Hoàn thành vòng tự động đẩy đội thắng vào vòng trong.
+                            Đội thắng 3 trận chốt cặp ngay • Quét mã QR để theo dõi tỷ số LIVE trên điện thoại.
                         </p>
                     </div>
-                    <button id="auth-mobile-btn" onclick="openLoginModal()" class="lg:hidden w-full sm:w-auto justify-center shrink-0 px-4 py-2.5 rounded-xl bg-white text-brand-700 hover:bg-rose-50 font-extrabold text-xs shadow-sm transition flex items-center gap-2">
-                        <i class="fa-solid fa-user-shield"></i> <span id="auth-mobile-btn-text">Đăng nhập Admin / Trọng tài</span>
-                    </button>
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto shrink-0">
+                        <button type="button" onclick="openSpectatorQrModal('ALL')" class="justify-center px-4 py-2.5 rounded-xl bg-amber-300 text-stone-950 hover:bg-amber-200 font-black text-xs shadow-sm transition flex items-center gap-2">
+                            <i class="fa-solid fa-qrcode text-sm"></i> <span>Mã QR Khán Giả</span>
+                        </button>
+                        <button id="auth-mobile-btn" onclick="openLoginModal()" class="lg:hidden justify-center px-4 py-2.5 rounded-xl bg-white text-brand-700 hover:bg-rose-50 font-extrabold text-xs shadow-sm transition flex items-center gap-2">
+                            <i class="fa-solid fa-user-shield"></i> <span id="auth-mobile-btn-text">Đăng nhập Admin / Trọng tài</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -222,7 +238,7 @@
                     <h3 class="text-sm sm:text-base font-extrabold text-stone-900 flex items-center">
                         <i class="fa-solid fa-border-all text-brand-600 mr-2"></i> Danh sách Sân đấu (1 - 8)
                     </h3>
-                    <span class="text-[10px] sm:text-xs text-stone-500 font-semibold">Tự động chuyển tiếp & khóa lượt đã xong</span>
+                    <span class="text-[10px] sm:text-xs text-stone-500 font-semibold">Bấm biểu tượng <i class="fa-solid fa-qrcode text-brand-600"></i> trên sân để lấy QR riêng</span>
                 </div>
                 <div id="overview-courts-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4"></div>
             </div>
@@ -236,7 +252,12 @@
                         <h2 class="text-base sm:text-lg font-extrabold text-stone-900">Lịch thi đấu theo Lượt & Sân</h2>
                         <p class="text-[11px] sm:text-xs text-stone-500">Bao gồm Vòng Bảng & các vòng Knock-out tự động tạo.</p>
                     </div>
-                    <div id="wave-filter-buttons" class="w-full lg:w-auto flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5"></div>
+                    <div class="flex items-center gap-2 w-full lg:w-auto justify-between lg:justify-end">
+                        <div id="wave-filter-buttons" class="flex-1 lg:flex-initial flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5"></div>
+                        <button type="button" onclick="openSpectatorQrModal('MATCHES')" class="shrink-0 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-extrabold flex items-center gap-1.5">
+                            <i class="fa-solid fa-qrcode text-brand-600"></i> QR Lịch Đấu
+                        </button>
+                    </div>
                 </div>
                 <div id="court-filter-buttons" class="w-full flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-2.5 border-t border-stone-100">
                     <button onclick="filterCourt('ALL')" class="court-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold bg-brand-600 text-white transition">Tất cả Sân</button>
@@ -397,6 +418,22 @@
 
         <!-- 6. TAB QUẢN TRỊ & LƯU TRỮ FIREBASE CLOUD (CHỈ ADMIN) -->
         <section id="tab-admin" class="tab-content hidden space-y-4 sm:space-y-6">
+            <!-- KHỐI TẠO MÃ QR CODE CHO KHÁN GIẢ & IN DÁN SÂN -->
+            <div class="bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 border-2 border-amber-300 p-4 sm:p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-xl bg-brand-600 text-white flex items-center justify-center text-xl shrink-0 shadow-sm">
+                        <i class="fa-solid fa-qrcode"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-stone-900 text-sm sm:text-base">Mã QR Code Dành Cho Khán Giả & Dán Sân</h3>
+                        <p class="text-[11px] sm:text-xs text-stone-600">Tạo mã QR toàn giải hoặc QR riêng từng sân (Sân 1 – Sân 8) để tải ảnh về in dán tại sân.</p>
+                    </div>
+                </div>
+                <button type="button" onclick="openSpectatorQrModal('ALL')" class="w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-extrabold shadow-sm flex items-center gap-2 shrink-0">
+                    <i class="fa-solid fa-qrcode"></i> Mở Trình Tạo QR Code
+                </button>
+            </div>
+
             <!-- KHỐI LƯU TRỮ MÙA GIẢI TRÊN FIREBASE CLOUD -->
             <div class="bg-gradient-to-r from-sky-50 via-indigo-50 to-emerald-50 border-2 border-sky-200 p-4 sm:p-5 rounded-2xl space-y-3.5 shadow-2xs">
                 <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-sky-200/80 pb-3">
@@ -500,6 +537,92 @@
         </section>
 
     </main>
+
+    <!-- POPUP MODAL TẠO MÃ QR CODE CHO KHÁN GIẢ -->
+    <div id="spectator-qr-modal" onclick="if(event.target === this) closeSpectatorQrModal()" class="fixed inset-0 z-[75] flex items-center justify-center bg-stone-900/70 backdrop-blur-sm hidden p-3 sm:p-4">
+        <div class="bg-gradient-to-b from-[#FFFDF9] to-[#FFF7ED] border-2 border-amber-300 w-full max-w-md p-4 sm:p-6 rounded-3xl shadow-2xl space-y-4 animate-modal-pop max-h-[92dvh] overflow-y-auto">
+            <div class="flex justify-between items-start gap-2 border-b border-stone-200 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-brand-600 to-orange-500 text-white flex items-center justify-center text-lg shadow-sm shrink-0">
+                        <i class="fa-solid fa-qrcode"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black text-stone-900 text-sm sm:text-base">Mã QR Xem Trực Tiếp Giải Đấu</h3>
+                        <p class="text-[11px] text-stone-500 font-medium">Khán giả quét mã để theo dõi tỷ số & sơ đồ thi đấu</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeSpectatorQrModal()" class="w-8 h-8 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- CHỌN CHẾ ĐỘ QR -->
+            <div class="space-y-1.5">
+                <label class="block text-xs font-extrabold text-stone-700">Chọn trang đích khi khán giả quét mã:</label>
+                <select id="qr-target-select" onchange="generateSpectatorQrCode()" class="w-full bg-white border border-stone-300 rounded-xl px-3 py-2.5 text-xs font-extrabold text-stone-900 focus:outline-none focus:border-brand-500 shadow-2xs">
+                    <option value="ALL">🏆 Trang Chủ Toàn Giải (Tổng quan 8 sân)</option>
+                    <option value="MATCHES">📅 Lịch Thi Đấu & Tỷ Số Chi Tiết</option>
+                    <option value="STANDINGS">📊 Bảng Xếp Hạng Vòng Bảng</option>
+                    <option value="BRACKET">🌳 Sơ Đồ Cây Thi Đấu (Knock-out)</option>
+                    <optgroup label="📍 QR Riêng Từng Sân (Dán tại sân)">
+                        <option value="Sân 1">📍 Sân 1 – Xem trực tiếp Sân 1</option>
+                        <option value="Sân 2">📍 Sân 2 – Xem trực tiếp Sân 2</option>
+                        <option value="Sân 3">📍 Sân 3 – Xem trực tiếp Sân 3</option>
+                        <option value="Sân 4">📍 Sân 4 – Xem trực tiếp Sân 4</option>
+                        <option value="Sân 5">📍 Sân 5 – Xem trực tiếp Sân 5</option>
+                        <option value="Sân 6">📍 Sân 6 – Xem trực tiếp Sân 6</option>
+                        <option value="Sân 7">📍 Sân 7 – Xem trực tiếp Sân 7</option>
+                        <option value="Sân 8">📍 Sân 8 – Xem trực tiếp Sân 8</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <!-- KHUNG HIỂN THỊ MÃ QR -->
+            <div class="bg-white border-2 border-dashed border-amber-300 rounded-2xl p-4 flex flex-col items-center justify-center text-center space-y-2.5 shadow-inner">
+                <div id="qr-badge-title" class="px-3 py-1 rounded-full bg-rose-50 text-brand-700 border border-rose-200 text-[11px] font-black uppercase tracking-wide">
+                    Giải Pickleball Bính Dần 1986
+                </div>
+                <div class="p-3 bg-white rounded-2xl border border-stone-200 shadow-sm">
+                    <canvas id="spectator-qr-canvas" class="mx-auto block"></canvas>
+                </div>
+                <p id="qr-helper-caption" class="text-[11px] font-bold text-stone-600">
+                    Đưa camera điện thoại hoặc Zalo vào mã QR để xem ngay
+                </p>
+            </div>
+
+            <!-- CẢNH BÁO NẾU ĐANG MỞ FILE LOCAL -->
+            <div id="qr-local-file-warning" class="hidden bg-amber-100/80 border border-amber-300 rounded-xl p-2.5 text-[11px] text-amber-900 space-y-1">
+                <div class="font-extrabold flex items-center gap-1.5">
+                    <i class="fa-solid fa-triangle-exclamation text-orange-600"></i> Bạn đang mở file trực tiếp từ máy tính (file://)
+                </div>
+                <p class="leading-relaxed">Để khán giả quét được từ điện thoại khác, hãy đưa web lên mạng (GitHub Pages, Vercel, Netlify, Firebase Hosting...) hoặc dán đường link web công khai của bạn vào ô bên dưới:</p>
+            </div>
+
+            <!-- Ô ĐƯỜNG LINK URL (CÓ THỂ TÙY CHỈNH NẾU MUỐN) -->
+            <div class="space-y-1">
+                <div class="flex items-center justify-between">
+                    <label class="text-[11px] font-bold text-stone-500">Đường dẫn liên kết (URL):</label>
+                    <button type="button" onclick="resetQrUrlToCurrent()" class="text-[10px] font-bold text-brand-600 hover:underline">Mặc định trang này</button>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <input type="text" id="qr-url-input" oninput="renderQrFromCustomInput()" class="flex-1 min-w-0 bg-white border border-stone-300 rounded-xl px-3 py-2 text-xs font-mono text-stone-700 focus:outline-none focus:border-brand-500">
+                    <button type="button" onclick="copySpectatorQrLink()" class="px-3 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-300 text-xs font-bold shrink-0" title="Sao chép link">
+                        <i class="fa-solid fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- NÚT HÀNH ĐỘNG -->
+            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-stone-200">
+                <button type="button" onclick="downloadSpectatorQrImage()" class="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold shadow-sm flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-download"></i> Tải Ảnh QR (.PNG)
+                </button>
+                <button type="button" onclick="closeSpectatorQrModal()" class="py-2.5 px-3 rounded-xl bg-stone-800 hover:bg-stone-700 text-white text-xs font-bold flex items-center justify-center">
+                    Đóng
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- POPUP MODAL HÀNH TRÌNH CÁC TRẬN ĐÃ ĐẤU CỦA ĐỘI -->
     <div id="team-journey-modal" onclick="if(event.target === this) closeTeamJourneyModal()" class="fixed inset-0 z-[62] flex items-center justify-center bg-stone-900/65 backdrop-blur-sm hidden p-3 sm:p-4">
@@ -808,6 +931,208 @@
         let __isPushingFirebase = false;
 
         // =========================================================================
+        // TẠO MÃ QR CODE DÀNH CHO KHÁN GIẢ XEM CÁC TRẬN ĐẤU
+        // =========================================================================
+        let __qrInstance = null;
+
+        function getBaseCleanUrl() {
+            try {
+                const url = new URL(window.location.href);
+                url.search = '';
+                url.hash = '';
+                return url.toString();
+            } catch (e) {
+                return window.location.href.split('?')[0].split('#')[0];
+            }
+        }
+
+        function buildSpectatorShareUrl(targetMode = 'ALL') {
+            const baseUrl = getBaseCleanUrl();
+            const urlObj = new URL(baseUrl);
+            if (targetMode === 'MATCHES') {
+                urlObj.searchParams.set('tab', 'matches');
+            } else if (targetMode === 'STANDINGS') {
+                urlObj.searchParams.set('tab', 'standings');
+            } else if (targetMode === 'BRACKET') {
+                urlObj.searchParams.set('tab', 'bracket');
+            } else if (COURTS_LIST.includes(targetMode)) {
+                urlObj.searchParams.set('tab', 'matches');
+                urlObj.searchParams.set('court', targetMode);
+            }
+            return urlObj.toString();
+        }
+
+        function renderQrCanvas(textUrl) {
+            const canvas = document.getElementById('spectator-qr-canvas');
+            if (!canvas || typeof QRious === 'undefined') return;
+            if (!__qrInstance) {
+                __qrInstance = new QRious({
+                    element: canvas,
+                    size: 220,
+                    level: 'M',
+                    background: '#ffffff',
+                    foreground: '#1c1917',
+                    value: textUrl
+                });
+            } else {
+                __qrInstance.value = textUrl;
+            }
+        }
+
+        function openSpectatorQrModal(initialTarget = 'ALL') {
+            const modal = document.getElementById('spectator-qr-modal');
+            const selectEl = document.getElementById('qr-target-select');
+            const warnEl = document.getElementById('qr-local-file-warning');
+            if (!modal || !selectEl) return;
+
+            selectEl.value = initialTarget || 'ALL';
+            if (warnEl) {
+                if (window.location.protocol === 'file:') {
+                    warnEl.classList.remove('hidden');
+                } else {
+                    warnEl.classList.add('hidden');
+                }
+            }
+
+            generateSpectatorQrCode();
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeSpectatorQrModal() {
+            const modal = document.getElementById('spectator-qr-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function generateSpectatorQrCode() {
+            const selectEl = document.getElementById('qr-target-select');
+            const urlInput = document.getElementById('qr-url-input');
+            const badgeTitle = document.getElementById('qr-badge-title');
+            const captionEl = document.getElementById('qr-helper-caption');
+            if (!selectEl || !urlInput) return;
+
+            const mode = selectEl.value;
+            const shareUrl = buildSpectatorShareUrl(mode);
+            urlInput.value = shareUrl;
+
+            const tourName = appState.tournamentName || 'Giải Pickleball Bính Dần 1986';
+            if (COURTS_LIST.includes(mode)) {
+                if (badgeTitle) badgeTitle.textContent = `${tourName} • ${mode.toUpperCase()}`;
+                if (captionEl) captionEl.textContent = `Quét mã để xem tỷ số & lịch đấu tại ${mode}`;
+            } else if (mode === 'MATCHES') {
+                if (badgeTitle) badgeTitle.textContent = `${tourName} • LỊCH THI ĐẤU`;
+                if (captionEl) captionEl.textContent = `Quét mã để xem toàn bộ lịch thi đấu & tỷ số LIVE`;
+            } else if (mode === 'STANDINGS') {
+                if (badgeTitle) badgeTitle.textContent = `${tourName} • BẢNG XẾP HẠNG`;
+                if (captionEl) captionEl.textContent = `Quét mã để xem điểm số & xếp hạng các bảng`;
+            } else if (mode === 'BRACKET') {
+                if (badgeTitle) badgeTitle.textContent = `${tourName} • SƠ ĐỒ THI ĐẤU`;
+                if (captionEl) captionEl.textContent = `Quét mã để xem nhánh đấu Vòng Bảng → Chung Kết`;
+            } else {
+                if (badgeTitle) badgeTitle.textContent = tourName;
+                if (captionEl) captionEl.textContent = `Quét mã để theo dõi trực tiếp 8 sân thi đấu`;
+            }
+
+            renderQrCanvas(shareUrl);
+        }
+
+        function renderQrFromCustomInput() {
+            const urlInput = document.getElementById('qr-url-input');
+            if (!urlInput) return;
+            const val = urlInput.value.trim();
+            if (val) renderQrCanvas(val);
+        }
+
+        function resetQrUrlToCurrent() {
+            generateSpectatorQrCode();
+            showToast('🔄 Đã khôi phục đường dẫn mặc định!');
+        }
+
+        function copySpectatorQrLink() {
+            const urlInput = document.getElementById('qr-url-input');
+            if (!urlInput || !urlInput.value) return;
+            navigator.clipboard?.writeText(urlInput.value).then(() => {
+                showToast('📋 Đã sao chép đường link xem giải đấu!');
+            }).catch(() => {
+                urlInput.select();
+                document.execCommand('copy');
+                showToast('📋 Đã sao chép đường link!');
+            });
+        }
+
+        function downloadSpectatorQrImage() {
+            const srcCanvas = document.getElementById('spectator-qr-canvas');
+            const selectEl = document.getElementById('qr-target-select');
+            if (!srcCanvas) return;
+
+            const mode = selectEl ? selectEl.value : 'ALL';
+            const tourTitle = (appState.tournamentName || 'GIAI PICKLEBALL BINH DAN 1986').toUpperCase();
+            const subTitle = COURTS_LIST.includes(mode)
+                ? `QUÉT MÃ XEM TRỰC TIẾP ${mode.toUpperCase()}`
+                : 'QUÉT MÃ QR ĐỂ XEM TỶ SỐ & LỊCH THI ĐẤU LIVE';
+
+            // Tạo poster QR chất lượng cao để in dán sân
+            const outCanvas = document.createElement('canvas');
+            outCanvas.width = 640;
+            outCanvas.height = 780;
+            const ctx = outCanvas.getContext('2d');
+
+            // Nền kem ấm
+            ctx.fillStyle = '#FFFBF5';
+            ctx.fillRect(0, 0, outCanvas.width, outCanvas.height);
+
+            // Viền đỏ cam nổi bật
+            ctx.strokeStyle = '#e11d48';
+            ctx.lineWidth = 14;
+            ctx.strokeRect(18, 18, outCanvas.width - 36, outCanvas.height - 36);
+
+            // Tiêu đề giải đấu
+            ctx.fillStyle = '#be123c';
+            ctx.font = 'bold 26px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(tourTitle.slice(0, 38), outCanvas.width / 2, 85);
+
+            // Dòng hướng dẫn
+            ctx.fillStyle = '#d97706';
+            ctx.font = 'bold 21px sans-serif';
+            ctx.fillText(subTitle, outCanvas.width / 2, 128);
+
+            // Khung trắng chứa QR
+            const qrBoxSize = 440;
+            const qrX = (outCanvas.width - qrBoxSize) / 2;
+            const qrY = 165;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(qrX, qrY, qrBoxSize, qrBoxSize);
+            ctx.strokeStyle = '#e7e5e4';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(qrX, qrY, qrBoxSize, qrBoxSize);
+
+            // Vẽ mã QR vào giữa
+            ctx.drawImage(srcCanvas, qrX + 25, qrY + 25, qrBoxSize - 50, qrBoxSize - 50);
+
+            // Chân trang
+            ctx.fillStyle = '#292524';
+            ctx.font = 'bold 22px sans-serif';
+            ctx.fillText('MỞ CAMERA ĐIỆN THOẠI HOẶC ZALO ĐỂ QUÉT', outCanvas.width / 2, 665);
+
+            ctx.fillStyle = '#78716c';
+            ctx.font = '18px sans-serif';
+            ctx.fillText('Cập nhật tỷ số trực tiếp • Bảng xếp hạng • Sơ đồ thi đấu', outCanvas.width / 2, 705);
+
+            const link = document.createElement('a');
+            const safeSuffix = COURTS_LIST.includes(mode) ? mode.replace(/\s+/g, '_') : 'Toan_Giai';
+            link.download = `QR_Khan_Gia_Pickleball_${safeSuffix}.png`;
+            link.href = outCanvas.toDataURL('image/png');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            showToast('📥 Đã tải ảnh mã QR chất lượng cao về máy!');
+        }
+
+        // =========================================================================
         // ĐỒNG BỘ & LƯU TRỮ FIREBASE CLOUD
         // =========================================================================
         const DEFAULT_SLOGAN = "Bản Lĩnh Mãnh Hổ – Chinh Phục Mọi Đỉnh Cao.";
@@ -1040,6 +1365,9 @@
             const standingsToolbar = document.getElementById('standings-toolbar-actions');
             if (standingsToolbar) {
                 standingsToolbar.innerHTML = `
+                    <button type="button" onclick="openSpectatorQrModal('STANDINGS')" class="px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-extrabold text-xs transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-qrcode text-brand-600"></i> QR BXH
+                    </button>
                     ${isAdmin ? `
                         <button onclick="exportResultToExcel()" class="flex-1 sm:flex-initial justify-center px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold text-xs transition flex items-center">
                             <i class="fa-solid fa-file-excel mr-1.5"></i> Xuất Excel
@@ -1136,7 +1464,6 @@
             __pendingLoginTargetTieId = tieId || '';
             __pendingLoginTargetWave = waveNum || '';
 
-            // Nếu đã xác thực Trọng tài trong phiên hiện tại thì mở thẳng luôn đúng lượt đó
             const refAuth = sessionStorage.getItem('PICKLEBALL_REFEREE_UNLOCKED') === '1' || localStorage.getItem('PICKLEBALL_REFEREE_UNLOCKED') === '1';
             if (refAuth || getCurrentUserRole() === 'referee') {
                 window.location.href = buildRefereeUrl(courtName, tieId, waveNum);
@@ -1437,66 +1764,6 @@
             });
 
             return changed;
-        }
-
-        function rebalanceEmptyCourts() {
-            const ties = appState.ties || [];
-            if (!ties.length) return false;
-
-            const activeBusyCourts = new Set();
-            const busyClubIds = new Set();
-
-            ties.forEach(t => {
-                const st = evaluateTieStatus(t.matches);
-                if (st.isLive) {
-                    activeBusyCourts.add(t.court);
-                    busyClubIds.add(t.club1Id);
-                    busyClubIds.add(t.club2Id);
-                }
-            });
-
-            const freeCourts = COURTS_LIST.filter(c => !activeBusyCourts.has(c));
-            if (freeCourts.length === 0) return false;
-
-            const upcomingTies = ties
-                .filter(t => {
-                    const st = evaluateTieStatus(t.matches);
-                    return !st.isCompleted && !st.isLive;
-                })
-                .sort((a, b) => (a.wave || 1) - (b.wave || 1));
-
-            if (upcomingTies.length === 0) return false;
-
-            let movedCount = 0;
-
-            for (const freeCourt of freeCourts) {
-                const existingReadyOnThisCourt = upcomingTies.find(t =>
-                    t.court === freeCourt && !busyClubIds.has(t.club1Id) && !busyClubIds.has(t.club2Id)
-                );
-                if (existingReadyOnThisCourt) {
-                    busyClubIds.add(existingReadyOnThisCourt.club1Id);
-                    busyClubIds.add(existingReadyOnThisCourt.club2Id);
-                    continue;
-                }
-
-                const nextCandidate = upcomingTies.find(t =>
-                    !busyClubIds.has(t.club1Id) && !busyClubIds.has(t.club2Id)
-                );
-                if (nextCandidate) {
-                    const oldCourt = nextCandidate.court;
-                    if (oldCourt !== freeCourt) {
-                        nextCandidate.court = freeCourt;
-                        (nextCandidate.matches || []).forEach(m => {
-                            m.court = freeCourt;
-                        });
-                        movedCount++;
-                    }
-                    busyClubIds.add(nextCandidate.club1Id);
-                    busyClubIds.add(nextCandidate.club2Id);
-                }
-            }
-
-            return movedCount > 0;
         }
 
         function runFullTournamentAutomation() {
@@ -2272,12 +2539,16 @@
 
             COURTS_LIST.forEach(courtName => {
                 const courtTies = allTies.filter(t => t.court === courtName);
+                const qrBtnHtml = `<button type="button" onclick="openSpectatorQrModal('${courtName}')" class="w-6 h-6 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 flex items-center justify-center shrink-0" title="Tạo mã QR riêng cho ${courtName}"><i class="fa-solid fa-qrcode text-[11px] text-brand-600"></i></button>`;
                 
                 if (courtTies.length === 0) {
                     html += `
                         <div class="bg-white/70 border border-stone-200 rounded-2xl p-3.5 flex flex-col justify-between space-y-2">
-                            <div class="flex items-center justify-between pb-1.5 border-b border-stone-100">
-                                <span class="text-xs font-extrabold text-stone-700"><i class="fa-solid fa-location-dot mr-1 text-orange-500"></i> ${courtName}</span>
+                            <div class="flex items-center justify-between pb-1.5 border-b border-stone-100 gap-1">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-xs font-extrabold text-stone-700"><i class="fa-solid fa-location-dot mr-1 text-orange-500"></i> ${courtName}</span>
+                                    ${qrBtnHtml}
+                                </div>
                                 <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-stone-100 text-stone-400">Trống</span>
                             </div>
                             <div class="py-1 text-center text-xs text-stone-400 italic">Chưa có lịch thi đấu</div>
@@ -2322,7 +2593,10 @@
                     html += `
                         <div class="bg-white border ${tieSt.isLive ? 'border-brand-400 shadow-sm' : 'border-stone-200/90'} rounded-2xl p-3.5 flex flex-col justify-between space-y-2">
                             <div class="flex items-center justify-between pb-1.5 border-b border-stone-100 gap-1">
-                                <span class="text-xs font-extrabold text-stone-800"><i class="fa-solid fa-location-dot mr-1 text-orange-500"></i> ${courtName}</span>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-xs font-extrabold text-stone-800"><i class="fa-solid fa-location-dot mr-1 text-orange-500"></i> ${courtName}</span>
+                                    ${qrBtnHtml}
+                                </div>
                                 ${statusBadge}
                             </div>
                             <div class="min-w-0 space-y-0.5">
@@ -3346,9 +3620,9 @@
 
             if (toolbarEl) {
                 toolbarEl.innerHTML = `
-                    <span class="px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold">
-                        <i class="fa-solid fa-robot mr-1"></i> Tự động tiến vòng
-                    </span>
+                    <button type="button" onclick="openSpectatorQrModal('BRACKET')" class="shrink-0 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-extrabold text-xs flex items-center gap-1.5">
+                        <i class="fa-solid fa-qrcode text-brand-600"></i> QR Sơ Đồ
+                    </button>
                     <button onclick="renderBracket()" class="shrink-0 px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold text-xs"><i class="fa-solid fa-rotate mr-1"></i> Làm mới</button>
                 `;
             }
@@ -3819,17 +4093,28 @@
             } else {
                 initApp(); 
             }
-                        await pullStateFromFirebase(true);
+            await pullStateFromFirebase(true);
             startFirebaseRealtimeStream();
             setInterval(() => pullStateFromFirebase(false), 2000);
 
-            let lastTab = localStorage.getItem('CAY_COI_ACTIVE_TAB') || 'home';
-            if ((lastTab === 'admin' || lastTab === 'teams') && !isAdminLoggedIn()) {
-                lastTab = 'home';
+            // Xử lý tham số URL khi khán giả quét mã QR (VD: ?tab=matches&court=Sân+1)
+            const urlParams = new URLSearchParams(window.location.search);
+            const qrTab = urlParams.get('tab');
+            const qrCourt = urlParams.get('court');
+
+            let targetTab = qrTab || localStorage.getItem('CAY_COI_ACTIVE_TAB') || 'home';
+            if ((targetTab === 'admin' || targetTab === 'teams') && !isAdminLoggedIn()) {
+                targetTab = 'home';
             }
-            switchTab(lastTab);
+            if (qrCourt && COURTS_LIST.includes(qrCourt)) {
+                currentCourtFilter = qrCourt;
+                targetTab = 'matches';
+                renderMatchesSchedule();
+            }
+            switchTab(targetTab);
         }
-                function startFirebaseRealtimeStream() {
+
+        function startFirebaseRealtimeStream() {
             if (!window.EventSource) return;
             try {
                 const evtSource = new EventSource(FIREBASE_ACTIVE_NODE);
