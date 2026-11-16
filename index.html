@@ -1798,8 +1798,9 @@
                 try {
                     appState = JSON.parse(e.newValue);
                     if (runFullTournamentAutomation()) {
-                        saveAppState();
-                    } else {
+    await pushStateToFirebase();
+}
+                    else {
                         initApp();
                     }
                 } catch (err) {}
@@ -3400,10 +3401,13 @@
 
                 return `
                     <div class="bg-white border ${cardBorder} rounded-xl p-2.5 w-52 shadow-2xs space-y-1">
-                        <div class="flex items-center justify-between text-[9px] font-bold text-stone-400 border-b border-stone-100 pb-1">
-                            <span>${tieObj.court} • ${tieObj.knockoutRound ? tieObj.group : `Lượt ${tieObj.wave}`}</span>
-                            <button onclick="openCourtDetailModal('${tieObj.court}', '${tieObj.club1Id}', '${tieObj.club2Id}', '${tieObj.id}')" class="text-brand-600 hover:underline font-extrabold">5 trận</button>
-                        </div>
+                        <div class="flex items-center justify-between text-[9px] font-bold text-stone-400 border-b border-stone-100 pb-1 gap-1">
+            <span class="truncate">${tieObj.court} • ${tieObj.knockoutRound ? tieObj.group : `Lượt ${tieObj.wave}`}</span>
+            <div class="flex items-center gap-1.5 shrink-0">
+                <button onclick="openCourtDetailModal('${tieObj.court}', '${tieObj.club1Id}', '${tieObj.club2Id}', '${tieObj.id}')" class="text-stone-600 hover:underline font-extrabold">5 trận</button>
+                ${renderRefereeAccessAction(tieObj.court, 'inline', st.isCompleted, tieObj.id, tieObj.wave)}
+            </div>
+        </div>
                         <div onclick="openTeamJourneyModal('${tieObj.club1Id}', '${name1.replace(/'/g, "\\'")}')" 
                              class="cursor-pointer flex items-center justify-between gap-2 px-1.5 py-1 rounded-lg transition ${isSel1 ? 'bg-amber-100 font-black' : (w1 ? 'bg-emerald-50/70' : 'hover:bg-stone-50')}">
                             <span class="text-xs truncate ${w1 ? 'font-black text-stone-900' : 'font-semibold text-stone-700'}">${name1} ${w1 ? '🏆' : ''}</span>
