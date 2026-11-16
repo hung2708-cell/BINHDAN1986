@@ -1187,9 +1187,9 @@
                 if (!appState.ties) appState.ties = [];
                 if (!appState.customGroups) appState.customGroups = ['Bảng A', 'Bảng B'];
 
-                if (runFullTournamentAutomation()) {
-                    await pushStateToFirebase();
-                }
+                if (isAdminLoggedIn() && runFullTournamentAutomation()) {
+    await pushStateToFirebase();
+}
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
                 initApp();
                 updateFirebaseStatusUI('OK', DEFAULT_SLOGAN);
@@ -4128,7 +4128,7 @@
                             if (!appState.clubs) appState.clubs = [];
                             if (!appState.ties) appState.ties = [];
                             if (!appState.customGroups) appState.customGroups = ['Bảng A', 'Bảng B'];
-                            if (runFullTournamentAutomation()) pushStateToFirebase();
+                            if (isAdminLoggedIn() && runFullTournamentAutomation()) pushStateToFirebase();
                             localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
                             initApp();
                             updateFirebaseStatusUI('OK', DEFAULT_SLOGAN);
