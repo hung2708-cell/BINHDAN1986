@@ -810,15 +810,19 @@
         // =========================================================================
         // ĐỒNG BỘ & LƯU TRỮ FIREBASE CLOUD
         // =========================================================================
+                const DEFAULT_SLOGAN = "Bản Lĩnh Mãnh Hổ – Chinh Phục Mọi Đỉnh Cao.";
+
         function updateFirebaseStatusUI(status, text) {
             const dot = document.getElementById('firebaseSyncDot');
             const lbl = document.getElementById('firebaseSyncLabel');
             if (dot) {
                 dot.className = `w-2 h-2 rounded-full inline-block shrink-0 ${status === 'OK' ? 'bg-emerald-500' : (status === 'SYNCING' ? 'bg-amber-500 animate-ping' : 'bg-rose-500')}`;
             }
-            if (lbl) lbl.textContent = text;
+            if (lbl) {
+                lbl.textContent = (status === 'OK') ? DEFAULT_SLOGAN : text;
+            }
         }
-
+        
         async function pushStateToFirebase() {
             if (__isPushingFirebase) return;
             __isPushingFirebase = true;
