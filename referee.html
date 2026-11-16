@@ -1426,7 +1426,7 @@
             const p2List = (m.team2PlayerIds || []).map(pid => getPlayerById(m.club2Id, pid)?.name).filter(Boolean);
             const prevSwapped = m.courtState ? Boolean(m.courtState.swappedEnds) : false;
             
-                        if (m.catKey === 'DON') {
+            if (m.catKey === 'DON') {
                 const totalScore = (parseInt(m.score1) || 0) + (parseInt(m.score2) || 0);
                 const rotIdx = Math.floor(totalScore / 4);
                 const activeP1 = p1List.length ? p1List[rotIdx % p1List.length] : c1.name;
@@ -1437,7 +1437,6 @@
                 m.courtState = { swappedEnds: prevSwapped, t1Right: activeP1, t2Right: activeP2 };
                 return;
             }
-
 
             m.team1Name = p1List.length ? p1List.join(' / ') : c1.name;
             m.team2Name = p2List.length ? p2List.join(' / ') : c2.name;
@@ -1903,7 +1902,7 @@
                 showToast(`🔄 Chạm ${switchScoreThreshold} điểm: Hai đội đổi sân!`);
             }
 
-                        if (isSingles) {
+            if (isSingles) {
                 syncMatchCourtStateFromLineup(m, false);
                 if (delta > 0 && currentTotalScore > 0 && maxTeamScore < target) {
                     const p1List = (m.team1PlayerIds || []).map(pid => getPlayerById(m.club1Id, pid)?.name).filter(Boolean);
@@ -2166,9 +2165,25 @@
             const totalScore = (parseInt(m.score1) || 0) + (parseInt(m.score2) || 0);
             const rotBanner = document.getElementById('singlesRotationBanner');
             if (isSingles && !isMatchFinished && fullLineup && !needToss) {
-                const rotIdx = (Math.floor(totalScore / 4) % 4) + 1;
-                const nextSwapAt = (Math.floor(totalScore / 4) + 1) * 4;
-                document.getElementById('singlesRotationText').textContent = `VĐV #${rotIdx}/4 đang đánh • Đổi VĐV ở tổng ${nextSwapAt}đ (11đ đổi sân • Chạm 21)`;
+                const p1List = (m.team1PlayerIds || []).map(pid => getPlayerById(m.club1Id, pid)?.name).filter(Boolean);
+                const p2List = (m.team2PlayerIds || []).map(pid => getPlayerById(m.club2Id, pid)?.name).filter(Boolean);
+                const curIdx = Math.floor(totalScore / 4);
+                const nextIdx = curIdx + 1;
+                const nextSwapAt = nextIdx * 4;
+
+                const curP1 = p1List.length ? p1List[curIdx % p1List.length] : cl1;
+                const curP2 = p2List.length ? p2List[curIdx % p2List.length] : cl2;
+                const nextP1 = p1List.length ? p1List[nextIdx % p1List.length] : cl1;
+                const nextP2 = p2List.length ? p2List[nextIdx % p2List.length] : cl2;
+
+                const isAboutToSwap = (totalScore % 4 === 3);
+                rotBanner.className = isAboutToSwap
+                    ? 'px-2.5 py-1 rounded-xl bg-rose-100 border-2 border-brand-500 text-brand-950 text-[10px] font-extrabold flex items-center justify-between gap-2 shadow-sm shrink-0 animate-pulse'
+                    : 'px-2.5 py-1 rounded-xl bg-amber-100 border border-amber-400 text-amber-950 text-[10px] font-extrabold flex items-center justify-between gap-2 shadow-sm shrink-0';
+
+                document.getElementById('singlesRotationText').textContent = isAboutToSwap
+                    ? `⚠️ Sắp đổi (tổng ${nextSwapAt}đ): Chuẩn bị ${nextP1} & ${nextP2}!`
+                    : `Đánh: ${curP1} vs ${curP2} • Chuẩn bị (${nextSwapAt}đ): ${nextP1} & ${nextP2}`;
                 rotBanner.classList.remove('hidden');
             } else {
                 rotBanner.classList.add('hidden');
@@ -2347,3 +2362,4 @@
     </script>
 </body>
 </html>
+
