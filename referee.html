@@ -1903,12 +1903,21 @@
                 showToast(`🔄 Chạm ${switchScoreThreshold} điểm: Hai đội đổi sân!`);
             }
 
-            if (isSingles) {
+                        if (isSingles) {
                 syncMatchCourtStateFromLineup(m, false);
-                if (delta > 0 && currentTotalScore > 0 && currentTotalScore % 4 === 0 && maxTeamScore < target) {
-                    const nextSlot = (Math.floor(currentTotalScore / 4) % 4) + 1;
-                    recordMatchLog(m, 'SERVE_CHANGE', `Tổng điểm ${currentTotalScore}: Luân phiên sang VĐV số #${nextSlot}/4`);
-                    showToast(`🔁 Tổng điểm ${currentTotalScore}: Đổi sang VĐV số #${nextSlot}/4!`);
+                if (delta > 0 && currentTotalScore > 0 && maxTeamScore < target) {
+                    const p1List = (m.team1PlayerIds || []).map(pid => getPlayerById(m.club1Id, pid)?.name).filter(Boolean);
+                    const p2List = (m.team2PlayerIds || []).map(pid => getPlayerById(m.club2Id, pid)?.name).filter(Boolean);
+                    const nextSlotIdx = Math.floor(currentTotalScore / 4) + (currentTotalScore % 4 === 0 ? 0 : 1);
+                    const nextP1 = p1List.length ? p1List[nextSlotIdx % p1List.length] : getClubById(m.club1Id).name;
+                    const nextP2 = p2List.length ? p2List[nextSlotIdx % p2List.length] : getClubById(m.club2Id).name;
+
+                    if (currentTotalScore % 4 === 0) {
+                        recordMatchLog(m, 'SERVE_CHANGE', `Tổng điểm ${currentTotalScore}: Đổi VĐV sang ${nextP1} & ${nextP2}`);
+                        showToast(`🔁 Tổng ${currentTotalScore}đ: Đổi VĐV ➔ ${nextP1} vs ${nextP2}!`);
+                    } else if (currentTotalScore % 4 === 3) {
+                        showToast(`⏳ Sắp đổi VĐV (tổng ${currentTotalScore + 1}đ): Chuẩn bị ${nextP1} & ${nextP2}!`);
+                    }
                 }
             }
 
