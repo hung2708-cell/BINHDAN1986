@@ -691,39 +691,30 @@
 
                 if (tieIdx !== -1) {
                     const targetTie = state.ties[tieIdx];
-                    targetTie.__updatedAt = Date.now();
+                    targetTie.__updatedAt = __lastLocalMutationAt;
 
-                    const [resTie, resMeta] = await Promise.all([
-                        fetch(`${FIREBASE_DB_URL}/active_tournament/ties/${tieIdx}.json`, {
-                            method: 'PUT',
-                            keepalive: true,
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(targetTie)
-                        }),
-                        fetch(FIREBASE_ACTIVE_NODE, {
-                            method: 'PATCH',
-                            keepalive: true,
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                __updatedAt: targetTie.__updatedAt,
-                                matchLogs: (state.matchLogs || []).slice(0, 150)
-                            })
-                        })
-                    ]);
+                    const resTie = await fetch(`${FIREBASE_DB_URL}/active_tournament/ties/${tieIdx}.json`, {
+                        method: 'PUT',
+                        keepalive: true,
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(targetTie)
+                    });
 
-                    if (dot) {
-                        dot.className = (resTie.ok && resMeta.ok)
-                            ? 'w-2 h-2 rounded-full bg-emerald-500 live-dot shrink-0'
-                            : 'w-2 h-2 rounded-full bg-rose-500 shrink-0';
-                    }
-                } else {
-                    const res = await fetch(FIREBASE_ACTIVE_NODE, {
+                    fetch(FIREBASE_ACTIVE_NODE, {
                         method: 'PATCH',
                         keepalive: true,
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ __updatedAt: state.__updatedAt, ties: state.ties })
+                        body: JSON.stringify({
+                            __updatedAt: targetTie.__updatedAt,
+                            matchLogs: (state.matchLogs || []).slice(0, 100)
+                        })
                     });
-                    if (dot) dot.className = res.ok ? 'w-2 h-2 rounded-full bg-emerald-500 live-dot shrink-0' : 'w-2 h-2 rounded-full bg-rose-500 shrink-0';
+
+                    if (dot) {
+                        dot.className = resTie.ok
+                            ? 'w-2 h-2 rounded-full bg-emerald-500 live-dot shrink-0'
+                            : 'w-2 h-2 rounded-full bg-rose-500 shrink-0';
+                    }
                 }
             } catch (e) {
                 const dot = document.getElementById('syncStatusDot');
