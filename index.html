@@ -222,7 +222,7 @@
                     <h3 class="text-sm sm:text-base font-extrabold text-stone-900 flex items-center">
                         <i class="fa-solid fa-border-all text-brand-600 mr-2"></i> Danh sách Sân đấu (1 - 8)
                     </h3>
-                    <span class="text-[10px] sm:text-xs text-stone-500 font-semibold">Tự động cập nhật & dồn sân trống</span>
+                    <span class="text-[10px] sm:text-xs text-stone-500 font-semibold">Tự động chuyển tiếp & khóa lượt đã xong</span>
                 </div>
                 <div id="overview-courts-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4"></div>
             </div>
@@ -834,7 +834,7 @@
                     body: JSON.stringify(appState)
                 });
                 if (res.ok) {
-                    updateFirebaseStatusUI('OK', 'Đã lưu Firebase Cloud • Bản Lĩnh Mãnh Hổ');
+                    updateFirebaseStatusUI('OK', DEFAULT_SLOGAN);
                 } else {
                     updateFirebaseStatusUI('ERR', 'Lỗi quyền ghi Firebase (Kiểm tra Rules)');
                 }
@@ -867,7 +867,7 @@
                 }
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
                 initApp();
-                updateFirebaseStatusUI('OK', 'Đã kết nối Firebase Cloud');
+                updateFirebaseStatusUI('OK', DEFAULT_SLOGAN);
             } catch (e) {
                 updateFirebaseStatusUI('ERR', 'Mất kết nối mạng (Đang dùng dữ liệu máy)');
             }
@@ -1050,27 +1050,37 @@
             }
         }
 
-        function renderRefereeAccessAction(courtName, variant = 'inline', isLockedCompleted = false) {
+        function buildRefereeUrl(courtName, tieId = '', waveNum = '') {
+            const params = new URLSearchParams();
+            if (courtName) params.set('court', courtName);
+            if (tieId) params.set('tieId', tieId);
+            if (waveNum) params.set('wave', String(waveNum));
+            return `referee.html?${params.toString()}`;
+        }
+
+        function renderRefereeAccessAction(courtName, variant = 'inline', isLockedCompleted = false, tieId = '', waveNum = '') {
             const isAdmin = isAdminLoggedIn();
+            const refUrl = buildRefereeUrl(courtName, tieId, waveNum);
+            const waveBadgeText = waveNum ? ` Lượt ${waveNum}` : '';
 
             if (isAdmin) {
-                const labelSuffix = isLockedCompleted ? ' (Admin)' : '';
+                const labelSuffix = isLockedCompleted ? ' (Admin)' : waveBadgeText;
                 if (variant === 'modal') {
                     return `
-                        <a href="referee.html?court=${encodeURIComponent(courtName)}" target="_blank" class="w-full sm:w-auto justify-center px-3.5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold shadow-sm flex items-center gap-1.5">
+                        <a href="${refUrl}" target="_blank" class="w-full sm:w-auto justify-center px-3.5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold shadow-sm flex items-center gap-1.5">
                             <i class="fa-solid fa-whistle"></i>
-                            <span>Mở App Trọng Tài (${courtName})${labelSuffix}</span>
+                            <span>Mở App Trọng Tài (${courtName}${labelSuffix})</span>
                         </a>
                     `;
                 }
                 if (variant === 'icon-btn') {
                     return `
-                        <a href="referee.html?court=${encodeURIComponent(courtName)}" target="_blank" class="py-2 px-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold flex items-center justify-center shadow-2xs" title="Mở bảng điểm Trọng Tài${labelSuffix}">
+                        <a href="${refUrl}" target="_blank" class="py-2 px-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold flex items-center justify-center shadow-2xs" title="Mở bảng điểm Trọng Tài${labelSuffix}">
                             <i class="fa-solid fa-arrow-up-right-from-square"></i>
                         </a>
                     `;
                 }
-                return `<a href="referee.html?court=${encodeURIComponent(courtName)}" target="_blank" class="font-extrabold text-brand-600 hover:text-brand-700 py-1 px-1.5 rounded-lg shrink-0">Trọng Tài${labelSuffix} <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i></a>`;
+                return `<a href="${refUrl}" target="_blank" class="font-extrabold text-brand-600 hover:text-brand-700 py-1 px-1.5 rounded-lg shrink-0">Trọng Tài${labelSuffix} <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i></a>`;
             }
 
             if (isLockedCompleted) {
@@ -1078,7 +1088,7 @@
                     return `
                         <button type="button" onclick="openAdminOnlyForCompletedMatch()" class="w-full sm:w-auto justify-center px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 border border-stone-300 text-xs font-bold flex items-center gap-1.5">
                             <i class="fa-solid fa-lock text-stone-500"></i>
-                            <span>Đã khóa Trọng Tài (Chỉ Admin)</span>
+                            <span>Đã khóa Trọng Tài${waveBadgeText} (Chỉ Admin)</span>
                         </button>
                     `;
                 }
@@ -1089,29 +1099,29 @@
                         </button>
                     `;
                 }
-                return `<button type="button" onclick="openAdminOnlyForCompletedMatch()" class="font-bold text-stone-400 hover:text-stone-600 py-1 px-1.5 rounded-lg shrink-0 flex items-center gap-1" title="Đã thi đấu xong - Chỉ Admin mới vào được"><i class="fa-solid fa-lock text-[10px]"></i> Đã khóa</button>`;
+                return `<button type="button" onclick="openAdminOnlyForCompletedMatch()" class="font-bold text-stone-400 hover:text-stone-600 py-1 px-1.5 rounded-lg shrink-0 flex items-center gap-1" title="Đã thi đấu xong - Chỉ Admin mới vào được"><i class="fa-solid fa-lock text-[10px]"></i> Khóa${waveBadgeText}</button>`;
             }
 
             if (variant === 'modal') {
                 return `
-                    <button type="button" onclick="openRefereeLoginForCourt('${courtName}')" class="w-full sm:w-auto justify-center px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-amber-50 text-stone-700 border border-stone-300 text-xs font-bold flex items-center gap-1.5">
-                        <i class="fa-solid fa-lock text-amber-600"></i>
-                        <span>Đăng nhập Trọng Tài (${courtName})</span>
+                    <button type="button" onclick="openRefereeLoginForCourt('${courtName}', '${tieId}', '${waveNum}')" class="w-full sm:w-auto justify-center px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-extrabold flex items-center gap-1.5">
+                        <i class="fa-solid fa-whistle text-orange-600"></i>
+                        <span>Trọng Tài (${courtName}${waveBadgeText})</span>
                     </button>
                 `;
             }
             if (variant === 'icon-btn') {
                 return `
-                    <button type="button" onclick="openRefereeLoginForCourt('${courtName}')" class="py-2 px-3 rounded-xl bg-stone-100 hover:bg-amber-50 text-stone-600 border border-stone-300 text-xs font-bold flex items-center justify-center" title="Đăng nhập Trọng Tài">
-                        <i class="fa-solid fa-lock text-amber-600"></i>
+                    <button type="button" onclick="openRefereeLoginForCourt('${courtName}', '${tieId}', '${waveNum}')" class="py-2 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-xs font-bold flex items-center justify-center" title="Mở Trọng Tài${waveBadgeText}">
+                        <i class="fa-solid fa-whistle text-orange-600"></i>
                     </button>
                 `;
             }
-            return `<button type="button" onclick="openRefereeLoginForCourt('${courtName}')" class="font-bold text-stone-400 hover:text-amber-700 py-1 px-1.5 rounded-lg shrink-0 flex items-center gap-1"><i class="fa-solid fa-lock text-[10px] text-amber-600"></i> Trọng Tài</button>`;
+            return `<button type="button" onclick="openRefereeLoginForCourt('${courtName}', '${tieId}', '${waveNum}')" class="font-extrabold text-brand-600 hover:text-brand-700 py-1 px-1.5 rounded-lg shrink-0 flex items-center gap-1"><i class="fa-solid fa-whistle text-[10px] text-orange-600"></i> Trọng Tài${waveBadgeText}</button>`;
         }
 
         function openAdminOnlyForCompletedMatch() {
-            showToast('🔒 Cặp đấu đã hoàn thành! Chỉ Admin mới có quyền truy cập.', true);
+            showToast('🔒 Lượt đấu này đã hoàn thành! Chỉ Admin mới có quyền chỉnh sửa.', true);
             openLoginModal();
             const roleSel = document.getElementById('login-role-select');
             const courtWrapper = document.getElementById('referee-court-wrapper');
@@ -1119,7 +1129,20 @@
             if (courtWrapper) courtWrapper.classList.add('hidden');
         }
 
-        function openRefereeLoginForCourt(courtName) {
+        let __pendingLoginTargetTieId = '';
+        let __pendingLoginTargetWave = '';
+
+        function openRefereeLoginForCourt(courtName, tieId = '', waveNum = '') {
+            __pendingLoginTargetTieId = tieId || '';
+            __pendingLoginTargetWave = waveNum || '';
+
+            // Nếu đã xác thực Trọng tài trong phiên hiện tại thì mở thẳng luôn đúng lượt đó
+            const refAuth = sessionStorage.getItem('PICKLEBALL_REFEREE_UNLOCKED') === '1' || localStorage.getItem('PICKLEBALL_REFEREE_UNLOCKED') === '1';
+            if (refAuth || getCurrentUserRole() === 'referee') {
+                window.location.href = buildRefereeUrl(courtName, tieId, waveNum);
+                return;
+            }
+
             openLoginModal();
             const roleSel = document.getElementById('login-role-select');
             const courtWrapper = document.getElementById('referee-court-wrapper');
@@ -1133,6 +1156,7 @@
             if (isAdminLoggedIn()) {
                 localStorage.setItem('PICKLEBALL_USER_ROLE', 'guest');
                 localStorage.removeItem('PICKLEBALL_REFEREE_UNLOCKED');
+                sessionStorage.removeItem('PICKLEBALL_REFEREE_UNLOCKED');
                 showToast('🔒 Đã đăng xuất khỏi hệ thống quản trị!');
                 applyRoleUI();
                 const curTab = localStorage.getItem('CAY_COI_ACTIVE_TAB') || 'home';
@@ -1227,6 +1251,7 @@
                 if (pwd === ADMIN_PASSWORD) {
                     localStorage.setItem('PICKLEBALL_USER_ROLE', 'admin');
                     localStorage.setItem('PICKLEBALL_REFEREE_UNLOCKED', '1');
+                    sessionStorage.setItem('PICKLEBALL_REFEREE_UNLOCKED', '1');
                     closeLoginModal();
                     applyRoleUI();
                     initApp();
@@ -1240,15 +1265,16 @@
                 const hasUnfinished = courtTies.some(t => !evaluateTieStatus(t.matches).isCompleted);
 
                 if (courtTies.length > 0 && !hasUnfinished && pwd !== ADMIN_PASSWORD) {
-                    triggerLoginErrorShake(`${court} đã đấu xong! Chỉ Admin mới vào được.`);
+                    triggerLoginErrorShake(`${court} đã đấu xong tất cả các lượt! Chỉ Admin mới vào được.`);
                     return;
                 }
 
                 if (pwd === REFEREE_PASSWORD || pwd === ADMIN_PASSWORD) {
                     localStorage.setItem('PICKLEBALL_USER_ROLE', pwd === ADMIN_PASSWORD ? 'admin' : 'referee');
                     localStorage.setItem('PICKLEBALL_REFEREE_UNLOCKED', '1');
+                    sessionStorage.setItem('PICKLEBALL_REFEREE_UNLOCKED', '1');
                     closeLoginModal();
-                    window.location.href = `referee.html?court=${encodeURIComponent(court)}`;
+                    window.location.href = buildRefereeUrl(court, __pendingLoginTargetTieId, __pendingLoginTargetWave);
                 } else {
                     triggerLoginErrorShake('Sai mật khẩu Trọng tài!');
                 }
@@ -1413,9 +1439,6 @@
             return changed;
         }
 
-        // =========================================================================
-        // 2. TỰ ĐỘNG DỒN CÁC TRẬN TIẾP THEO VÀO SÂN TRỐNG ĐỂ KHÔNG BỊ THỜI GIAN CHỜ
-        // =========================================================================
         function rebalanceEmptyCourts() {
             const ties = appState.ties || [];
             if (!ties.length) return false;
@@ -2259,7 +2282,7 @@
                             </div>
                             <div class="py-1 text-center text-xs text-stone-400 italic">Chưa có lịch thi đấu</div>
                             <div class="pt-1.5 border-t border-stone-100 flex justify-end text-[11px]">
-                                ${renderRefereeAccessAction(courtName, 'inline', false)}
+                                ${renderRefereeAccessAction(courtName, 'inline', false, '', '')}
                             </div>
                         </div>
                     `;
@@ -2278,7 +2301,7 @@
                         lastFinishedHtml = `
                             <div onclick="openCourtDetailModal('${courtName}', '${lastFinishedTie.club1Id}', '${lastFinishedTie.club2Id}', '${lastFinishedTie.id}')" class="cursor-pointer mt-1.5 px-2 py-1 rounded-lg bg-emerald-50/90 hover:bg-emerald-100 border border-emerald-200 flex items-center justify-between text-[10px] text-emerald-800">
                                 <span class="truncate font-bold">✅ Lượt ${lastFinishedTie.wave}: ${getClubName(lastFinishedTie.club1Id)} (${lSt.c1Wins}-${lSt.c2Wins}) ${getClubName(lastFinishedTie.club2Id)}</span>
-                                <span class="underline font-extrabold shrink-0 ml-1">Xem</span>
+                                <span class="underline font-extrabold shrink-0 ml-1 flex items-center gap-0.5"><i class="fa-solid fa-lock text-[8px]"></i> Xem</span>
                             </div>
                         `;
                     }
@@ -2289,9 +2312,9 @@
 
                     let statusBadge = '';
                     if (tieSt.isCompleted) {
-                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-700">Xong (${tieSt.c1Wins}-${tieSt.c2Wins})</span>`;
+                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-700">Xong Lượt ${activeTie.wave} (${tieSt.c1Wins}-${tieSt.c2Wins})</span>`;
                     } else if (tieSt.isLive) {
-                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-brand-700 animate-pulse">LIVE (${tieSt.c1Wins}-${tieSt.c2Wins})</span>`;
+                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-brand-700 animate-pulse">LIVE • Lượt ${activeTie.wave} (${tieSt.c1Wins}-${tieSt.c2Wins})</span>`;
                     } else {
                         statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">${activeTie.knockoutRound ? 'Knock-out' : `Sẵn sàng • Lượt ${activeTie.wave}`}</span>`;
                     }
@@ -2310,7 +2333,7 @@
                             </div>
                             <div class="flex justify-between items-center pt-1.5 border-t border-stone-100 text-xs gap-2">
                                 <button onclick="openCourtDetailModal('${courtName}', '${activeTie.club1Id}', '${activeTie.club2Id}', '${activeTie.id}')" class="font-bold text-emerald-700 hover:underline py-1"><i class="fa-solid fa-eye mr-1"></i> Chi tiết</button>
-                                ${renderRefereeAccessAction(courtName, 'inline', tieSt.isCompleted)}
+                                ${renderRefereeAccessAction(courtName, 'inline', tieSt.isCompleted, activeTie.id, activeTie.wave)}
                             </div>
                         </div>
                     `;
@@ -2387,7 +2410,7 @@
                     const tieSt = evaluateTieStatus(tieMatches);
 
                     const statusBadge = tieSt.isCompleted 
-                        ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">Kết thúc</span>` 
+                        ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700"><i class="fa-solid fa-lock mr-0.5"></i> Kết thúc</span>` 
                         : (tieSt.isLive 
                             ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-brand-700 animate-pulse">LIVE</span>` 
                             : `<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-stone-100 text-stone-600">${tie.group}</span>`);
@@ -2414,7 +2437,7 @@
                                 <button onclick="openCourtDetailModal('${tie.court}', '${tie.club1Id}', '${tie.club2Id}', '${tie.id}')" class="flex-1 py-2 px-3 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold flex items-center justify-center">
                                     <i class="fa-solid fa-eye mr-1.5 text-stone-500"></i> Chi tiết (${tieMatches.length})
                                 </button>
-                                ${renderRefereeAccessAction(tie.court, 'icon-btn', tieSt.isCompleted)}
+                                ${renderRefereeAccessAction(tie.court, 'icon-btn', tieSt.isCompleted, tie.id, tie.wave)}
                             </div>
                         </div>
                     `;
@@ -2439,10 +2462,11 @@
         function openCourtDetailModal(courtName, club1Id, club2Id, tieId = null) {
             currentOpenDetailModalCtx = { courtName, club1Id, club2Id, tieId };
             let tieMatches = [];
+            let foundTieObj = null;
 
             if (tieId) {
-                const foundTie = (appState.ties || []).find(t => t.id === tieId);
-                if (foundTie && foundTie.matches) tieMatches = foundTie.matches;
+                foundTieObj = (appState.ties || []).find(t => t.id === tieId);
+                if (foundTieObj && foundTieObj.matches) tieMatches = foundTieObj.matches;
             }
 
             if (tieMatches.length === 0) {
@@ -2454,6 +2478,8 @@
             const c1Name = club1Obj ? club1Obj.name : 'CLB 1';
             const c2Name = club2Obj ? club2Obj.name : 'CLB 2';
             const displayCourt = courtName || (tieMatches[0]?.court || 'Sân 1');
+            const waveNum = foundTieObj?.wave || tieMatches[0]?.wave || '';
+            const resolvedTieId = foundTieObj?.id || tieId || '';
             const isAdmin = isAdminLoggedIn();
 
             const tieSt = evaluateTieStatus(tieMatches);
@@ -2474,13 +2500,13 @@
                 return null;
             };
 
-            document.getElementById('detail-modal-title').textContent = `${displayCourt}: ${c1Name} (${tieSt.c1Wins}) - (${tieSt.c2Wins}) ${c2Name}`;
+            document.getElementById('detail-modal-title').textContent = `${displayCourt}${waveNum ? ` (Lượt ${waveNum})` : ''}: ${c1Name} (${tieSt.c1Wins}) - (${tieSt.c2Wins}) ${c2Name}`;
             document.getElementById('detail-modal-subtitle').textContent = tieSt.isCompleted
-                ? `🏆 ${tieSt.winnerSide === 1 ? c1Name : c2Name} thắng (${tieSt.c1Wins}-${tieSt.c2Wins}) • Đã khóa trọng tài (Chỉ Admin được chỉnh sửa)`
+                ? `🏆 ${tieSt.winnerSide === 1 ? c1Name : c2Name} thắng (${tieSt.c1Wins}-${tieSt.c2Wins}) • Đã khóa trọng tài Lượt ${waveNum} (Chỉ Admin được chỉnh sửa)`
                 : (isAdmin ? `Quản trị viên có thể nhập tỷ số trực tiếp bên dưới` : `Chạm ${WINS_TO_CLINCH_TIE} trận thắng kết thúc cặp đấu`);
 
             const refWrap = document.getElementById('detail-modal-referee-action-wrap');
-            if (refWrap) refWrap.innerHTML = renderRefereeAccessAction(displayCourt, 'modal', tieSt.isCompleted);
+            if (refWrap) refWrap.innerHTML = renderRefereeAccessAction(displayCourt, 'modal', tieSt.isCompleted, resolvedTieId, waveNum);
 
             document.getElementById('detail-modal-content').innerHTML = tieMatches.length ? tieMatches.map((m, idx) => {
                 const cleanLabel = (m.catLabel || `Trận ${idx + 1}`).replace(/^.*•\s*(Trận \d+:)/i, '$1');
@@ -2756,8 +2782,8 @@
                         return `
                             <div onclick="openCourtDetailModal('${tie.court}', '${tie.club1Id}', '${tie.club2Id}', '${tie.id}')" class="cursor-pointer bg-white hover:bg-stone-50 border border-stone-200 rounded-2xl p-3.5 space-y-2 transition shadow-2xs">
                                 <div class="flex items-center justify-between text-[11px] border-b border-stone-100 pb-1.5">
-                                    <span class="font-bold text-stone-600">${tie.group} • ${tie.court}</span>
-                                    <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 font-bold text-[10px]"><i class="fa-solid fa-lock mr-0.5"></i> Xong (${tie.c1Wins}-${tie.c2Wins})</span>
+                                    <span class="font-bold text-stone-600">${tie.group} • Lượt ${tie.wave} • ${tie.court}</span>
+                                    <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 font-bold text-[10px]"><i class="fa-solid fa-lock mr-0.5"></i> Khóa (${tie.c1Wins}-${tie.c2Wins})</span>
                                 </div>
                                 <div class="space-y-1">
                                     <div class="flex items-center justify-between text-xs">
@@ -3353,7 +3379,7 @@
                             </div>
                             <div class="pt-1 flex items-center justify-between gap-2 text-[11px]">
                                 <button onclick="openCourtDetailModal('${tieObj.court}', '${tieObj.club1Id}', '${tieObj.club2Id}', '${tieObj.id}')" class="font-bold text-stone-700 hover:underline"><i class="fa-solid fa-eye mr-1"></i>5 nội dung</button>
-                                ${renderRefereeAccessAction(tieObj.court, 'inline', st.isCompleted)}
+                                ${renderRefereeAccessAction(tieObj.court, 'inline', st.isCompleted, tieObj.id, tieObj.wave)}
                             </div>
                         </div>
                     `;
