@@ -512,10 +512,8 @@
     </div>
 
     <div id="toastContainer" class="fixed top-12 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-1.5 pointer-events-none w-[90%] max-w-sm items-center"></div>
+
     <script>
-        // =========================================================================
-        // KẾT NỐI FIREBASE REALTIME DATABASE CỦA BẠN
-        // =========================================================================
         const FIREBASE_DB_URL = "https://pickleball1986-cb6c5-default-rtdb.asia-southeast1.firebasedatabase.app";
         const FIREBASE_ACTIVE_NODE = `${FIREBASE_DB_URL}/active_tournament.json`;
 
@@ -535,9 +533,6 @@
         let __lastLocalMutationAt = 0;
         let __courtSwapFreezeUntil = 0;
 
-        // =========================================================================
-        // HỆ THỐNG KHÓA BẢO MẬT TRANG TRỌNG TÀI
-        // =========================================================================
         function isAdminRole() {
             return localStorage.getItem('PICKLEBALL_USER_ROLE') === 'admin';
         }
@@ -655,7 +650,6 @@
         let state = loadState();
         if (!Array.isArray(state.matchLogs)) state.matchLogs = [];
 
-        // ĐỌC ĐẦY ĐỦ THAM SỐ SÂN, CẶP ĐẤU (tieId) VÀ LƯỢT ĐẤU (wave) TỪ URL
         const urlParams = new URLSearchParams(window.location.search);
         const lockedUrlCourt = urlParams.get('court');
         let requestedUrlTieId = urlParams.get('tieId') || '';
@@ -678,9 +672,6 @@
             }
         }
 
-        // =========================================================================
-        // GHI TRỰC TIẾP & TỨC THÌ LÊN FIREBASE (KHÔNG DELAY, KHÔNG ĐÈ SÂN KHÁC)
-        // =========================================================================
         async function saveState() {
             if (!isRefereeAuthorized()) return;
             try {
@@ -791,9 +782,6 @@
             }
         });
 
-        // =========================================================================
-        // GHI NHẬT KÝ (LOG) CHI TIẾT CỦA TỪNG TRẬN ĐẤU & TOÀN GIẢI
-        // =========================================================================
         function formatNowTime() {
             const d = new Date();
             const pad = (n) => String(n).padStart(2, '0');
@@ -1063,7 +1051,6 @@
             return list;
         }
 
-        // CHỌN ĐÚNG CẶP ĐẤU THEO THAM SỐ LƯỢT / TIEID TRÊN URL HOẶC LƯỢT TIẾP THEO CHƯA ĐẤU
         function getActiveTieMatchesForCourt(courtName) {
             enforceTieClinchRules();
             const courtTies = (state.ties || [])
@@ -1073,18 +1060,14 @@
             if (courtTies.length > 0) {
                 let targetTie = null;
 
-                // 1. Nếu URL truyền cụ thể tieId (khi bấm từ Trang chủ vào đúng Lượt 2), ưu tiên tuyệt đối tieId này
                 if (requestedUrlTieId) {
                     targetTie = courtTies.find(t => t.id === requestedUrlTieId);
                 }
 
-                // 2. Nếu URL truyền cụ thể số Lượt (wave), lấy đúng cặp của Lượt đó
                 if (!targetTie && requestedUrlWave > 0) {
                     targetTie = courtTies.find(t => (t.wave || t.matches?.[0]?.wave || 1) === requestedUrlWave);
                 }
 
-                // 3. Nếu đang chọn trận trong localStorage nhưng cặp đó ĐÃ KẾT THÚC (Lượt 1 đã xong)
-                // thì bỏ qua cặp cũ để nhảy sang Lượt 2!
                 if (!targetTie) {
                     const selectedMatchId = getCourtSelectedMatchId(courtName);
                     if (selectedMatchId) {
@@ -1095,17 +1078,14 @@
                     }
                 }
 
-                // 4. Ưu tiên cặp đang đánh LIVE trên sân
                 if (!targetTie) {
                     targetTie = courtTies.find(t => evaluateTieStatus(t.matches).isLive);
                 }
 
-                // 5. Tiếp theo là cặp đầu tiên CHƯA ĐẤU (Lượt 2, Lượt 3...)
                 if (!targetTie) {
                     targetTie = courtTies.find(t => !evaluateTieStatus(t.matches).isCompleted);
                 }
 
-                // 6. Nếu tất cả các lượt trên sân đã đấu xong hết thì hiển thị cặp cuối cùng
                 if (!targetTie) {
                     targetTie = courtTies[courtTies.length - 1];
                 }
