@@ -1082,12 +1082,12 @@
 
                 if (!targetTie) {
                     const selectedMatchId = getCourtSelectedMatchId(courtName);
-                    if (selectedMatchId) {
-                        const savedTie = courtTies.find(t => (t.matches || []).some(m => m.id === selectedMatchId));
-                        if (savedTie && !evaluateTieStatus(savedTie.matches).isCompleted) {
-                            targetTie = savedTie;
-                        }
-                    }
+if (!targetTie && selectedMatchId) {
+    const savedTie = courtTies.find(t => (t.matches || []).some(m => m.id === selectedMatchId));
+    if (savedTie) {
+        targetTie = savedTie; // Giữ nguyên cặp đấu đang mở, kể cả khi vừa chốt xong
+    }
+}
                 }
 
                 if (!targetTie) {
@@ -1948,68 +1948,59 @@
         }
 
         function onMatchOrTieFinishedStayOnCourt(finishedMatch, winRes = null) {
-            const { tie } = findMatchById(finishedMatch.id);
-            const tieMatches = tie ? (tie.matches || []) : getActiveTieMatchesForCourt(currentAssignedCourt);
-            enforceTieClinchRules();
-            const tieSt = evaluateTieStatus(tieMatches);
+    const { tie } = findMatchById(finishedMatch.id);
+    const tieMatches = tie ? (tie.matches || []) : getActiveTieMatchesForCourt(currentAssignedCourt);
+    enforceTieClinchRules();
+    const tieSt = evaluateTieStatus(tieMatches);
 
-            if (tieSt.isClinched || tieSt.isCompleted) {
-                const winnerClubName = getClubById(tieSt.winnerSide === 1 ? finishedMatch.club1Id : finishedMatch.club2Id).name;
-                recordMatchLog(finishedMatch, 'FINISH', `🏆 TỰ ĐỘNG KẾT THÚC CẶP ĐẤU trên ${currentAssignedCourt}: ${winnerClubName} thắng ${tieSt.c1Wins}-${tieSt.c2Wins}`);
-                saveState(tie?.id);
-                clearCourtSelectedMatchId(currentAssignedCourt);
-                requestedUrlTieId = '';
-                requestedUrlWave = 0;
-                showToast(`🏆 ${winnerClubName} thắng ${tieSt.c1Wins}-${tieSt.c2Wins}! Đã tự động đẩy kết quả về bàn tổng hợp.`);
-            } else {
-                const nextMatch = tieMatches.find(x => x.status !== 'FINISHED' && x.status !== 'SKIPPED');
-                if (nextMatch) {
-                    setCourtSelectedMatchId(currentAssignedCourt, nextMatch.id);
-                    __lastPromptedTossMatchId = null;
-                }
-                saveState(tie?.id);
-                const scoreText = winRes ? ` (${winRes.winnerScore}-${winRes.loserScore})` : '';
-                showToast(`✅ Xong trận${scoreText}! Tự động chuyển sang nội dung tiếp theo.`);
-            }
-        }
+    // Giữ nguyên đúng trận vừa kết thúc trên màn hình, KHÔNG tự nhảy sang trận khác hay cặp khác
+    setCourtSelectedMatchId(currentAssignedCourt, finishedMatch.id);
+    if (tie?.id) requestedUrlTieId = tie.id;
+
+    if (tieSt.isClinched || tieSt.isCompleted) {
+        const winnerClubName = getClubById(tieSt.winnerSide === 1 ? finishedMatch.club1Id : finishedMatch.club2Id).name;
+        recordMatchLog(finishedMatch, 'FINISH', `🏆 KẾT THÚC CẶP ĐẤU trên ${currentAssignedCourt}: ${winnerClubName} thắng ${tieSt.c1Wins}-${tieSt.c2Wins}`);
+        saveState(tie?.id);
+        showToast(`🏆 ${winnerClubName} thắng ${tieSt.c1Wins}-${tieSt.c2Wins}! Đã chốt cặp đấu trên sân.`);
+    } else {
+        saveState(tie?.id);
+        const scoreText = winRes ? ` (${winRes.winnerScore}-${winRes.loserScore})` : '';
+        showToast(`✅ Đã xong nội dung${scoreText}! Chọn nội dung tiếp theo ở danh sách trên để tiếp tục.`);
+    }
+}
 
         function finishEntireTieOnCourt() {
-            if (!enforceRefereeSecurityLock()) return;
-            const activeTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
-            if (!activeTieMatches.length) return;
+    if (!enforceRefereeSecurityLock()) return;
+    const activeTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
+    if (!activeTieMatches.length) return;
 
-            const { tie } = findMatchById(activeTieMatches[0].id);
-            const tieSt = evaluateTieStatus(activeTieMatches);
-            if (tieSt.isCompleted) {
-                saveState(tie?.id);
-                clearCourtSelectedMatchId(currentAssignedCourt);
-                showToast(`✅ Cặp đấu trên ${currentAssignedCourt} đã kết thúc & đồng bộ lên bàn tổng!`);
-                return;
-            }
+    const { tie } = findMatchById(activeTieMatches[0].id);
+    const tieSt = evaluateTieStatus(activeTieMatches);
+    if (tieSt.isCompleted) {
+        saveState(tie?.id);
+        showToast(`✅ Cặp đấu trên ${currentAssignedCourt} đã kết thúc & đồng bộ!`);
+        return;
+    }
 
-            activeTieMatches.forEach(m => {
-                if (m.status !== 'FINISHED' && m.status !== 'SKIPPED') {
-                    const s1 = parseInt(m.score1) || 0;
-                    const s2 = parseInt(m.score2) || 0;
-                    if (s1 > 0 || s2 > 0) {
-                        m.status = 'FINISHED';
-                    } else {
-                        m.status = 'SKIPPED';
-                    }
-                }
-            });
-
-            const finalSt = evaluateTieStatus(activeTieMatches);
-            const firstM = activeTieMatches[0];
-            const c1 = getClubById(firstM.club1Id).name;
-            const c2 = getClubById(firstM.club2Id).name;
-            recordMatchLog(firstM, 'FINISH', `🔒 Trọng tài kết thúc toàn bộ các nội dung trên ${currentAssignedCourt}: ${c1} (${finalSt.c1Wins}) - (${finalSt.c2Wins}) ${c2}`);
-
-            saveState(tie?.id);
-            clearCourtSelectedMatchId(currentAssignedCourt);
-            renderRefereeApp();
-            showToast(`🔒 Đã chốt cặp đấu ${c1} vs ${c2} lên bàn tổng!`);
+    activeTieMatches.forEach(m => {
+        if (m.status !== 'FINISHED' && m.status !== 'SKIPPED') {
+            const s1 = parseInt(m.score1) || 0;
+            const s2 = parseInt(m.score2) || 0;
+            m.status = (s1 > 0 || s2 > 0) ? 'FINISHED' : 'SKIPPED';
         }
+    });
+
+    const finalSt = evaluateTieStatus(activeTieMatches);
+    const firstM = activeTieMatches[0];
+    const c1 = getClubById(firstM.club1Id).name;
+    const c2 = getClubById(firstM.club2Id).name;
+    recordMatchLog(firstM, 'FINISH', `🔒 Trọng tài kết thúc toàn bộ cặp đấu trên ${currentAssignedCourt}: ${c1} (${finalSt.c1Wins}) - (${finalSt.c2Wins}) ${c2}`);
+
+    if (tie?.id) requestedUrlTieId = tie.id;
+    saveState(tie?.id);
+    renderRefereeApp();
+    showToast(`🔒 Đã chốt cặp đấu ${c1} vs ${c2}!`);
+}
 
         function triggerSideOutOrNextServer() {
             if (!enforceRefereeSecurityLock()) return;
