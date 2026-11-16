@@ -1426,17 +1426,18 @@
             const p2List = (m.team2PlayerIds || []).map(pid => getPlayerById(m.club2Id, pid)?.name).filter(Boolean);
             const prevSwapped = m.courtState ? Boolean(m.courtState.swappedEnds) : false;
             
-            if (m.catKey === 'DON') {
+                        if (m.catKey === 'DON') {
                 const totalScore = (parseInt(m.score1) || 0) + (parseInt(m.score2) || 0);
                 const rotIdx = Math.floor(totalScore / 4);
                 const activeP1 = p1List.length ? p1List[rotIdx % p1List.length] : c1.name;
                 const activeP2 = p2List.length ? p2List[rotIdx % p2List.length] : c2.name;
 
-                m.team1Name = p1List.length ? `${activeP1} (#${(rotIdx % p1List.length) + 1}/${p1List.length})` : c1.name;
-                m.team2Name = p2List.length ? `${activeP2} (#${(rotIdx % p2List.length) + 1}/${p2List.length})` : c2.name;
+                m.team1Name = activeP1;
+                m.team2Name = activeP2;
                 m.courtState = { swappedEnds: prevSwapped, t1Right: activeP1, t2Right: activeP2 };
                 return;
             }
+
 
             m.team1Name = p1List.length ? p1List.join(' / ') : c1.name;
             m.team2Name = p2List.length ? p2List.join(' / ') : c2.name;
