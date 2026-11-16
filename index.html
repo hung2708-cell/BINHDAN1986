@@ -810,7 +810,7 @@
         // =========================================================================
         // ĐỒNG BỘ & LƯU TRỮ FIREBASE CLOUD
         // =========================================================================
-                const DEFAULT_SLOGAN = "Bản Lĩnh Mãnh Hổ – Chinh Phục Mọi Đỉnh Cao.";
+        const DEFAULT_SLOGAN = "Bản Lĩnh Mãnh Hổ – Chinh Phục Mọi Đỉnh Cao.";
 
         function updateFirebaseStatusUI(status, text) {
             const dot = document.getElementById('firebaseSyncDot');
@@ -822,7 +822,7 @@
                 lbl.textContent = (status === 'OK') ? DEFAULT_SLOGAN : text;
             }
         }
-        
+
         async function pushStateToFirebase() {
             if (__isPushingFirebase) return;
             __isPushingFirebase = true;
@@ -1529,11 +1529,34 @@
 
         let pendingAction = null;
         function openPasswordModal(title, actionCallback) {
-            if (isAdminLoggedIn()) {
-                actionCallback();
+            if (!isAdminLoggedIn()) {
+                openLoginModal();
                 return;
             }
-            openLoginModal();
+            pendingAction = actionCallback;
+            const titleEl = document.getElementById('modal-title');
+            if (titleEl) titleEl.textContent = title || 'Xác nhận mật khẩu Quản trị';
+
+            const pwdInput = document.getElementById('modal-password-input');
+            const errorMsg = document.getElementById('modal-error-msg');
+            const modalCard = document.getElementById('modal-card-container');
+
+            if (errorMsg) errorMsg.classList.add('hidden');
+            if (modalCard) {
+                modalCard.classList.remove('animate-shake', 'border-rose-500');
+                modalCard.classList.add('border-stone-300');
+            }
+            if (pwdInput) {
+                pwdInput.value = '';
+                pwdInput.classList.remove('border-rose-500', 'bg-rose-50/60');
+            }
+
+            const modal = document.getElementById('password-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                if (pwdInput) setTimeout(() => pwdInput.focus(), 60);
+            }
         }
 
         function closePasswordModal() {
@@ -1599,25 +1622,27 @@
             if (!isAdminLoggedIn()) { openLoginModal(); return; }
             if (teams.length < 2) { showToast('Cần ít nhất 2 đội tuyển để chia bảng & xếp lịch!', true); return; }
 
-            const modeVal = document.getElementById('auto-group-count-select')?.value || 'AUTO';
-            let numGroups = modeVal === 'AUTO' ? suggestOptimalGroupCount(teams.length) : parseInt(modeVal, 10);
-            numGroups = Math.max(1, Math.min(numGroups, Math.floor(teams.length / 2) || 1));
+            openPasswordModal("Xác nhận Chia bảng & Xếp lịch lại toàn giải", () => {
+                const modeVal = document.getElementById('auto-group-count-select')?.value || 'AUTO';
+                let numGroups = modeVal === 'AUTO' ? suggestOptimalGroupCount(teams.length) : parseInt(modeVal, 10);
+                numGroups = Math.max(1, Math.min(numGroups, Math.floor(teams.length / 2) || 1));
 
-            const groupLabels = Array.from({ length: numGroups }, (_, idx) => `Bảng ${String.fromCharCode(65 + idx)}`);
-            appState.customGroups = [...groupLabels];
+                const groupLabels = Array.from({ length: numGroups }, (_, idx) => `Bảng ${String.fromCharCode(65 + idx)}`);
+                appState.customGroups = [...groupLabels];
 
-            const sortedByStrength = [...teams].sort((a, b) => computeTeamStrengthScore(b) - computeTeamStrengthScore(a));
+                const sortedByStrength = [...teams].sort((a, b) => computeTeamStrengthScore(b) - computeTeamStrengthScore(a));
 
-            sortedByStrength.forEach((team, idx) => {
-                const row = Math.floor(idx / numGroups);
-                const col = idx % numGroups;
-                const targetGroupIdx = (row % 2 === 0) ? col : (numGroups - 1 - col);
-                const assignedGroup = groupLabels[targetGroupIdx];
-                const realTeam = teams.find(t => t.id === team.id);
-                if (realTeam) realTeam.group = assignedGroup;
+                sortedByStrength.forEach((team, idx) => {
+                    const row = Math.floor(idx / numGroups);
+                    const col = idx % numGroups;
+                    const targetGroupIdx = (row % 2 === 0) ? col : (numGroups - 1 - col);
+                    const assignedGroup = groupLabels[targetGroupIdx];
+                    const realTeam = teams.find(t => t.id === team.id);
+                    if (realTeam) realTeam.group = assignedGroup;
+                });
+
+                generateScheduleByGroups(true);
             });
-
-            generateScheduleByGroups(true);
         }
 
         function handleAddCustomGroup(e) {
@@ -1695,81 +1720,89 @@
             if (!isAdminLoggedIn()) { openLoginModal(); return; }
             if (teams.length < 2) { showToast('Cần ít nhất 2 đội tuyển để xếp lịch!', true); return; }
 
-            const groupNames = getAllGroupNames();
-            let rawPairingsPool = [];
+            const executeSchedule = () => {
+                const groupNames = getAllGroupNames();
+                let rawPairingsPool = [];
 
-            groupNames.forEach((gName, gIdx) => {
-                const groupTeams = teams.filter(t => ((t.group && String(t.group).trim()) || 'Bảng A') === gName);
-                if (groupTeams.length < 2) return;
+                groupNames.forEach((gName, gIdx) => {
+                    const groupTeams = teams.filter(t => ((t.group && String(t.group).trim()) || 'Bảng A') === gName);
+                    if (groupTeams.length < 2) return;
 
-                let list = [...groupTeams];
-                if (list.length % 2 !== 0) list.push({ id: 'dummy_bye', name: 'BYE (Nghỉ)' });
+                    let list = [...groupTeams];
+                    if (list.length % 2 !== 0) list.push({ id: 'dummy_bye', name: 'BYE (Nghỉ)' });
 
-                const numTeams = list.length;
-                const rounds = numTeams - 1;
-                const half = numTeams / 2;
+                    const numTeams = list.length;
+                    const rounds = numTeams - 1;
+                    const half = numTeams / 2;
 
-                for (let round = 0; round < rounds; round++) {
-                    for (let i = 0; i < half; i++) {
-                        let teamA = list[i];
-                        let teamB = list[numTeams - 1 - i];
-                        if (teamA.id !== 'dummy_bye' && teamB.id !== 'dummy_bye') {
-                            rawPairingsPool.push({ group: gName, groupOrder: gIdx, roundNum: round + 1, home: teamA, away: teamB });
+                    for (let round = 0; round < rounds; round++) {
+                        for (let i = 0; i < half; i++) {
+                            let teamA = list[i];
+                            let teamB = list[numTeams - 1 - i];
+                            if (teamA.id !== 'dummy_bye' && teamB.id !== 'dummy_bye') {
+                                rawPairingsPool.push({ group: gName, groupOrder: gIdx, roundNum: round + 1, home: teamA, away: teamB });
+                            }
                         }
+                        let temp = list.pop();
+                        list.splice(1, 0, temp);
                     }
-                    let temp = list.pop();
-                    list.splice(1, 0, temp);
-                }
-            });
+                });
 
-            if (rawPairingsPool.length === 0) { showToast('Mỗi bảng cần ít nhất 2 CLB để tạo cặp đấu!', true); return; }
+                if (rawPairingsPool.length === 0) { showToast('Mỗi bảng cần ít nhất 2 CLB để tạo cặp đấu!', true); return; }
 
-            rawPairingsPool.sort((a, b) => (a.roundNum !== b.roundNum) ? a.roundNum - b.roundNum : a.groupOrder - b.groupOrder);
+                rawPairingsPool.sort((a, b) => (a.roundNum !== b.roundNum) ? a.roundNum - b.roundNum : a.groupOrder - b.groupOrder);
 
-            const maxCourtsPerWave = COURTS_LIST.length;
-            const waves = [];
+                const maxCourtsPerWave = COURTS_LIST.length;
+                const waves = [];
 
-            rawPairingsPool.forEach(pair => {
-                let placedWave = null;
-                for (const w of waves) {
-                    if (w.pairings.length >= maxCourtsPerWave) continue;
-                    const isClubBusy = w.pairings.some(p =>
-                        p.home.id === pair.home.id || p.away.id === pair.home.id ||
-                        p.home.id === pair.away.id || p.away.id === pair.away.id
-                    );
-                    if (!isClubBusy) { placedWave = w; break; }
-                }
+                rawPairingsPool.forEach(pair => {
+                    let placedWave = null;
+                    for (const w of waves) {
+                        if (w.pairings.length >= maxCourtsPerWave) continue;
+                        const isClubBusy = w.pairings.some(p =>
+                            p.home.id === pair.home.id || p.away.id === pair.home.id ||
+                            p.home.id === pair.away.id || p.away.id === pair.away.id
+                        );
+                        if (!isClubBusy) { placedWave = w; break; }
+                    }
 
-                if (!placedWave) {
-                    placedWave = { waveNum: waves.length + 1, pairings: [] };
-                    waves.push(placedWave);
-                }
-                placedWave.pairings.push(pair);
-            });
+                    if (!placedWave) {
+                        placedWave = { waveNum: waves.length + 1, pairings: [] };
+                        waves.push(placedWave);
+                    }
+                    placedWave.pairings.push(pair);
+                });
 
-            let generatedTies = [];
-            let tieCounter = 1;
+                let generatedTies = [];
+                let tieCounter = 1;
 
-            waves.forEach(w => {
-                w.pairings.forEach((pair, slotIdx) => {
-                    const assignedCourt = COURTS_LIST[slotIdx % COURTS_LIST.length];
-                    const tieId = `tie_grp_${tieCounter++}_${Math.random().toString(36).slice(2, 6)}`;
-                    const tieMatches = buildFiveMatchesForTie(tieId, `${pair.group} • Lượt ${w.waveNum}`, w.waveNum, assignedCourt, pair.home.id, pair.away.id, null);
+                waves.forEach(w => {
+                    w.pairings.forEach((pair, slotIdx) => {
+                        const assignedCourt = COURTS_LIST[slotIdx % COURTS_LIST.length];
+                        const tieId = `tie_grp_${tieCounter++}_${Math.random().toString(36).slice(2, 6)}`;
+                        const tieMatches = buildFiveMatchesForTie(tieId, `${pair.group} • Lượt ${w.waveNum}`, w.waveNum, assignedCourt, pair.home.id, pair.away.id, null);
 
-                    generatedTies.push({
-                        id: tieId, group: pair.group, wave: w.waveNum, court: assignedCourt,
-                        club1Id: pair.home.id, club2Id: pair.away.id, matches: tieMatches
+                        generatedTies.push({
+                            id: tieId, group: pair.group, wave: w.waveNum, court: assignedCourt,
+                            club1Id: pair.home.id, club2Id: pair.away.id, matches: tieMatches
+                        });
                     });
                 });
-            });
 
-            appState.ties = generatedTies;
-            currentWaveFilter = 'ALL';
-            saveAppState();
-            const activeGroupsCount = groupNames.filter(g => teams.filter(t => (t.group || 'Bảng A') === g).length >= 2).length;
-            showToast(fromAutoBalance 
-                ? `🪄 Đã chia ${activeGroupsCount} bảng & xếp ${generatedTies.length} cặp đấu vòng bảng lên Firebase!` 
-                : `✅ Đã xếp ${generatedTies.length} cặp đấu theo các bảng hiện tại!`);
+                appState.ties = generatedTies;
+                currentWaveFilter = 'ALL';
+                saveAppState();
+                const activeGroupsCount = groupNames.filter(g => teams.filter(t => (t.group || 'Bảng A') === g).length >= 2).length;
+                showToast(fromAutoBalance 
+                    ? `🪄 Đã chia ${activeGroupsCount} bảng & xếp ${generatedTies.length} cặp đấu vòng bảng lên Firebase!` 
+                    : `✅ Đã xếp ${generatedTies.length} cặp đấu theo các bảng hiện tại!`);
+            };
+
+            if (fromAutoBalance) {
+                executeSchedule();
+            } else {
+                openPasswordModal("Xác nhận Áp dụng & Xếp lịch lại toàn giải", executeSchedule);
+            }
         }
 
         function renderAdminGroupsBoard() {
