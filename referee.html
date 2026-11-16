@@ -1916,23 +1916,26 @@
         function onMatchOrTieFinishedStayOnCourt(finishedMatch, winRes = null) {
             const { tie } = findMatchById(finishedMatch.id);
             const tieMatches = tie ? (tie.matches || []) : getActiveTieMatchesForCourt(currentAssignedCourt);
+            enforceTieClinchRules();
             const tieSt = evaluateTieStatus(tieMatches);
-
-            setCourtSelectedMatchId(currentAssignedCourt, finishedMatch.id);
 
             if (tieSt.isClinched || tieSt.isCompleted) {
                 const winnerClubName = getClubById(tieSt.winnerSide === 1 ? finishedMatch.club1Id : finishedMatch.club2Id).name;
-                recordMatchLog(finishedMatch, 'FINISH', `🏆 KẾT THÚC CẶP ĐẤU trên ${currentAssignedCourt}: ${winnerClubName} thắng ${tieSt.c1Wins}-${tieSt.c2Wins}`);
+                recordMatchLog(finishedMatch, 'FINISH', `🏆 TỰ ĐỘNG KẾT THÚC CẶP ĐẤU trên ${currentAssignedCourt}: ${winnerClubName} thắng ${tieSt.c1Wins}-${tieSt.c2Wins}`);
                 clearCourtSelectedMatchId(currentAssignedCourt);
+                requestedUrlTieId = '';
+                requestedUrlWave = 0;
                 saveState();
-                showToast(`🏆 ${winnerClubName} thắng ${tieSt.c1Wins}-${tieSt.c2Wins}! Đã gửi tỷ số lên bàn tổng.`);
+                showToast(`🏆 ${winnerClubName} thắng ${tieSt.c1Wins}-${tieSt.c2Wins}! Đã tự động đẩy kết quả về bàn tổng hợp.`);
             } else {
-                saveState();
-                if (winRes) {
-                    showToast(`✅ Đã chốt trận (${winRes.winnerScore}-${winRes.loserScore}) & gửi lên bàn tổng!`);
-                } else {
-                    showToast('✅ Đã chốt trận & gửi lên bàn tổng!');
+                const nextMatch = tieMatches.find(x => x.status !== 'FINISHED' && x.status !== 'SKIPPED');
+                if (nextMatch) {
+                    setCourtSelectedMatchId(currentAssignedCourt, nextMatch.id);
+                    __lastPromptedTossMatchId = null;
                 }
+                saveState();
+                const scoreText = winRes ? ` (${winRes.winnerScore}-${winRes.loserScore})` : '';
+                showToast(`✅ Xong trận${scoreText}! Tự động chuyển sang nội dung tiếp theo.`);
             }
         }
 
