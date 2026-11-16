@@ -841,7 +841,8 @@
             }
         }
 
-        async function pullStateFromFirebase(isInitial = false) {
+                async function pullStateFromFirebase(isInitial = false) {
+            if (__isPushingFirebase) return;
             try {
                 const res = await fetch(FIREBASE_ACTIVE_NODE, { cache: 'no-store' });
                 if (!res.ok) return;
@@ -852,27 +853,21 @@
                     return;
                 }
 
-                const localTime = appState.__updatedAt || 0;
-                const cloudTime = cloudData.__updatedAt || 0;
+                appState = cloudData;
+                if (!appState.clubs) appState.clubs = [];
+                if (!appState.ties) appState.ties = [];
+                if (!appState.customGroups) appState.customGroups = ['Bảng A', 'Bảng B'];
 
-                if (cloudTime > localTime || isInitial) {
-                    appState = cloudData;
-                    if (!appState.clubs) appState.clubs = [];
-                    if (!appState.ties) appState.ties = [];
-                    if (!appState.customGroups) appState.customGroups = ['Bảng A', 'Bảng B'];
-                    if (runFullTournamentAutomation()) {
-                        saveAppState();
-                    } else {
-                        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-                        initApp();
-                    }
+                if (runFullTournamentAutomation()) {
+                    await pushStateToFirebase();
                 }
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+                initApp();
                 updateFirebaseStatusUI('OK', 'Đã kết nối Firebase Cloud');
             } catch (e) {
                 updateFirebaseStatusUI('ERR', 'Mất kết nối mạng (Đang dùng dữ liệu máy)');
             }
         }
-
         async function archiveCurrentTournamentToFirebase() {
             if (!isAdminLoggedIn()) { openLoginModal(); return; }
             const nameInput = document.getElementById('tournament-name-input');
@@ -1476,11 +1471,11 @@
             return movedCount > 0;
         }
 
-        function runFullTournamentAutomation() {
-    enforceTieClinchRules();
-    const advanced = autoAdvanceTournamentRounds();
-    return advanced;
-}
+                function runFullTournamentAutomation() {
+            enforceTieClinchRules();
+            const advanced = autoAdvanceTournamentRounds();
+            return advanced;
+        }
 
         function manualTriggerAdvanceAndCompact() {
             if (!isAdminLoggedIn()) { openLoginModal(); return; }
