@@ -512,3 +512,1844 @@
     </div>
 
     <div id="toastContainer" class="fixed top-12 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-1.5 pointer-events-none w-[90%] max-w-sm items-center"></div>
+    <script>
+        // =========================================================================
+        // KẾT NỐI FIREBASE REALTIME DATABASE CỦA BẠN
+        // =========================================================================
+        const FIREBASE_DB_URL = "https://pickleball1986-cb6c5-default-rtdb.asia-southeast1.firebasedatabase.app";
+        const FIREBASE_ACTIVE_NODE = `${FIREBASE_DB_URL}/active_tournament.json`;
+
+        const ADMIN_PASSWORD = "1986";
+        const REFEREE_PASSWORD = "86";
+        const STORAGE_KEY = 'CAY_COI_TEAM_LINEUP_V28_PERMANENT';
+        const ALL_COURTS = ['Sân 1', 'Sân 2', 'Sân 3', 'Sân 4', 'Sân 5', 'Sân 6', 'Sân 7', 'Sân 8'];
+        const WINS_TO_CLINCH_TIE = 3;
+        window.__deviceClientId = 'REF_' + Math.random().toString(36).slice(2, 9);
+        let currentSetupStep = 1;
+        let tempTossServeTeam = 1;
+        let tempTossSwapped = false;
+        let isMandatoryCoinTossOpen = false;
+        let __lastPromptedTossMatchId = null;
+
+        let __lastScoreTapAt = 0;
+        let __lastLocalMutationAt = 0;
+        let __courtSwapFreezeUntil = 0;
+
+        // =========================================================================
+        // HỆ THỐNG KHÓA BẢO MẬT TRANG TRỌNG TÀI
+        // =========================================================================
+        function isAdminRole() {
+            return localStorage.getItem('PICKLEBALL_USER_ROLE') === 'admin';
+        }
+
+        function isRefereeAuthorized() {
+            const role = localStorage.getItem('PICKLEBALL_USER_ROLE');
+            const refAuth = sessionStorage.getItem('PICKLEBALL_REFEREE_UNLOCKED') === '1' || localStorage.getItem('PICKLEBALL_REFEREE_UNLOCKED') === '1';
+            return role === 'admin' || role === 'referee' || refAuth;
+        }
+
+        function enforceRefereeSecurityLock(reasonMessage = null) {
+            const lockModal = document.getElementById('refereeAuthLockModal');
+            const leftCol = document.getElementById('leftLandscapeCol');
+            const rightCol = document.getElementById('rightLandscapeCol');
+            const subEl = document.getElementById('refereeLockSubtitle');
+            const errEl = document.getElementById('refereeLockErrorMsg');
+            const pwdInput = document.getElementById('refereeUnlockPwdInput');
+
+            if (isRefereeAuthorized()) {
+                if (lockModal) {
+                    lockModal.classList.add('hidden');
+                    lockModal.classList.remove('flex');
+                }
+                if (leftCol) leftCol.classList.remove('pointer-events-none', 'blur-[3px]');
+                if (rightCol) rightCol.classList.remove('pointer-events-none', 'blur-[3px]');
+                return true;
+            }
+
+            closeCoinTossModal(true);
+            closeMedicalSubModal();
+            closeMatchLogModal();
+            forceCloseSetupModal();
+
+            if (leftCol) leftCol.classList.add('pointer-events-none', 'blur-[3px]');
+            if (rightCol) rightCol.classList.add('pointer-events-none', 'blur-[3px]');
+            if (subEl && reasonMessage) subEl.textContent = reasonMessage;
+            if (errEl) errEl.classList.add('hidden');
+
+            if (lockModal) {
+                lockModal.classList.remove('hidden');
+                lockModal.classList.add('flex');
+            }
+            if (pwdInput) {
+                pwdInput.value = '';
+                pwdInput.type = 'password';
+                pwdInput.classList.remove('border-rose-500', 'bg-rose-50');
+                setTimeout(() => pwdInput.focus(), 60);
+            }
+            return false;
+        }
+
+        function logoutReferee() {
+            localStorage.setItem('PICKLEBALL_USER_ROLE', 'guest');
+            localStorage.removeItem('PICKLEBALL_REFEREE_UNLOCKED');
+            sessionStorage.removeItem('PICKLEBALL_REFEREE_UNLOCKED');
+            enforceRefereeSecurityLock('Bạn đã đăng xuất khỏi hệ thống Trọng tài. Vui lòng nhập mật khẩu để đăng nhập lại.');
+        }
+
+        function toggleRefereeLockPwdVisibility() {
+            const pwdInput = document.getElementById('refereeUnlockPwdInput');
+            const eyeIcon = document.getElementById('refereeLockEyeIcon');
+            if (!pwdInput || !eyeIcon) return;
+            if (pwdInput.type === 'password') {
+                pwdInput.type = 'text';
+                eyeIcon.className = 'fa-solid fa-eye-slash text-xs text-brand-600';
+            } else {
+                pwdInput.type = 'password';
+                eyeIcon.className = 'fa-solid fa-eye text-xs';
+            }
+            pwdInput.focus();
+        }
+
+        function handleRefereeUnlockSubmit(event) {
+            event.preventDefault();
+            const pwdInput = document.getElementById('refereeUnlockPwdInput');
+            const pwd = pwdInput ? pwdInput.value.trim() : '';
+            const cardEl = document.getElementById('refereeLockCard');
+            const errEl = document.getElementById('refereeLockErrorMsg');
+
+            if (pwd === REFEREE_PASSWORD || pwd === ADMIN_PASSWORD) {
+                if (pwd === ADMIN_PASSWORD) {
+                    localStorage.setItem('PICKLEBALL_USER_ROLE', 'admin');
+                } else {
+                    localStorage.setItem('PICKLEBALL_USER_ROLE', 'referee');
+                }
+                localStorage.setItem('PICKLEBALL_REFEREE_UNLOCKED', '1');
+                sessionStorage.setItem('PICKLEBALL_REFEREE_UNLOCKED', '1');
+                enforceRefereeSecurityLock();
+                renderRefereeApp();
+                showToast('🔓 Đã mở khóa bảng điểm Trọng tài!');
+            } else {
+                if (errEl) errEl.classList.remove('hidden');
+                if (pwdInput) {
+                    pwdInput.classList.add('border-rose-500', 'bg-rose-50');
+                    pwdInput.focus();
+                    pwdInput.select();
+                }
+                if (cardEl) {
+                    cardEl.classList.remove('animate-shake');
+                    void cardEl.offsetWidth;
+                    cardEl.classList.add('animate-shake');
+                }
+                if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            }
+        }
+
+        function loadState() {
+            try {
+                let raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) return JSON.parse(raw);
+            } catch (e) {}
+            return { ties: [], clubs: [], matchLogs: [] };
+        }
+
+        let state = loadState();
+        if (!Array.isArray(state.matchLogs)) state.matchLogs = [];
+
+        // ĐỌC ĐẦY ĐỦ THAM SỐ SÂN, CẶP ĐẤU (tieId) VÀ LƯỢT ĐẤU (wave) TỪ URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const lockedUrlCourt = urlParams.get('court');
+        let requestedUrlTieId = urlParams.get('tieId') || '';
+        let requestedUrlWave = urlParams.get('wave') ? parseInt(urlParams.get('wave'), 10) : 0;
+        let currentAssignedCourt = lockedUrlCourt || localStorage.getItem('REF_STANDALONE_COURT') || 'Sân 1';
+
+        function getCourtSelectedMatchId(courtName) {
+            return localStorage.getItem(`REF_SELECTED_MATCH_${courtName}`) || '';
+        }
+
+        function setCourtSelectedMatchId(courtName, matchId) {
+            if (courtName && matchId) {
+                localStorage.setItem(`REF_SELECTED_MATCH_${courtName}`, matchId);
+            }
+        }
+
+        function clearCourtSelectedMatchId(courtName) {
+            if (courtName) {
+                localStorage.removeItem(`REF_SELECTED_MATCH_${courtName}`);
+            }
+        }
+
+        // =========================================================================
+        // GHI TRỰC TIẾP & TỨC THÌ LÊN FIREBASE (KHÔNG DELAY, KHÔNG ĐÈ SÂN KHÁC)
+        // =========================================================================
+        async function saveState() {
+            if (!isRefereeAuthorized()) return;
+            try {
+                __lastLocalMutationAt = Date.now();
+                state.__updatedAt = __lastLocalMutationAt;
+                enforceTieClinchRules();
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+
+                const dot = document.getElementById('syncStatusDot');
+                if (dot) dot.className = 'w-2 h-2 rounded-full bg-amber-500 animate-ping shrink-0';
+
+                const activeId = getCourtSelectedMatchId(currentAssignedCourt);
+                const tieIdx = (state.ties || []).findIndex(t =>
+                    (t.court || t.matches?.[0]?.court || 'Sân 1') === currentAssignedCourt &&
+                    (t.matches || []).some(m => m.id === activeId)
+                );
+
+                if (tieIdx !== -1) {
+                    const targetTie = state.ties[tieIdx];
+                    targetTie.__updatedAt = Date.now();
+
+                    const [resTie, resMeta] = await Promise.all([
+                        fetch(`${FIREBASE_DB_URL}/active_tournament/ties/${tieIdx}.json`, {
+                            method: 'PUT',
+                            keepalive: true,
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(targetTie)
+                        }),
+                        fetch(FIREBASE_ACTIVE_NODE, {
+                            method: 'PATCH',
+                            keepalive: true,
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                __updatedAt: targetTie.__updatedAt,
+                                matchLogs: (state.matchLogs || []).slice(0, 150)
+                            })
+                        })
+                    ]);
+
+                    if (dot) {
+                        dot.className = (resTie.ok && resMeta.ok)
+                            ? 'w-2 h-2 rounded-full bg-emerald-500 live-dot shrink-0'
+                            : 'w-2 h-2 rounded-full bg-rose-500 shrink-0';
+                    }
+                } else {
+                    const res = await fetch(FIREBASE_ACTIVE_NODE, {
+                        method: 'PATCH',
+                        keepalive: true,
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ __updatedAt: state.__updatedAt, ties: state.ties })
+                    });
+                    if (dot) dot.className = res.ok ? 'w-2 h-2 rounded-full bg-emerald-500 live-dot shrink-0' : 'w-2 h-2 rounded-full bg-rose-500 shrink-0';
+                }
+            } catch (e) {
+                const dot = document.getElementById('syncStatusDot');
+                if (dot) dot.className = 'w-2 h-2 rounded-full bg-rose-500 shrink-0';
+            }
+        }
+
+        async function connectRealtimeSync() {
+            const pullFromFirebase = async (isFirst = false) => {
+                if (!isFirst && Date.now() - __lastLocalMutationAt < 2500) return;
+                try {
+                    const res = await fetch(FIREBASE_ACTIVE_NODE, { cache: 'no-store' });
+                    if (!res.ok) return;
+                    const cloudData = await res.json();
+                    if (cloudData && cloudData.ties) {
+                        const myCourtTiesBackup = (state.ties || []).filter(t => (t.court || t.matches?.[0]?.court || 'Sân 1') === currentAssignedCourt);
+                        const isRecentLocal = !isFirst && (Date.now() - __lastLocalMutationAt < 5000) && myCourtTiesBackup.length > 0;
+
+                        state = cloudData;
+                        if (!Array.isArray(state.matchLogs)) state.matchLogs = [];
+
+                        if (isRecentLocal) {
+                            state.ties = (state.ties || []).map(ct => {
+                                const localMatchTie = myCourtTiesBackup.find(lt => lt.id === ct.id);
+                                return localMatchTie ? localMatchTie : ct;
+                            });
+                        }
+
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                        renderRefereeApp();
+                    }
+                    const dot = document.getElementById('syncStatusDot');
+                    if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-500 live-dot shrink-0';
+                } catch (e) {
+                    const dot = document.getElementById('syncStatusDot');
+                    if (dot) dot.className = 'w-2 h-2 rounded-full bg-amber-500 live-dot shrink-0';
+                }
+            };
+
+            await pullFromFirebase(true);
+            setInterval(() => pullFromFirebase(false), 2500);
+        }
+
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'PICKLEBALL_USER_ROLE' || e.key === 'PICKLEBALL_REFEREE_UNLOCKED') {
+                enforceRefereeSecurityLock('Phiên làm việc đã được đăng xuất. Vui lòng nhập mật khẩu để tiếp tục.');
+                return;
+            }
+            if (e.key === STORAGE_KEY && e.newValue) {
+                if (Date.now() - __lastLocalMutationAt < 1000) return;
+                try {
+                    state = JSON.parse(e.newValue);
+                    if (!Array.isArray(state.matchLogs)) state.matchLogs = [];
+                    renderRefereeApp();
+                } catch (err) {}
+            }
+        });
+
+        // =========================================================================
+        // GHI NHẬT KÝ (LOG) CHI TIẾT CỦA TỪNG TRẬN ĐẤU & TOÀN GIẢI
+        // =========================================================================
+        function formatNowTime() {
+            const d = new Date();
+            const pad = (n) => String(n).padStart(2, '0');
+            return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        }
+
+        function recordMatchLog(matchObj, eventType, detailText) {
+            if (!matchObj) return;
+            if (!Array.isArray(matchObj.logs)) matchObj.logs = [];
+            if (!Array.isArray(state.matchLogs)) state.matchLogs = [];
+
+            const { tie } = findMatchById(matchObj.id);
+            const c1 = getClubById(matchObj.club1Id).name;
+            const c2 = getClubById(matchObj.club2Id).name;
+            const cleanCat = (matchObj.catLabel || '').replace(/^(Bảng [^•]+•\s*)?(Lượt \d+\s*•\s*)?(Vòng \d+\s*•\s*)?/i, '');
+            const scoreSnapshot = `${matchObj.score1 || 0}-${matchObj.score2 || 0}`;
+
+            const entry = {
+                id: 'log_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                time: formatNowTime(),
+                timestamp: Date.now(),
+                court: matchObj.court || currentAssignedCourt,
+                tieId: tie?.id || '',
+                tieLabel: `${c1} vs ${c2}`,
+                matchId: matchObj.id,
+                matchLabel: cleanCat,
+                type: eventType,
+                score: scoreSnapshot,
+                detail: detailText,
+                actor: isAdminRole() ? 'Admin' : 'Trọng tài'
+            };
+
+            matchObj.logs.unshift(entry);
+            state.matchLogs.unshift(entry);
+            if (state.matchLogs.length > 500) state.matchLogs.length = 500;
+        }
+
+        function openMatchLogModal() {
+            if (!enforceRefereeSecurityLock()) return;
+            renderMatchLogsList();
+            document.getElementById('matchLogModal').classList.remove('hidden');
+            document.getElementById('matchLogModal').classList.add('flex');
+        }
+
+        function closeMatchLogModal() {
+            document.getElementById('matchLogModal').classList.add('hidden');
+            document.getElementById('matchLogModal').classList.remove('flex');
+        }
+
+        function renderMatchLogsList() {
+            const container = document.getElementById('matchLogListContainer');
+            const scope = document.getElementById('logScopeSelect')?.value || 'CURRENT_MATCH';
+            if (!container) return;
+
+            const activeId = getCourtSelectedMatchId(currentAssignedCourt);
+            const { tie, match: curMatch } = findMatchById(activeId);
+            let logsToShow = [];
+
+            if (scope === 'CURRENT_MATCH' && curMatch) {
+                logsToShow = curMatch.logs || (state.matchLogs || []).filter(l => l.matchId === curMatch.id);
+            } else if (scope === 'CURRENT_TIE' && tie) {
+                const matchIds = new Set((tie.matches || []).map(x => x.id));
+                logsToShow = (state.matchLogs || []).filter(l => l.tieId === tie.id || matchIds.has(l.matchId));
+            } else {
+                logsToShow = state.matchLogs || [];
+            }
+
+            if (!logsToShow.length) {
+                container.innerHTML = `<div class="text-center py-8 text-stone-400 italic">Chưa có nhật ký ghi nhận cho mục này.</div>`;
+                return;
+            }
+
+            const badgeMap = {
+                'COIN_TOSS': 'bg-amber-100 text-amber-800 border-amber-300',
+                'SCORE': 'bg-emerald-100 text-emerald-800 border-emerald-300',
+                'MEDICAL_SUB': 'bg-rose-100 text-rose-800 border-rose-300',
+                'SERVE_CHANGE': 'bg-sky-100 text-sky-800 border-sky-300',
+                'FINISH': 'bg-purple-100 text-purple-800 border-purple-300'
+            };
+
+            container.innerHTML = logsToShow.map(l => {
+                const bCls = badgeMap[l.type] || 'bg-stone-100 text-stone-700 border-stone-300';
+                return `
+                    <div class="bg-white border border-stone-200 rounded-lg p-2 space-y-0.5 shadow-2xs">
+                        <div class="flex items-center justify-between gap-1 text-[10px]">
+                            <span class="font-mono font-bold text-stone-500">[${l.time}] • ${l.court}</span>
+                            <div class="flex items-center gap-1">
+                                <span class="px-1.5 py-0.2 rounded border font-extrabold ${bCls}">${l.score}</span>
+                                <span class="text-[9px] text-stone-400 font-bold">${l.actor || 'TT'}</span>
+                            </div>
+                        </div>
+                        <div class="text-[11px] font-bold text-stone-900 leading-snug">${l.detail}</div>
+                        <div class="text-[9.5px] text-stone-500 truncate">${l.tieLabel} • ${l.matchLabel}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function copyMatchLogsToClipboard() {
+            const scope = document.getElementById('logScopeSelect')?.value || 'CURRENT_MATCH';
+            const activeId = getCourtSelectedMatchId(currentAssignedCourt);
+            const { tie, match: curMatch } = findMatchById(activeId);
+            let logsToShow = [];
+            if (scope === 'CURRENT_MATCH' && curMatch) {
+                logsToShow = curMatch.logs || (state.matchLogs || []).filter(l => l.matchId === curMatch.id);
+            } else if (scope === 'CURRENT_TIE' && tie) {
+                const matchIds = new Set((tie.matches || []).map(x => x.id));
+                logsToShow = (state.matchLogs || []).filter(l => l.tieId === tie.id || matchIds.has(l.matchId));
+            } else {
+                logsToShow = state.matchLogs || [];
+            }
+
+            if (!logsToShow.length) { showToast('Không có dữ liệu log để sao chép!'); return; }
+            const text = logsToShow.slice().reverse().map(l => `[${l.time}] [${l.court}] (${l.tieLabel} - ${l.matchLabel}) [${l.score}]: ${l.detail}`).join('\n');
+            navigator.clipboard?.writeText(text).then(() => {
+                showToast('📋 Đã sao chép toàn bộ Log vào bộ nhớ tạm!');
+            }).catch(() => {
+                showToast('⚠️ Trình duyệt không hỗ trợ sao chép tự động!');
+            });
+        }
+
+        function evaluateTieStatus(tieMatches) {
+            let c1Wins = 0;
+            let c2Wins = 0;
+            let finishedCount = 0;
+
+            (tieMatches || []).forEach(m => {
+                if (m.status === 'FINISHED') {
+                    finishedCount++;
+                    const s1 = parseInt(m.score1) || 0;
+                    const s2 = parseInt(m.score2) || 0;
+                    if (s1 > s2) c1Wins++;
+                    else if (s2 > s1) c2Wins++;
+                }
+            });
+
+            const isClinched = (c1Wins >= WINS_TO_CLINCH_TIE || c2Wins >= WINS_TO_CLINCH_TIE);
+            const allResolved = (tieMatches || []).length > 0 && (tieMatches || []).every(m => m.status === 'FINISHED' || m.status === 'SKIPPED');
+            const isCompleted = isClinched || allResolved;
+            const isLive = !isCompleted && (
+                (tieMatches || []).some(m => m.status === 'LIVE' || (m.status !== 'FINISHED' && m.status !== 'SKIPPED' && ((parseInt(m.score1) || 0) > 0 || (parseInt(m.score2) || 0) > 0))) ||
+                finishedCount > 0
+            );
+
+            return {
+                c1Wins,
+                c2Wins,
+                finishedCount,
+                totalCount: (tieMatches || []).length,
+                isClinched,
+                isCompleted,
+                isLive,
+                winnerSide: c1Wins > c2Wins ? 1 : (c2Wins > c1Wins ? 2 : 0)
+            };
+        }
+
+        function enforceTieClinchRules() {
+            (state.ties || []).forEach(tie => {
+                const tMatches = tie.matches || [];
+                const st = evaluateTieStatus(tMatches);
+                if (st.isClinched) {
+                    tie.status = 'FINISHED';
+                    tMatches.forEach(m => {
+                        if (m.status !== 'FINISHED') {
+                            m.status = 'SKIPPED';
+                        }
+                    });
+                } else {
+                    tie.status = st.isCompleted ? 'FINISHED' : (st.isLive ? 'LIVE' : 'UPCOMING');
+                    tMatches.forEach(m => {
+                        if (m.status === 'SKIPPED') {
+                            m.status = 'UPCOMING';
+                        }
+                    });
+                }
+            });
+        }
+
+        function getActiveCourtsWithMatches() {
+            const allMatches = getAllMatchesFlat();
+            const occupiedSet = new Set(allMatches.map(m => (m.court || 'Sân 1').trim()));
+            return ALL_COURTS.filter(c => occupiedSet.has(c));
+        }
+
+        function syncCourtSelectorOptions() {
+            const courtSel = document.getElementById('refereeCourtSelect');
+            if (!courtSel) return;
+
+            const activeCourts = getActiveCourtsWithMatches();
+            if (activeCourts.length === 0) {
+                courtSel.innerHTML = `<option value="">Trống lịch</option>`;
+                courtSel.classList.add('opacity-60');
+                document.getElementById('refereeCourtTitle').textContent = 'Chưa có sân thi đấu';
+                document.getElementById('liveCurrentCourtBadge').textContent = 'Trống';
+                return;
+            }
+
+            courtSel.classList.remove('opacity-60');
+            if (!lockedUrlCourt && !activeCourts.includes(currentAssignedCourt)) {
+                currentAssignedCourt = activeCourts[0];
+                localStorage.setItem('REF_STANDALONE_COURT', currentAssignedCourt);
+            }
+
+            const isLockedToUrlCourt = Boolean(lockedUrlCourt) && !isAdminRole();
+            courtSel.disabled = isLockedToUrlCourt;
+            courtSel.innerHTML = (isLockedToUrlCourt ? [currentAssignedCourt] : activeCourts).map(c => `<option value="${c}">${c}</option>`).join('');
+            courtSel.value = currentAssignedCourt;
+            document.getElementById('refereeCourtTitle').textContent = `Cố định: ${currentAssignedCourt}`;
+            document.getElementById('liveCurrentCourtBadge').textContent = currentAssignedCourt;
+        }
+
+        function changeRefereeCourt(courtName) {
+            if (!enforceRefereeSecurityLock()) return;
+            if (lockedUrlCourt && !isAdminRole()) {
+                showToast(`🔒 Bạn đang được phân công cố định tại ${lockedUrlCourt}!`);
+                return;
+            }
+            if (!courtName) return;
+            currentAssignedCourt = courtName;
+            requestedUrlTieId = '';
+            requestedUrlWave = 0;
+            localStorage.setItem('REF_STANDALONE_COURT', courtName);
+            document.getElementById('refereeCourtTitle').textContent = `Cố định: ${courtName}`;
+            document.getElementById('liveCurrentCourtBadge').textContent = courtName;
+            
+            const activeTieMatches = getActiveTieMatchesForCourt(courtName);
+            const found = activeTieMatches.find(x => x.status !== 'FINISHED' && x.status !== 'SKIPPED') || activeTieMatches[0];
+            if (found) setCourtSelectedMatchId(courtName, found.id);
+            __lastPromptedTossMatchId = null;
+            renderRefereeApp();
+        }
+
+        function showToast(msg) {
+            const c = document.getElementById('toastContainer');
+            if (!c) return;
+            c.innerHTML = '';
+            const el = document.createElement('div');
+            el.className = 'px-3.5 py-2 rounded-xl bg-white/95 border-2 border-brand-300 text-brand-700 text-xs font-extrabold shadow-xl text-center';
+            el.textContent = msg;
+            c.appendChild(el);
+            setTimeout(() => el.remove(), 2400);
+        }
+
+        function isPlayerFemale(p) {
+            const g = String(p?.gender || '').trim().toLowerCase();
+            return g === 'nữ' || g === 'nu' || g === 'f' || g === 'female';
+        }
+
+        function getMatchGenderRule(matchObj) {
+            const label = String(matchObj?.catLabel || '').toLowerCase();
+            if (label.includes('đôi nam nữ') || label.includes('nam nữ')) return 'NAM_NU';
+            if (label.includes('đôi nữ')) return 'NU';
+            if (label.includes('đôi nam')) return 'NAM';
+            return 'ANY';
+        }
+
+        function getRequiredPlayerCount(matchObj) {
+            return matchObj?.catKey === 'DON' ? 4 : 2;
+        }
+
+        function getClubById(clubId) { return (state.clubs || []).find(c => c.id === clubId) || { id: clubId, name: 'CLB', players: [] }; }
+        function getPlayerById(clubId, playerId) { return (getClubById(clubId).players || []).find(p => p.id === playerId) || null; }
+        
+        function getAllMatchesFlat() {
+            const list = [];
+            (state.ties || []).forEach(tie => (tie.matches || []).forEach(m => list.push(m)));
+            return list;
+        }
+
+        // CHỌN ĐÚNG CẶP ĐẤU THEO THAM SỐ LƯỢT / TIEID TRÊN URL HOẶC LƯỢT TIẾP THEO CHƯA ĐẤU
+        function getActiveTieMatchesForCourt(courtName) {
+            enforceTieClinchRules();
+            const courtTies = (state.ties || [])
+                .filter(t => (t.court || t.matches?.[0]?.court || 'Sân 1') === courtName && (t.matches || []).length > 0)
+                .sort((a, b) => (a.wave || a.matches?.[0]?.wave || 1) - (b.wave || b.matches?.[0]?.wave || 1));
+
+            if (courtTies.length > 0) {
+                let targetTie = null;
+
+                // 1. Nếu URL truyền cụ thể tieId (khi bấm từ Trang chủ vào đúng Lượt 2), ưu tiên tuyệt đối tieId này
+                if (requestedUrlTieId) {
+                    targetTie = courtTies.find(t => t.id === requestedUrlTieId);
+                }
+
+                // 2. Nếu URL truyền cụ thể số Lượt (wave), lấy đúng cặp của Lượt đó
+                if (!targetTie && requestedUrlWave > 0) {
+                    targetTie = courtTies.find(t => (t.wave || t.matches?.[0]?.wave || 1) === requestedUrlWave);
+                }
+
+                // 3. Nếu đang chọn trận trong localStorage nhưng cặp đó ĐÃ KẾT THÚC (Lượt 1 đã xong)
+                // thì bỏ qua cặp cũ để nhảy sang Lượt 2!
+                if (!targetTie) {
+                    const selectedMatchId = getCourtSelectedMatchId(courtName);
+                    if (selectedMatchId) {
+                        const savedTie = courtTies.find(t => (t.matches || []).some(m => m.id === selectedMatchId));
+                        if (savedTie && !evaluateTieStatus(savedTie.matches).isCompleted) {
+                            targetTie = savedTie;
+                        }
+                    }
+                }
+
+                // 4. Ưu tiên cặp đang đánh LIVE trên sân
+                if (!targetTie) {
+                    targetTie = courtTies.find(t => evaluateTieStatus(t.matches).isLive);
+                }
+
+                // 5. Tiếp theo là cặp đầu tiên CHƯA ĐẤU (Lượt 2, Lượt 3...)
+                if (!targetTie) {
+                    targetTie = courtTies.find(t => !evaluateTieStatus(t.matches).isCompleted);
+                }
+
+                // 6. Nếu tất cả các lượt trên sân đã đấu xong hết thì hiển thị cặp cuối cùng
+                if (!targetTie) {
+                    targetTie = courtTies[courtTies.length - 1];
+                }
+
+                return targetTie.matches || [];
+            }
+
+            const courtMatches = getAllMatchesFlat().filter(x => (x.court || 'Sân 1') === courtName);
+            if (courtMatches.length === 0) return [];
+            const anchorMatch = courtMatches[0];
+            return courtMatches.filter(m => m.club1Id === anchorMatch.club1Id && m.club2Id === anchorMatch.club2Id);
+        }
+
+        function findMatchById(matchId) {
+            for (const tie of (state.ties || [])) {
+                const found = (tie.matches || []).find(m => m.id === matchId);
+                if (found) return { tie, match: found };
+            }
+            const firstTie = state.ties?.[0];
+            return { tie: firstTie, match: firstTie?.matches?.[0] || null };
+        }
+
+        function hasMatchFullLineup(m) {
+            if (!m) return false;
+            const req = getRequiredPlayerCount(m);
+            return (m.team1PlayerIds || []).length >= req && (m.team2PlayerIds || []).length >= req;
+        }
+
+        function openMissingLineupStep() {
+            const activeId = getCourtSelectedMatchId(currentAssignedCourt);
+            const { match: m } = findMatchById(activeId);
+            if (!m) return;
+            const req = getRequiredPlayerCount(m);
+            if ((m.team1PlayerIds || []).length < req) {
+                openRefereePlayerSetupModal(1);
+            } else {
+                openRefereePlayerSetupModal(2);
+            }
+        }
+
+        function getMatchPlayersDisplayString(m, side) {
+            const clubId = side === 1 ? m.club1Id : m.club2Id;
+            const pIds = side === 1 ? (m.team1PlayerIds || []) : (m.team2PlayerIds || []);
+            const names = pIds.map(pid => getPlayerById(clubId, pid)?.name).filter(Boolean);
+            return names.length > 0 ? names.join(' / ') : 'Chưa chọn VĐV';
+        }
+
+        function isCoinTossRequiredForMatch(m) {
+            if (!m) return false;
+            if (m.status === 'FINISHED' || m.status === 'SKIPPED') return false;
+            if (!hasMatchFullLineup(m)) return false;
+            const s1 = parseInt(m.score1) || 0;
+            const s2 = parseInt(m.score2) || 0;
+            if (s1 > 0 || s2 > 0) return false;
+            return !Boolean(m.coinTossConfirmed);
+        }
+
+        function openCoinTossModal(mandatory = false) {
+            if (!enforceRefereeSecurityLock()) return;
+            const activeId = getCourtSelectedMatchId(currentAssignedCourt);
+            const { match: m } = findMatchById(activeId);
+            if (!m) return;
+
+            if (!hasMatchFullLineup(m)) {
+                showToast('⚠️ Vui lòng chọn đủ VĐV cho 2 đội trước khi bốc thăm!');
+                openMissingLineupStep();
+                return;
+            }
+
+            if (!m.courtState) syncMatchCourtStateFromLineup(m);
+
+            isMandatoryCoinTossOpen = Boolean(mandatory);
+            const closeBtn = document.getElementById('closeCoinTossBtn');
+            const subEl = document.getElementById('coinTossModalSub');
+            const catEl = document.getElementById('coinTossCategoryLabel');
+            if (closeBtn) closeBtn.classList.toggle('hidden', isMandatoryCoinTossOpen);
+            if (catEl) {
+                const cleanCat = (m.catLabel || '').replace(/^(Bảng [^•]+•\s*)?(Lượt \d+\s*•\s*)?(Vòng \d+\s*•\s*)?/i, '');
+                catEl.textContent = cleanCat;
+            }
+            if (subEl) {
+                subEl.textContent = isMandatoryCoinTossOpen
+                    ? '⚠️ Bắt buộc bốc thăm chọn Sân & Bóng trước khi bắt đầu trận đấu!'
+                    : 'Tung đồng xu hoặc điều chỉnh quyền giao bóng / chọn sân';
+            }
+
+            tempTossServeTeam = m.servingTeam || 1;
+            tempTossSwapped = Boolean(m.courtState?.swappedEnds);
+
+            const c1 = getClubById(m.club1Id).name;
+            const c2 = getClubById(m.club2Id).name;
+            const p1Str = getMatchPlayersDisplayString(m, 1);
+            const p2Str = getMatchPlayersDisplayString(m, 2);
+
+            document.getElementById('tossTeam1ClubHeader').textContent = c1;
+            document.getElementById('tossTeam1PlayersText').textContent = p1Str;
+            document.getElementById('tossTeam2ClubHeader').textContent = c2;
+            document.getElementById('tossTeam2PlayersText').textContent = p2Str;
+
+            document.getElementById('tossServeTeam1Btn').innerHTML = `<div class="truncate">${c1}</div><div class="text-[10px] font-semibold opacity-90 truncate mt-0.5">${p1Str}</div>`;
+            document.getElementById('tossServeTeam2Btn').innerHTML = `<div class="truncate">${c2}</div><div class="text-[10px] font-semibold opacity-90 truncate mt-0.5">${p2Str}</div>`;
+
+            document.getElementById('tossSideNormalBtn').innerHTML = `<div class="truncate">Trái: ${p1Str}</div><div class="text-[9.5px] font-normal opacity-80 truncate mt-0.5">Phải: ${p2Str}</div>`;
+            document.getElementById('tossSideSwappedBtn').innerHTML = `<div class="truncate">Trái: ${p2Str}</div><div class="text-[9.5px] font-normal opacity-80 truncate mt-0.5">Phải: ${p1Str}</div>`;
+            document.getElementById('coinTossResultText').textContent = 'Bấm tung đồng xu để xác định đội ưu tiên';
+
+            updateCoinTossButtonsUI();
+            document.getElementById('coinTossModal').classList.remove('hidden');
+            document.getElementById('coinTossModal').classList.add('flex');
+        }
+
+        function closeCoinTossModal(force = false) {
+            if (isMandatoryCoinTossOpen && !force) {
+                showToast('⚠️ Vui lòng xác nhận bốc thăm chọn Sân/Bóng trước!');
+                return;
+            }
+            isMandatoryCoinTossOpen = false;
+            document.getElementById('coinTossModal').classList.add('hidden');
+            document.getElementById('coinTossModal').classList.remove('flex');
+        }
+
+        function flipCoinForPriority() {
+            const activeId = getCourtSelectedMatchId(currentAssignedCourt);
+            const { match: m } = findMatchById(activeId);
+            if (!m) return;
+            const c1 = getClubById(m.club1Id).name;
+            const c2 = getClubById(m.club2Id).name;
+            const p1Str = getMatchPlayersDisplayString(m, 1);
+            const p2Str = getMatchPlayersDisplayString(m, 2);
+
+            const coinEl = document.getElementById('coinVisualIcon');
+            coinEl.classList.remove('animate-coin');
+            void coinEl.offsetWidth;
+            coinEl.classList.add('animate-coin');
+
+            const winnerTeam = Math.random() < 0.5 ? 1 : 2;
+            const winnerName = winnerTeam === 1 ? `${p1Str} (${c1})` : `${p2Str} (${c2})`;
+            tempTossServeTeam = winnerTeam;
+            updateCoinTossButtonsUI();
+
+            document.getElementById('coinTossResultText').innerHTML = `🎉 <span class="text-orange-600 font-extrabold">${winnerName}</span> thắng bốc thăm! (Chọn Sân hoặc Bóng bên dưới)`;
+        }
+
+        function setTossServeTeam(teamNum) {
+            tempTossServeTeam = teamNum;
+            updateCoinTossButtonsUI();
+        }
+
+        function setTossCourtSide(isSwapped) {
+            tempTossSwapped = isSwapped;
+            updateCoinTossButtonsUI();
+        }
+
+        function updateCoinTossButtonsUI() {
+            const s1Btn = document.getElementById('tossServeTeam1Btn');
+            const s2Btn = document.getElementById('tossServeTeam2Btn');
+            const sideNormBtn = document.getElementById('tossSideNormalBtn');
+            const sideSwapBtn = document.getElementById('tossSideSwappedBtn');
+
+            s1Btn.className = `py-2 px-2 rounded-xl border font-extrabold text-xs leading-tight transition ${tempTossServeTeam === 1 ? 'bg-brand-600 text-white border-brand-500 shadow-sm' : 'bg-stone-50 text-stone-700 border-stone-200'}`;
+            s2Btn.className = `py-2 px-2 rounded-xl border font-extrabold text-xs leading-tight transition ${tempTossServeTeam === 2 ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-stone-50 text-stone-700 border-stone-200'}`;
+
+            sideNormBtn.className = `py-2 px-2 rounded-xl border font-bold text-[10.5px] leading-tight transition ${!tempTossSwapped ? 'bg-amber-100 text-amber-900 border-amber-400 shadow-sm' : 'bg-stone-50 text-stone-600 border-stone-200'}`;
+            sideSwapBtn.className = `py-2 px-2 rounded-xl border font-bold text-[10.5px] leading-tight transition ${tempTossSwapped ? 'bg-amber-100 text-amber-900 border-amber-400 shadow-sm' : 'bg-stone-50 text-stone-600 border-stone-200'}`;
+        }
+
+        function applyCoinTossSettings() {
+            if (!enforceRefereeSecurityLock()) return;
+            const activeId = getCourtSelectedMatchId(currentAssignedCourt);
+            const { match: m } = findMatchById(activeId);
+            if (!m) return;
+            if (!m.courtState) syncMatchCourtStateFromLineup(m);
+
+            m.servingTeam = tempTossServeTeam;
+            m.serverNum = m.catKey === 'DON' ? 1 : 2;
+            m.courtState.swappedEnds = tempTossSwapped;
+            m.coinTossConfirmed = true;
+
+            const c1 = getClubById(m.club1Id).name;
+            const c2 = getClubById(m.club2Id).name;
+            const p1Str = getMatchPlayersDisplayString(m, 1);
+            const p2Str = getMatchPlayersDisplayString(m, 2);
+            const serverLabel = tempTossServeTeam === 1 ? `${p1Str} (${c1})` : `${p2Str} (${c2})`;
+            const sideDesc = tempTossSwapped ? `Trái: ${p2Str} - Phải: ${p1Str}` : `Trái: ${p1Str} - Phải: ${p2Str}`;
+
+            recordMatchLog(m, 'COIN_TOSS', `Bốc thăm: ${serverLabel} giao bóng trước (${sideDesc})`);
+
+            saveState();
+            closeCoinTossModal(true);
+            renderRefereeApp();
+            showToast(`✅ ${serverLabel} giao bóng trước!`);
+        }
+
+        function openMedicalSubModal() {
+            if (!enforceRefereeSecurityLock()) return;
+            const activeId = getCourtSelectedMatchId(currentAssignedCourt);
+            const { match: m } = findMatchById(activeId);
+            if (!m) return;
+
+            if (m.status === 'FINISHED' || m.status === 'SKIPPED') {
+                showToast('⚠️ Nội dung này đã kết thúc, không thể thay VĐV y tế!');
+                return;
+            }
+
+            const c1 = getClubById(m.club1Id);
+            const c2 = getClubById(m.club2Id);
+            const cleanCat = (m.catLabel || '').replace(/^(Bảng [^•]+•\s*)?(Lượt \d+\s*•\s*)?(Vòng \d+\s*•\s*)?/i, '');
+            document.getElementById('medSubMatchTitle').textContent = `${cleanCat} (${m.score1 || 0}-${m.score2 || 0})`;
+
+            const sideSel = document.getElementById('medSubSideSelect');
+            sideSel.innerHTML = `
+                <option value="1">Đội 1: ${c1.name}</option>
+                <option value="2">Đội 2: ${c2.name}</option>
+            `;
+            sideSel.value = '1';
+            populateMedicalSubPlayers();
+
+            document.getElementById('medicalSubModal').classList.remove('hidden');
+            document.getElementById('medicalSubModal').classList.add('flex');
+        }
+
+        function closeMedicalSubModal() {
+            document.getElementById('medicalSubModal').classList.add('hidden');
+            document.getElementById('medicalSubModal').classList.remove('flex');
+        }
+
+        function populateMedicalSubPlayers() {
+            const activeId = getCourtSelectedMatchId(currentAssignedCourt);
+            const { match: m } = findMatchById(activeId);
+            if (!m) return;
+            const side = parseInt(document.getElementById('medSubSideSelect').value, 10) || 1;
+            const club = getClubById(side === 1 ? m.club1Id : m.club2Id);
+            const arrKey = side === 1 ? 'team1PlayerIds' : 'team2PlayerIds';
+            const onCourtIds = m[arrKey] || [];
+
+            const outSel = document.getElementById('medSubOutPlayerSelect');
+            if (onCourtIds.length === 0) {
+                outSel.innerHTML = `<option value="">(Đội chưa đăng ký VĐV trên sân)</option>`;
+            } else {
+                outSel.innerHTML = onCourtIds.map(pid => {
+                    const p = getPlayerById(club.id, pid);
+                    return p ? `<option value="${p.id}">${p.name} (${p.gender || 'Nam'} - Trình ${p.level || 'A'})</option>` : '';
+                }).join('');
+            }
+            populateMedicalSubInPlayers();
+        }
+
+        function populateMedicalSubInPlayers() {
+            const activeId = getCourtSelectedMatchId(currentAssignedCourt);
+            const { match: m } = findMatchById(activeId);
+            if (!m) return;
+            const side = parseInt(document.getElementById('medSubSideSelect').value, 10) || 1;
+            const club = getClubById(side === 1 ? m.club1Id : m.club2Id);
+            const arrKey = side === 1 ? 'team1PlayerIds' : 'team2PlayerIds';
+            const onCourtIds = m[arrKey] || [];
+            const outPlayerId = document.getElementById('medSubOutPlayerSelect').value;
+            const outPlayer = getPlayerById(club.id, outPlayerId);
+            const genderRule = getMatchGenderRule(m);
+
+            const benchPlayers = (club.players || []).filter(p => {
+                if (onCourtIds.includes(p.id)) return false;
+                if (genderRule === 'NAM' && isPlayerFemale(p)) return false;
+                if (genderRule === 'NU' && !isPlayerFemale(p)) return false;
+                if (genderRule === 'NAM_NU' && outPlayer) {
+                    return isPlayerFemale(p) === isPlayerFemale(outPlayer);
+                }
+                return true;
+            });
+
+            const inSel = document.getElementById('medSubInPlayerSelect');
+            if (benchPlayers.length === 0) {
+                inSel.innerHTML = `<option value="">(Không còn VĐV dự bị hợp lệ trong CLB)</option>`;
+            } else {
+                inSel.innerHTML = benchPlayers.map(p => `<option value="${p.id}">${p.name} (${p.gender || 'Nam'} - Trình ${p.level || 'A'})</option>`).join('');
+            }
+        }
+
+        function applyMedicalSubstitution(event) {
+            event.preventDefault();
+            if (!enforceRefereeSecurityLock()) return;
+            const activeId = getCourtSelectedMatchId(currentAssignedCourt);
+            const { match: m } = findMatchById(activeId);
+            if (!m) return;
+
+            const side = parseInt(document.getElementById('medSubSideSelect').value, 10) || 1;
+            const outId = document.getElementById('medSubOutPlayerSelect').value;
+            const inId = document.getElementById('medSubInPlayerSelect').value;
+            const reason = document.getElementById('medSubReasonInput').value.trim() || 'Thay y tế';
+
+            if (!outId || !inId) {
+                showToast('⚠️ Vui lòng chọn đầy đủ VĐV ra sân và VĐV thay thế!');
+                return;
+            }
+
+            const club = getClubById(side === 1 ? m.club1Id : m.club2Id);
+            const outPlayer = getPlayerById(club.id, outId);
+            const inPlayer = getPlayerById(club.id, inId);
+            if (!outPlayer || !inPlayer) return;
+
+            const arrKey = side === 1 ? 'team1PlayerIds' : 'team2PlayerIds';
+            const curList = [...(m[arrKey] || [])];
+            const idx = curList.indexOf(outId);
+            if (idx !== -1) curList[idx] = inId;
+            m[arrKey] = curList;
+
+            if (m.courtState) {
+                if (side === 1) {
+                    if (m.courtState.t1Right === outPlayer.name) m.courtState.t1Right = inPlayer.name;
+                    if (m.courtState.t1Left === outPlayer.name) m.courtState.t1Left = inPlayer.name;
+                } else {
+                    if (m.courtState.t2Right === outPlayer.name) m.courtState.t2Right = inPlayer.name;
+                    if (m.courtState.t2Left === outPlayer.name) m.courtState.t2Left = inPlayer.name;
+                }
+            }
+            syncMatchCourtStateFromLineup(m, true);
+
+            recordMatchLog(m, 'MEDICAL_SUB', `🚑 Thay VĐV y tế (${club.name}): ${outPlayer.name} RA ➔ ${inPlayer.name} VÀO (${reason})`);
+
+            saveState();
+            closeMedicalSubModal();
+            renderRefereeApp();
+            showToast(`🚑 Đã thay y tế: ${outPlayer.name} ➔ ${inPlayer.name}`);
+        }
+
+        function evaluateMatchWinCondition(m) {
+            const isSingles = (m.catKey === 'DON');
+            const target = isSingles ? 21 : 15;
+            const s1 = parseInt(m.score1) || 0, s2 = parseInt(m.score2) || 0;
+            if (s1 >= target || s2 >= target) {
+                return { isWon: true, winnerScore: Math.max(s1, s2), loserScore: Math.min(s1, s2) };
+            }
+            return { isWon: false };
+        }
+
+        function syncMatchCourtStateFromLineup(m, preservePositions = false) {
+            const c1 = getClubById(m.club1Id), c2 = getClubById(m.club2Id);
+            const p1List = (m.team1PlayerIds || []).map(pid => getPlayerById(m.club1Id, pid)?.name).filter(Boolean);
+            const p2List = (m.team2PlayerIds || []).map(pid => getPlayerById(m.club2Id, pid)?.name).filter(Boolean);
+            const prevSwapped = m.courtState ? Boolean(m.courtState.swappedEnds) : false;
+            
+            if (m.catKey === 'DON') {
+                const totalScore = (parseInt(m.score1) || 0) + (parseInt(m.score2) || 0);
+                const rotIdx = Math.floor(totalScore / 4);
+                const activeP1 = p1List.length ? p1List[rotIdx % p1List.length] : c1.name;
+                const activeP2 = p2List.length ? p2List[rotIdx % p2List.length] : c2.name;
+
+                m.team1Name = p1List.length ? `${activeP1} (#${(rotIdx % p1List.length) + 1}/${p1List.length})` : c1.name;
+                m.team2Name = p2List.length ? `${activeP2} (#${(rotIdx % p2List.length) + 1}/${p2List.length})` : c2.name;
+                m.courtState = { swappedEnds: prevSwapped, t1Right: activeP1, t2Right: activeP2 };
+                return;
+            }
+
+            m.team1Name = p1List.length ? p1List.join(' / ') : c1.name;
+            m.team2Name = p2List.length ? p2List.join(' / ') : c2.name;
+
+            if (preservePositions && m.courtState && p1List.includes(m.courtState.t1Right) && p2List.includes(m.courtState.t2Right)) {
+                return;
+            }
+
+            m.courtState = { 
+                swappedEnds: prevSwapped, 
+                t1Right: p1List[0] || c1.name, 
+                t1Left: p1List[1] || p1List[0] || c1.name, 
+                t2Right: p2List[0] || c2.name, 
+                t2Left: p2List[1] || p2List[0] || c2.name 
+            };
+        }
+
+        function handleManualServerSelect(selectedName) {
+            if (!enforceRefereeSecurityLock()) return;
+            const activeId = getCourtSelectedMatchId(currentAssignedCourt);
+            const { match: m } = findMatchById(activeId);
+            if (!m) return;
+            const isSingles = (m.catKey === 'DON');
+            if (!m.courtState) syncMatchCourtStateFromLineup(m);
+            const cs = m.courtState;
+
+            const servingTeam = m.servingTeam || 1;
+            const serverNum = isSingles ? 1 : (m.serverNum || 2);
+            const servingScore = servingTeam === 1 ? (parseInt(m.score1) || 0) : (parseInt(m.score2) || 0);
+            const isEvenScore = (servingScore % 2 === 0);
+            const isFirstServerSlot = isSingles || (serverNum === 1);
+            const serveFromRightBox = isFirstServerSlot ? isEvenScore : !isEvenScore;
+
+            if (isSingles) {
+                if (servingTeam === 1) cs.t1Right = selectedName;
+                else cs.t2Right = selectedName;
+            } else {
+                if (servingTeam === 1) {
+                    const p1List = (m.team1PlayerIds || []).map(pid => getPlayerById(m.club1Id, pid)?.name).filter(Boolean);
+                    const partner = p1List.find(n => n !== selectedName) || selectedName;
+                    if (serveFromRightBox) { cs.t1Right = selectedName; cs.t1Left = partner; }
+                    else { cs.t1Left = selectedName; cs.t1Right = partner; }
+                } else {
+                    const p2List = (m.team2PlayerIds || []).map(pid => getPlayerById(m.club2Id, pid)?.name).filter(Boolean);
+                    const partner = p2List.find(n => n !== selectedName) || selectedName;
+                    if (serveFromRightBox) { cs.t2Right = selectedName; cs.t2Left = partner; }
+                    else { cs.t2Left = selectedName; cs.t2Right = partner; }
+                }
+            }
+            recordMatchLog(m, 'SERVE_CHANGE', `Chọn người giao bóng: ${selectedName}`);
+            saveState();
+            renderRefereeApp();
+            showToast(`🎾 Người giao bóng: ${selectedName}`);
+        }
+
+        function handleManualReceiverSelect(selectedName) {
+            if (!enforceRefereeSecurityLock()) return;
+            const activeId = getCourtSelectedMatchId(currentAssignedCourt);
+            const { match: m } = findMatchById(activeId);
+            if (!m) return;
+            const isSingles = (m.catKey === 'DON');
+            if (!m.courtState) syncMatchCourtStateFromLineup(m);
+            const cs = m.courtState;
+
+            const servingTeam = m.servingTeam || 1;
+            const receivingTeam = servingTeam === 1 ? 2 : 1;
+            const serverNum = isSingles ? 1 : (m.serverNum || 2);
+            const servingScore = servingTeam === 1 ? (parseInt(m.score1) || 0) : (parseInt(m.score2) || 0);
+            const isEvenScore = (servingScore % 2 === 0);
+            const isFirstServerSlot = isSingles || (serverNum === 1);
+            const serveFromRightBox = isFirstServerSlot ? isEvenScore : !isEvenScore;
+
+            if (isSingles) {
+                if (receivingTeam === 1) cs.t1Right = selectedName;
+                else cs.t2Right = selectedName;
+            } else {
+                if (receivingTeam === 1) {
+                    const p1List = (m.team1PlayerIds || []).map(pid => getPlayerById(m.club1Id, pid)?.name).filter(Boolean);
+                    const partner = p1List.find(n => n !== selectedName) || selectedName;
+                    if (serveFromRightBox) { cs.t1Right = selectedName; cs.t1Left = partner; }
+                    else { cs.t1Left = selectedName; cs.t1Right = partner; }
+                } else {
+                    const p2List = (m.team2PlayerIds || []).map(pid => getPlayerById(m.club2Id, pid)?.name).filter(Boolean);
+                    const partner = p2List.find(n => n !== selectedName) || selectedName;
+                    if (serveFromRightBox) { cs.t2Right = selectedName; cs.t2Left = partner; }
+                    else { cs.t2Left = selectedName; cs.t2Right = partner; }
+                }
+            }
+            recordMatchLog(m, 'SERVE_CHANGE', `Chọn người đỡ bóng: ${selectedName}`);
+            saveState();
+            renderRefereeApp();
+            showToast(`🛡️ Người đỡ bóng: ${selectedName}`);
+        }
+
+        function selectMatchForScoreboard(matchId) {
+            if (!enforceRefereeSecurityLock()) return;
+            setCourtSelectedMatchId(currentAssignedCourt, matchId);
+            __lastPromptedTossMatchId = null;
+            saveState();
+            renderRefereeApp();
+            const { match: m } = findMatchById(matchId);
+            if (m && m.status !== 'SKIPPED' && m.status !== 'FINISHED') {
+                const req = getRequiredPlayerCount(m);
+                if ((m.team1PlayerIds || []).length < req) {
+                    openRefereePlayerSetupModal(1);
+                } else if ((m.team2PlayerIds || []).length < req) {
+                    openRefereePlayerSetupModal(2);
+                } else if (isCoinTossRequiredForMatch(m)) {
+                    __lastPromptedTossMatchId = m.id;
+                    openCoinTossModal(true);
+                }
+            }
+        }
+
+        function getPlayerDoublesCountInTie(tieMatches, side, playerId, excludeMatchId) {
+            let count = 0;
+            const arrKey = side === 1 ? 'team1PlayerIds' : 'team2PlayerIds';
+            tieMatches.forEach(m => {
+                if (m.id !== excludeMatchId && m.catKey === 'DOI') {
+                    if ((m[arrKey] || []).includes(playerId)) count++;
+                }
+            });
+            return count;
+        }
+
+        function openRefereePlayerSetupModal(step = 1) {
+            if (!enforceRefereeSecurityLock()) return;
+            const activeTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
+            if (!activeTieMatches.length) return;
+            currentSetupStep = step;
+
+            const firstMatch = activeTieMatches[0];
+            const c1 = getClubById(firstMatch.club1Id);
+            const c2 = getClubById(firstMatch.club2Id);
+            const activeClub = step === 1 ? c1 : c2;
+            const isStep1 = (step === 1);
+            const arrKey = isStep1 ? 'team1PlayerIds' : 'team2PlayerIds';
+
+            document.getElementById('setupModalStepTitle').textContent = isStep1 
+                ? `Bước 1/2: Chọn đủ 5 nội dung - ${c1.name}` 
+                : `Bước 2/2: Chọn đủ 5 nội dung - ${c2.name}`;
+            document.getElementById('setupModalStepTitle').className = `text-xs font-extrabold uppercase truncate ${isStep1 ? 'text-brand-700' : 'text-emerald-700'}`;
+            document.getElementById('setupModalStepSubtitle').textContent = isStep1 
+                ? `Chọn đủ VĐV (Đôi 2 người, Đơn 4 người) rồi xác nhận khóa trước khi sang ${c2.name}` 
+                : `${c1.name} đã chốt kín đội hình. Chọn đủ VĐV cả 5 trận cho ${c2.name}`;
+
+            const players = activeClub.players || [];
+
+            let html = `
+                <div class="flex items-center justify-between bg-amber-50/80 px-3 py-2 rounded-xl border border-amber-200">
+                    <span class="text-[11px] font-extrabold ${isStep1 ? 'text-brand-700' : 'text-emerald-700'}">
+                        <i class="fa-solid fa-users mr-1"></i> ${activeClub.name} (${players.length} VĐV)
+                    </span>
+                    <button type="button" onclick="autoFillAllMatchesForSide(${step})" class="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-white text-[10px] font-extrabold shadow-sm transition">
+                        <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Tự động chọn đủ
+                    </button>
+                </div>
+            `;
+
+            if (players.length === 0) {
+                html += `<div class="text-center py-6 text-stone-400 bg-stone-50 rounded-xl border border-stone-200">CLB ${activeClub.name} chưa có danh sách VĐV. Hãy thêm VĐV ở trang chủ.</div>`;
+            } else {
+                activeTieMatches.forEach((m, idx) => {
+                    const isSingles = (m.catKey === 'DON');
+                    const req = getRequiredPlayerCount(m);
+                    const genderRule = getMatchGenderRule(m);
+                    
+                    let selIds = (m[arrKey] || []).filter(pid => {
+                        const pObj = players.find(x => x.id === pid);
+                        if (!pObj) return false;
+                        if (genderRule === 'NAM' && isPlayerFemale(pObj)) return false;
+                        if (genderRule === 'NU' && !isPlayerFemale(pObj)) return false;
+                        return true;
+                    });
+                    m[arrKey] = selIds;
+
+                    const eligiblePlayers = players.filter(p => {
+                        if (genderRule === 'NAM') return !isPlayerFemale(p);
+                        if (genderRule === 'NU') return isPlayerFemale(p);
+                        return true;
+                    });
+
+                    const selectedObjs = selIds.map(pid => players.find(x => x.id === pid)).filter(Boolean);
+                    const hasSelectedMale = selectedObjs.some(x => !isPlayerFemale(x));
+                    const hasSelectedFemale = selectedObjs.some(x => isPlayerFemale(x));
+
+                    const isComplete = selIds.length >= req;
+                    const cleanCat = (m.catLabel || `Trận ${idx + 1}`).replace(/^(Bảng [^•]+•\s*)?(Lượt \d+\s*•\s*)?(Vòng \d+\s*•\s*)?/i, '');
+
+                    let filterHintBadge = '';
+                    if (isSingles) {
+                        filterHintBadge = `<span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300 font-bold">4 VĐV luân phiên</span>`;
+                    } else if (genderRule === 'NAM') {
+                        filterHintBadge = `<span class="text-[9px] px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200 font-bold">Chỉ Nam</span>`;
+                    } else if (genderRule === 'NU') {
+                        filterHintBadge = `<span class="text-[9px] px-1.5 py-0.5 rounded bg-pink-50 text-pink-700 border border-pink-200 font-bold">Chỉ Nữ</span>`;
+                    } else if (genderRule === 'NAM_NU') {
+                        filterHintBadge = `<span class="text-[9px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 font-bold">1 Nam + 1 Nữ</span>`;
+                    }
+
+                    const playerButtonsHtml = eligiblePlayers.length > 0 ? eligiblePlayers.map(p => {
+                        const selIndex = selIds.indexOf(p.id);
+                        const isSelected = selIndex !== -1;
+                        const isFem = isPlayerFemale(p);
+                        const doublesCount = !isSingles ? getPlayerDoublesCountInTie(activeTieMatches, step, p.id, m.id) : 0;
+                        
+                        const isExceededDoubles = (!isSingles && doublesCount >= 2 && !isSelected);
+                        const isGenderSlotFull = (genderRule === 'NAM_NU' && !isSelected && ((isFem && hasSelectedFemale) || (!isFem && hasSelectedMale)));
+                        const isDisabled = isExceededDoubles || isGenderSlotFull;
+
+                        const genderColor = isFem ? 'text-pink-600' : 'text-sky-600';
+                        const genderSymbol = isFem ? '♀' : '♂';
+                        const orderTag = (isSingles && isSelected) ? `<span class="px-1 rounded bg-amber-300 text-stone-900 font-black text-[9px] mr-1">#${selIndex + 1}</span>` : '';
+
+                        return `
+                            <button type="button" ${isDisabled ? 'disabled' : ''} onclick="togglePlayerInTieMatch('${m.id}', ${step}, '${p.id}', ${req})" class="px-2 py-1.5 rounded-lg border text-[11px] font-bold transition flex items-center justify-between gap-1 ${isDisabled ? 'opacity-35 bg-stone-100 border-stone-200 cursor-not-allowed text-stone-400' : (isSelected ? (isStep1 ? 'bg-brand-600 text-white border-brand-500 shadow-sm' : 'bg-emerald-600 text-white border-emerald-500 shadow-sm') : 'bg-stone-50 text-stone-800 border-stone-200 hover:border-amber-400')}">
+                                <span class="truncate flex items-center">${orderTag}<span class="${isSelected ? 'text-white' : genderColor} mr-0.5">${genderSymbol}</span>${p.name}</span>
+                                <span class="text-[9px] px-1 rounded ${isSelected ? 'bg-black/20 text-white' : 'bg-amber-100 text-amber-800'} shrink-0">${p.level || 'A'}${!isSingles ? ` (${doublesCount}/2)` : ''}</span>
+                            </button>
+                        `;
+                    }).join('') : `<div class="col-span-2 text-center py-2 text-[11px] text-rose-600 italic">CLB ${activeClub.name} chưa có VĐV ${genderRule === 'NU' ? 'Nữ' : 'Nam'}!</div>`;
+
+                    html += `
+                        <div class="p-2.5 rounded-xl bg-white border ${isComplete ? 'border-emerald-300 shadow-sm' : 'border-amber-300'} space-y-2">
+                            <div class="flex justify-between items-center gap-1.5">
+                                <div class="flex items-center gap-1.5 min-w-0">
+                                    <span class="text-[11px] font-extrabold text-orange-700 truncate">${cleanCat}</span>
+                                    ${filterHintBadge}
+                                </div>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-black shrink-0 ${isComplete ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800'}">
+                                    ${isComplete ? `✓ Đủ ${selIds.length}/${req}` : `Chọn ${selIds.length}/${req}`}
+                                </span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-1.5">
+                                ${playerButtonsHtml}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            document.getElementById('refereePlayerSetupContent').innerHTML = html;
+
+            document.getElementById('refereePlayerSetupFooter').innerHTML = isStep1 ? `
+                <button type="button" onclick="proceedToTeam2Setup()" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-orange-600 hover:from-brand-500 hover:to-orange-500 text-white font-extrabold text-xs uppercase shadow-md flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-lock"></i>
+                    <span>Xác nhận ${c1.name} & Sang ${c2.name}</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            ` : `
+                <div class="space-y-2">
+                    <div class="p-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-[10px] text-emerald-700 font-bold flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-shield-halved"></i> Đội hình 5 trận của ${c1.name} đã chốt kín
+                    </div>
+                    <button type="button" onclick="finishBothTeamsSetup()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs uppercase shadow-md flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-check-double"></i>
+                        <span>Hoàn tất Chọn VĐV & Vào Bốc Thăm</span>
+                    </button>
+                </div>
+            `;
+
+            document.getElementById('refereePlayerSetupModal').classList.remove('hidden');
+            document.getElementById('refereePlayerSetupModal').classList.add('flex');
+        }
+
+        function togglePlayerInTieMatch(matchId, side, playerId, maxReq) {
+            if (!enforceRefereeSecurityLock()) return;
+            const { match: m } = findMatchById(matchId);
+            if (!m) return;
+            const clubId = side === 1 ? m.club1Id : m.club2Id;
+            const club = getClubById(clubId);
+            const playerObj = getPlayerById(clubId, playerId);
+            if (!playerObj) return;
+
+            const genderRule = getMatchGenderRule(m);
+            const isFem = isPlayerFemale(playerObj);
+
+            if (genderRule === 'NAM' && isFem) { showToast('⚠️ Nội dung Đôi Nam không thể chọn VĐV Nữ!'); return; }
+            if (genderRule === 'NU' && !isFem) { showToast('⚠️ Nội dung Đôi Nữ không thể chọn VĐV Nam!'); return; }
+
+            const arrKey = side === 1 ? 'team1PlayerIds' : 'team2PlayerIds';
+            let cur = m[arrKey] || [];
+
+            if (cur.includes(playerId)) {
+                m[arrKey] = cur.filter(id => id !== playerId);
+            } else {
+                if (genderRule === 'NAM_NU') {
+                    const selectedObjs = cur.map(pid => (club.players || []).find(x => x.id === pid)).filter(Boolean);
+                    if (isFem && selectedObjs.some(x => isPlayerFemale(x))) { showToast('⚠️ Đôi Nam Nữ đã đủ 1 VĐV Nữ, hãy chọn tiếp 1 VĐV Nam!'); return; }
+                    if (!isFem && selectedObjs.some(x => !isPlayerFemale(x))) { showToast('⚠️ Đôi Nam Nữ đã đủ 1 VĐV Nam, hãy chọn tiếp 1 VĐV Nữ!'); return; }
+                }
+                if (cur.length >= maxReq) { showToast(`Nội dung này chọn tối đa ${maxReq} VĐV!`); return; }
+                cur.push(playerId);
+                m[arrKey] = cur;
+            }
+            syncMatchCourtStateFromLineup(m, false);
+            saveState();
+            openRefereePlayerSetupModal(side);
+            renderRefereeApp();
+        }
+
+        function autoFillAllMatchesForSide(side) {
+            if (!enforceRefereeSecurityLock()) return;
+            const activeTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
+            if (!activeTieMatches.length) return;
+            const firstMatch = activeTieMatches[0];
+            const club = getClubById(side === 1 ? firstMatch.club1Id : firstMatch.club2Id);
+            const players = club.players || [];
+            if (!players.length) return;
+
+            const arrKey = side === 1 ? 'team1PlayerIds' : 'team2PlayerIds';
+            activeTieMatches.forEach(m => { m[arrKey] = []; });
+
+            activeTieMatches.forEach(m => {
+                const req = getRequiredPlayerCount(m);
+                const genderRule = getMatchGenderRule(m);
+                let picked = [];
+
+                const getAvailable = (genderFilter) => {
+                    return players.filter(p => {
+                        if (picked.includes(p.id)) return false;
+                        if (m.catKey === 'DOI' && getPlayerDoublesCountInTie(activeTieMatches, side, p.id, m.id) >= 2) return false;
+                        if (!genderFilter) return true;
+                        const isFem = isPlayerFemale(p);
+                        return genderFilter === 'Nữ' ? isFem : !isFem;
+                    });
+                };
+
+                if (genderRule === 'NAM_NU') {
+                    const men = getAvailable('Nam');
+                    const women = getAvailable('Nữ');
+                    if (men.length > 0) picked.push(men[0].id);
+                    if (women.length > 0) picked.push(women[0].id);
+                } else if (genderRule === 'NU') {
+                    const women = getAvailable('Nữ');
+                    women.slice(0, 2).forEach(p => picked.push(p.id));
+                } else if (genderRule === 'NAM') {
+                    const men = getAvailable('Nam');
+                    men.slice(0, 2).forEach(p => picked.push(p.id));
+                } else {
+                    const anyPlayers = getAvailable(null);
+                    anyPlayers.slice(0, req).forEach(p => picked.push(p.id));
+                }
+
+                m[arrKey] = picked;
+                syncMatchCourtStateFromLineup(m, false);
+            });
+
+            saveState();
+            openRefereePlayerSetupModal(side);
+            renderRefereeApp();
+            showToast(`🪄 Đã lọc đúng giới tính & điền đủ VĐV cho ${club.name}!`);
+        }
+
+        function proceedToTeam2Setup() {
+            const activeTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
+            for (let i = 0; i < activeTieMatches.length; i++) {
+                const m = activeTieMatches[i];
+                const req = getRequiredPlayerCount(m);
+                if ((m.team1PlayerIds || []).length < req) {
+                    const cleanCat = (m.catLabel || `Trận ${i + 1}`).replace(/^(Bảng [^•]+•\s*)?(Lượt \d+\s*•\s*)?(Vòng \d+\s*•\s*)?/i, '');
+                    showToast(`⚠️ ${cleanCat} của Đội 1 chưa chọn đủ ${req} VĐV!`);
+                    return;
+                }
+            }
+            activeTieMatches.forEach(m => { m.team1Confirmed = true; });
+            saveState();
+            showToast(`🔒 Đã chốt đội hình Đội 1! Mời Đội 2 chọn VĐV.`);
+            openRefereePlayerSetupModal(2);
+        }
+
+        function finishBothTeamsSetup() {
+            const activeTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
+            for (let i = 0; i < activeTieMatches.length; i++) {
+                const m = activeTieMatches[i];
+                const req = getRequiredPlayerCount(m);
+                if ((m.team2PlayerIds || []).length < req) {
+                    const cleanCat = (m.catLabel || `Trận ${i + 1}`).replace(/^(Bảng [^•]+•\s*)?(Lượt \d+\s*•\s*)?(Vòng \d+\s*•\s*)?/i, '');
+                    showToast(`⚠️ ${cleanCat} của Đội 2 chưa chọn đủ ${req} VĐV!`);
+                    return;
+                }
+            }
+            activeTieMatches.forEach(m => {
+                m.team2Confirmed = true;
+                recordMatchLog(m, 'SERVE_CHANGE', `Chốt đội hình: ${m.team1Name} vs ${m.team2Name}`);
+            });
+            saveState();
+            forceCloseSetupModal();
+            renderRefereeApp();
+
+            const activeId = getCourtSelectedMatchId(currentAssignedCourt);
+            const { match: curM } = findMatchById(activeId);
+            if (curM && isCoinTossRequiredForMatch(curM)) {
+                __lastPromptedTossMatchId = curM.id;
+                openCoinTossModal(true);
+            } else {
+                showToast('✅ Đã chốt đủ đội hình & gửi lên Firebase!');
+            }
+        }
+
+        function forceCloseSetupModal() {
+            document.getElementById('refereePlayerSetupModal').classList.add('hidden');
+            document.getElementById('refereePlayerSetupModal').classList.remove('flex');
+        }
+
+        function adjustLiveScore(teamNum, delta) {
+            if (!enforceRefereeSecurityLock()) return;
+            const now = Date.now();
+            if (now - __lastScoreTapAt < 220) return;
+            if (now < __courtSwapFreezeUntil) {
+                showToast('⏳ Đang đổi sân, vui lòng chờ 1 giây...');
+                return;
+            }
+            __lastScoreTapAt = now;
+
+            const activeId = getCourtSelectedMatchId(currentAssignedCourt);
+            const { match: m } = findMatchById(activeId);
+            if (!m || m.status === 'FINISHED' || m.status === 'SKIPPED' || teamNum !== (m.servingTeam || 1)) return;
+            
+            const isSingles = (m.catKey === 'DON');
+            const req = getRequiredPlayerCount(m);
+            if ((m.team1PlayerIds || []).length < req || (m.team2PlayerIds || []).length < req) {
+                showToast(`⚠️ Bước 1: Cần chọn đủ ${req} VĐV cho mỗi đội trước!`);
+                openRefereePlayerSetupModal((m.team1PlayerIds || []).length < req ? 1 : 2);
+                return;
+            }
+
+            if (isCoinTossRequiredForMatch(m)) {
+                openCoinTossModal(true);
+                return;
+            }
+
+            const curScore = teamNum === 1 ? (parseInt(m.score1) || 0) : (parseInt(m.score2) || 0);
+            if (delta < 0 && curScore <= 0) return;
+
+            m.status = 'LIVE';
+            if (!m.courtState) syncMatchCourtStateFromLineup(m, false);
+            const cs = m.courtState;
+
+            if (teamNum === 1) {
+                m.score1 = Math.max(0, curScore + delta);
+                if (cs && !isSingles) { const tmp = cs.t1Left; cs.t1Left = cs.t1Right; cs.t1Right = tmp; }
+            } else {
+                m.score2 = Math.max(0, curScore + delta);
+                if (cs && !isSingles) { const tmp = cs.t2Left; cs.t2Left = cs.t2Right; cs.t2Right = tmp; }
+            }
+
+            const scorerClub = getClubById(teamNum === 1 ? m.club1Id : m.club2Id).name;
+            recordMatchLog(m, 'SCORE', `${delta > 0 ? '+1 điểm' : '-1 điểm'} cho ${scorerClub}`);
+
+            const s1 = parseInt(m.score1) || 0;
+            const s2 = parseInt(m.score2) || 0;
+            const maxTeamScore = Math.max(s1, s2);
+            const currentTotalScore = s1 + s2;
+            const target = isSingles ? 21 : 15;
+            const switchScoreThreshold = isSingles ? 11 : 8;
+
+            if (maxTeamScore === switchScoreThreshold && !m.swappedAtMid && delta > 0) {
+                cs.swappedEnds = !cs.swappedEnds;
+                m.swappedAtMid = true;
+                __courtSwapFreezeUntil = Date.now() + 1200;
+                recordMatchLog(m, 'SERVE_CHANGE', `Chạm ${switchScoreThreshold} điểm: Hai đội tự động đổi sân`);
+                showToast(`🔄 Chạm ${switchScoreThreshold} điểm: Hai đội đổi sân!`);
+            }
+
+            if (isSingles) {
+                syncMatchCourtStateFromLineup(m, false);
+                if (delta > 0 && currentTotalScore > 0 && currentTotalScore % 4 === 0 && maxTeamScore < target) {
+                    const nextSlot = (Math.floor(currentTotalScore / 4) % 4) + 1;
+                    recordMatchLog(m, 'SERVE_CHANGE', `Tổng điểm ${currentTotalScore}: Luân phiên sang VĐV số #${nextSlot}/4`);
+                    showToast(`🔁 Tổng điểm ${currentTotalScore}: Đổi sang VĐV số #${nextSlot}/4!`);
+                }
+            }
+
+            const res = evaluateMatchWinCondition(m);
+            if (res.isWon) {
+                m.status = 'FINISHED';
+                recordMatchLog(m, 'FINISH', `🏁 Kết thúc nội dung (${res.winnerScore}-${res.loserScore}) - Thắng: ${scorerClub}`);
+                onMatchOrTieFinishedStayOnCourt(m, res);
+            } else {
+                saveState();
+            }
+            renderRefereeApp();
+        }
+
+        function onMatchOrTieFinishedStayOnCourt(finishedMatch, winRes = null) {
+            const { tie } = findMatchById(finishedMatch.id);
+            const tieMatches = tie ? (tie.matches || []) : getActiveTieMatchesForCourt(currentAssignedCourt);
+            const tieSt = evaluateTieStatus(tieMatches);
+
+            setCourtSelectedMatchId(currentAssignedCourt, finishedMatch.id);
+
+            if (tieSt.isClinched || tieSt.isCompleted) {
+                const winnerClubName = getClubById(tieSt.winnerSide === 1 ? finishedMatch.club1Id : finishedMatch.club2Id).name;
+                recordMatchLog(finishedMatch, 'FINISH', `🏆 KẾT THÚC CẶP ĐẤU trên ${currentAssignedCourt}: ${winnerClubName} thắng ${tieSt.c1Wins}-${tieSt.c2Wins}`);
+                clearCourtSelectedMatchId(currentAssignedCourt);
+                saveState();
+                showToast(`🏆 ${winnerClubName} thắng ${tieSt.c1Wins}-${tieSt.c2Wins}! Đã gửi tỷ số lên bàn tổng.`);
+            } else {
+                saveState();
+                if (winRes) {
+                    showToast(`✅ Đã chốt trận (${winRes.winnerScore}-${winRes.loserScore}) & gửi lên bàn tổng!`);
+                } else {
+                    showToast('✅ Đã chốt trận & gửi lên bàn tổng!');
+                }
+            }
+        }
+
+        function finishEntireTieOnCourt() {
+            if (!enforceRefereeSecurityLock()) return;
+            const activeTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
+            if (!activeTieMatches.length) return;
+
+            const tieSt = evaluateTieStatus(activeTieMatches);
+            if (tieSt.isCompleted) {
+                clearCourtSelectedMatchId(currentAssignedCourt);
+                saveState();
+                showToast(`✅ Cặp đấu trên ${currentAssignedCourt} đã kết thúc & đồng bộ lên bàn tổng!`);
+                return;
+            }
+
+            activeTieMatches.forEach(m => {
+                if (m.status !== 'FINISHED' && m.status !== 'SKIPPED') {
+                    const s1 = parseInt(m.score1) || 0;
+                    const s2 = parseInt(m.score2) || 0;
+                    if (s1 > 0 || s2 > 0) {
+                        m.status = 'FINISHED';
+                    } else {
+                        m.status = 'SKIPPED';
+                    }
+                }
+            });
+
+            const finalSt = evaluateTieStatus(activeTieMatches);
+            const firstM = activeTieMatches[0];
+            const c1 = getClubById(firstM.club1Id).name;
+            const c2 = getClubById(firstM.club2Id).name;
+            recordMatchLog(firstM, 'FINISH', `🔒 Trọng tài kết thúc toàn bộ các nội dung trên ${currentAssignedCourt}: ${c1} (${finalSt.c1Wins}) - (${finalSt.c2Wins}) ${c2}`);
+
+            clearCourtSelectedMatchId(currentAssignedCourt);
+            saveState();
+            renderRefereeApp();
+            showToast(`🔒 Đã chốt cặp đấu ${c1} vs ${c2} lên bàn tổng!`);
+        }
+
+        function triggerSideOutOrNextServer() {
+            if (!enforceRefereeSecurityLock()) return;
+            const now = Date.now();
+            if (now - __lastScoreTapAt < 220) return;
+            __lastScoreTapAt = now;
+
+            const activeId = getCourtSelectedMatchId(currentAssignedCourt);
+            const { match: m } = findMatchById(activeId);
+            if (!m || m.status === 'FINISHED' || m.status === 'SKIPPED') return;
+            const isSingles = (m.catKey === 'DON');
+            if (!m.courtState) syncMatchCourtStateFromLineup(m, false);
+
+            if (isSingles) {
+                m.servingTeam = (m.servingTeam || 1) === 1 ? 2 : 1;
+                m.serverNum = 1;
+                const newServerClub = getClubById(m.servingTeam === 1 ? m.club1Id : m.club2Id).name;
+                recordMatchLog(m, 'SERVE_CHANGE', `Đổi giao bóng sang ${newServerClub}`);
+                showToast(`🔄 Đổi giao bóng sang ${newServerClub}!`);
+            } else {
+                const curServerNum = m.serverNum || 2;
+                const curTeam = m.servingTeam || 1;
+
+                if (curServerNum === 1) {
+                    m.serverNum = 2;
+                    recordMatchLog(m, 'SERVE_CHANGE', `Chuyển sang người giao bóng số 2`);
+                    showToast(`2️⃣ Người giao bóng số 2 (Ô còn lại)!`);
+                } else {
+                    m.servingTeam = curTeam === 1 ? 2 : 1;
+                    m.serverNum = 1;
+                    const newServerClub = getClubById(m.servingTeam === 1 ? m.club1Id : m.club2Id).name;
+                    recordMatchLog(m, 'SERVE_CHANGE', `Đổi giao bóng sang ${newServerClub} (Lượt 1)`);
+                    showToast(`🔄 Đổi giao bóng sang ${newServerClub} (Lượt 1)!`);
+                }
+            }
+
+            saveState();
+            renderRefereeApp();
+        }
+
+        function finishCurrentLiveMatchAndAdvance() {
+            if (!enforceRefereeSecurityLock()) return;
+            const activeId = getCourtSelectedMatchId(currentAssignedCourt);
+            const { match: m } = findMatchById(activeId);
+            if (!m || m.status === 'SKIPPED') return;
+            m.status = 'FINISHED';
+            recordMatchLog(m, 'FINISH', `Chốt kết thúc nội dung (${m.score1 || 0}-${m.score2 || 0})`);
+            onMatchOrTieFinishedStayOnCourt(m);
+            renderRefereeApp();
+        }
+
+        function reopenFinishedMatch() {
+            if (!enforceRefereeSecurityLock()) return;
+            if (!isAdminRole()) {
+                showToast('🔒 Trận đã chốt xong! Chỉ Admin mới có quyền mở lại.');
+                return;
+            }
+            const activeId = getCourtSelectedMatchId(currentAssignedCourt);
+            const { match: m } = findMatchById(activeId);
+            if (!m) return;
+            m.status = 'LIVE';
+            recordMatchLog(m, 'SERVE_CHANGE', `Admin mở lại nội dung thi đấu`);
+            saveState();
+            renderRefereeApp();
+            showToast('🔓 Admin đã mở lại nội dung thi đấu!');
+        }
+
+        function swapCourtEnds() {
+            if (!enforceRefereeSecurityLock()) return;
+            const activeId = getCourtSelectedMatchId(currentAssignedCourt);
+            const { match: m } = findMatchById(activeId);
+            if (!m || !m.courtState) return;
+            m.courtState.swappedEnds = !m.courtState.swappedEnds;
+            __courtSwapFreezeUntil = Date.now() + 800;
+            recordMatchLog(m, 'SERVE_CHANGE', `Đổi bên sân thủ công`);
+            saveState();
+            renderRefereeApp();
+            showToast('🔄 Đã đổi bên sân & đổi vị trí bảng điểm!');
+        }
+
+        function renderRefereeApp() {
+            enforceTieClinchRules();
+            syncCourtSelectorOptions();
+
+            const activeTieMatches = getActiveTieMatchesForCourt(currentAssignedCourt);
+            const savedMatchId = getCourtSelectedMatchId(currentAssignedCourt);
+            let m = activeTieMatches.find(x => x.id === savedMatchId);
+            
+            if (!m) {
+                m = activeTieMatches.find(x => x.status !== 'FINISHED' && x.status !== 'SKIPPED') || activeTieMatches[0];
+                if (m) setCourtSelectedMatchId(currentAssignedCourt, m.id);
+            }
+
+            const headerLabelEl = document.getElementById('activeTieHeaderLabel');
+            const selector = document.getElementById('liveMatchSelector');
+
+            if (!m || activeTieMatches.length === 0) {
+                if (headerLabelEl) headerLabelEl.innerHTML = `<i class="fa-solid fa-circle-info mr-1 text-orange-500"></i>Chưa có cặp đấu nào`;
+                if (selector) selector.innerHTML = '<option>Trống lịch thi đấu</option>';
+                document.getElementById('officialScoreCallout').textContent = "Chưa có trận";
+                return;
+            }
+
+            const cl1 = getClubById(m.club1Id).name;
+            const cl2 = getClubById(m.club2Id).name;
+            const tieSt = evaluateTieStatus(activeTieMatches);
+            const waveNum = m.wave || '';
+
+            if (headerLabelEl) {
+                headerLabelEl.innerHTML = `<i class="fa-solid fa-swords mr-1 text-orange-500"></i>${waveNum ? `<span class="text-orange-700 font-black">L${waveNum} • </span>` : ''}<span class="text-stone-900 font-extrabold">${cl1}</span> <span class="px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 font-black">${tieSt.c1Wins}-${tieSt.c2Wins}</span> <span class="text-stone-900 font-extrabold">${cl2}</span>`;
+            }
+
+            if (selector) {
+                selector.innerHTML = activeTieMatches.map(x => {
+                    const cleanCat = (x.catLabel || '').replace(/^(Bảng [^•]+•\s*)?(Lượt \d+\s*•\s*)?(Vòng \d+\s*•\s*)?/i, '');
+                    const hasFullLineup = hasMatchFullLineup(x);
+                    const statusIcon = x.status === 'FINISHED' ? '✅' : (x.status === 'SKIPPED' ? '⏭️' : (x.status === 'LIVE' ? '🔴' : (hasFullLineup ? '🟢' : '⏳')));
+                    const suffix = x.status === 'SKIPPED' ? 'Không đấu' : `${x.score1 || 0}-${x.score2 || 0}`;
+                    return `<option value="${x.id}">${statusIcon} ${cleanCat} (${suffix})</option>`;
+                }).join('');
+                selector.value = m.id;
+            }
+
+            const isSingles = (m.catKey === 'DON');
+            m.targetPoints = isSingles ? 21 : 15;
+
+            syncMatchCourtStateFromLineup(m, true);
+            const cs = m.courtState;
+
+            if (m.servingTeam === undefined) m.servingTeam = 1;
+            if (m.serverNum === undefined) m.serverNum = isSingles ? 1 : 2;
+
+            const isMatchFinished = (m.status === 'FINISHED' || m.status === 'SKIPPED');
+            const fullLineup = hasMatchFullLineup(m);
+            const needToss = isCoinTossRequiredForMatch(m);
+
+            const missingLineupBannerEl = document.getElementById('missingLineupBanner');
+            if (missingLineupBannerEl) {
+                missingLineupBannerEl.classList.toggle('hidden', isMatchFinished || fullLineup);
+            }
+
+            const tossBannerEl = document.getElementById('mandatoryCoinTossBanner');
+            if (tossBannerEl) {
+                tossBannerEl.classList.toggle('hidden', !needToss);
+            }
+
+            const isSetupModalClosed = document.getElementById('refereePlayerSetupModal').classList.contains('hidden');
+            if (needToss && fullLineup && isRefereeAuthorized() && __lastPromptedTossMatchId !== m.id && isSetupModalClosed) {
+                __lastPromptedTossMatchId = m.id;
+                setTimeout(() => openCoinTossModal(true), 120);
+            }
+
+            const bannerEl = document.getElementById('matchFinishedCelebrationBanner');
+            const bannerTextEl = document.getElementById('finishedBannerText');
+            const reopenBtn = document.getElementById('reopenMatchBtn');
+            bannerEl.classList.toggle('hidden', !isMatchFinished);
+            if (isMatchFinished && bannerTextEl) {
+                if (tieSt.isCompleted) {
+                    const winClub = getClubById(tieSt.winnerSide === 1 ? m.club1Id : m.club2Id).name;
+                    bannerTextEl.textContent = `🏆 Hoàn thành ${currentAssignedCourt}: ${winClub} thắng ${tieSt.c1Wins}-${tieSt.c2Wins}`;
+                } else {
+                    bannerTextEl.textContent = '🏆 Nội dung này đã chốt! Chọn nội dung khác ở danh sách trên.';
+                }
+                if (reopenBtn) {
+                    reopenBtn.classList.toggle('hidden', !isAdminRole());
+                }
+            }
+
+            const totalScore = (parseInt(m.score1) || 0) + (parseInt(m.score2) || 0);
+            const rotBanner = document.getElementById('singlesRotationBanner');
+            if (isSingles && !isMatchFinished && fullLineup && !needToss) {
+                const rotIdx = (Math.floor(totalScore / 4) % 4) + 1;
+                const nextSwapAt = (Math.floor(totalScore / 4) + 1) * 4;
+                document.getElementById('singlesRotationText').textContent = `VĐV #${rotIdx}/4 đang đánh • Đổi VĐV ở tổng ${nextSwapAt}đ (11đ đổi sân • Chạm 21)`;
+                rotBanner.classList.remove('hidden');
+            } else {
+                rotBanner.classList.add('hidden');
+            }
+
+            const cleanStageLabel = (m.catLabel || '').replace(/^(Bảng [^•]+•\s*)?(Lượt \d+\s*•\s*)?(Vòng \d+\s*•\s*)?/i, '');
+            const ruleTag = isSingles ? 'Chạm 21 • 11đ đổi sân' : 'Chạm 15 • 8đ đổi sân';
+            document.getElementById('liveMatchStageBadge').textContent = `${cleanStageLabel} (${ruleTag})`;
+
+            const servingTeam = m.servingTeam || 1;
+            const serverNum = isSingles ? 1 : (m.serverNum || 2);
+            const servingScore = servingTeam === 1 ? (parseInt(m.score1) || 0) : (parseInt(m.score2) || 0);
+            const receivingScore = servingTeam === 1 ? (parseInt(m.score2) || 0) : (parseInt(m.score1) || 0);
+            
+            document.getElementById('officialScoreCallout').textContent = isSingles 
+                ? `${servingScore} - ${receivingScore}` 
+                : `${servingScore} - ${receivingScore} - ${serverNum}`;
+
+            const leftIsT1 = !cs.swappedEnds;
+            const leftTeamNum = leftIsT1 ? 1 : 2;
+            const rightTeamNum = leftIsT1 ? 2 : 1;
+
+            document.getElementById('leftCourtSideTag').textContent = leftIsT1 ? cl1 : cl2;
+            document.getElementById('rightCourtSideTag').textContent = leftIsT1 ? cl2 : cl1;
+
+            const renderSideScoreBox = (sidePos, teamNum) => {
+                const isT1 = (teamNum === 1);
+                const clubLabel = isT1 ? cl1 : cl2;
+                const playerName = isT1 ? (m.team1Name || cs.t1Right) : (m.team2Name || cs.t2Right);
+                const scoreVal = isT1 ? (m.score1 || 0) : (m.score2 || 0);
+                const isServing = (servingTeam === teamNum);
+
+                const boxEl = document.getElementById(`${sidePos}ScorePanelBox`);
+                const serveBadgeEl = document.getElementById(`${sidePos}ServeBadge`);
+                const serverNumEl = document.getElementById(`${sidePos}ServerNum`);
+                const clubEl = document.getElementById(`${sidePos}PanelClubLabel`);
+                const nameEl = document.getElementById(`${sidePos}PanelPlayerName`);
+                const scoreEl = document.getElementById(`${sidePos}PanelScore`);
+                const actionEl = document.getElementById(`${sidePos}PanelActionArea`);
+
+                boxEl.className = `${isT1 ? 'bg-rose-50/75 border-brand-300' : 'bg-emerald-50/75 border-emerald-300'} border rounded-xl p-2 space-y-1 relative flex flex-col justify-between shadow-sm transition-all`;
+                serveBadgeEl.className = `${isServing && !isMatchFinished ? '' : 'hidden'} absolute -top-2 -left-1 ${isT1 ? 'bg-brand-600 text-white' : 'bg-emerald-600 text-white'} px-1.5 py-0.5 rounded font-extrabold text-[8px] shadow-sm uppercase`;
+                serverNumEl.textContent = serverNum;
+
+                clubEl.className = `text-[9px] ${isT1 ? 'text-brand-700' : 'text-emerald-700'} font-extrabold uppercase truncate leading-tight`;
+                clubEl.textContent = clubLabel;
+                nameEl.textContent = playerName;
+
+                scoreEl.className = `text-center font-score fluid-score-num font-extrabold ${isT1 ? 'text-brand-600' : 'text-emerald-700'} py-0.5`;
+                scoreEl.textContent = scoreVal;
+
+                if (m.status === 'SKIPPED') {
+                    actionEl.innerHTML = `<div class="col-span-4 ref-score-btn rounded-lg bg-stone-100 border border-stone-200 text-stone-500 font-extrabold text-[11px] flex items-center justify-center">⏭️ Không đấu</div>`;
+                } else if (m.status === 'FINISHED') {
+                    actionEl.innerHTML = `<div class="col-span-4 ref-score-btn rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-800 font-extrabold text-xs flex items-center justify-center"><i class="fa-solid fa-lock mr-1"></i> ĐÃ XONG</div>`;
+                } else if (!fullLineup) {
+                    actionEl.innerHTML = `<button type="button" onclick="openMissingLineupStep()" class="col-span-4 ref-score-btn rounded-lg bg-rose-50 border border-brand-300 text-brand-700 font-extrabold text-[11px] flex items-center justify-center gap-1"><i class="fa-solid fa-user-plus"></i> Chọn VĐV</button>`;
+                } else if (needToss) {
+                    actionEl.innerHTML = `<button type="button" onclick="openCoinTossModal(true)" class="col-span-4 ref-score-btn rounded-lg bg-amber-100 border border-amber-400 text-amber-900 font-extrabold text-[11px] flex items-center justify-center gap-1"><i class="fa-solid fa-coins text-orange-600"></i> Bốc thăm</button>`;
+                } else if (isServing) {
+                    const btnGradient = isT1 ? 'from-brand-600 to-orange-500 text-white' : 'from-emerald-600 to-teal-500 text-white';
+                    actionEl.innerHTML = `
+                        <button type="button" onclick="adjustLiveScore(${teamNum}, -1)" class="col-span-1 ref-score-btn rounded-lg bg-white border border-stone-300 hover:bg-stone-100 active:scale-95 text-stone-500 font-bold text-xs shadow-sm" title="Giảm 1 điểm">-1</button>
+                        <button type="button" onclick="adjustLiveScore(${teamNum}, 1)" class="col-span-3 ref-score-btn rounded-lg bg-gradient-to-r ${btnGradient} active:scale-95 font-extrabold text-xs uppercase shadow-md">+ ĐIỂM</button>
+                    `;
+                } else {
+                    actionEl.innerHTML = `<div class="col-span-4 ref-score-btn rounded-lg bg-stone-100 border border-stone-200 text-stone-400 text-[11px] font-bold flex items-center justify-center">🔒 Đang đỡ</div>`;
+                }
+            };
+
+            renderSideScoreBox('left', leftTeamNum);
+            renderSideScoreBox('right', rightTeamNum);
+
+            const isEvenScore = (servingScore % 2 === 0);
+            const isFirstServerSlot = isSingles || (serverNum === 1);
+            const serveFromRightBox = isFirstServerSlot ? isEvenScore : !isEvenScore;
+
+            const leftServerY = serveFromRightBox ? 152 : 58;
+            const rightServerY = serveFromRightBox ? 58 : 152;
+
+            let dots = [];
+
+            if (isSingles) {
+                const leftPlayerName = String(leftIsT1 ? cs.t1Right : cs.t2Right);
+                const rightPlayerName = String(leftIsT1 ? cs.t2Right : cs.t1Right);
+
+                const activeYLeft = (servingTeam === leftTeamNum) ? leftServerY : (210 - rightServerY);
+                const activeYRight = (servingTeam === rightTeamNum) ? rightServerY : (210 - leftServerY);
+
+                dots = [
+                    { team: leftTeamNum, x: 46, y: activeYLeft, name: leftPlayerName, color: leftIsT1 ? '#e11d48' : '#059669', isServer: (servingTeam === leftTeamNum) },
+                    { team: rightTeamNum, x: 394, y: activeYRight, name: rightPlayerName, color: leftIsT1 ? '#059669' : '#e11d48', isServer: (servingTeam === rightTeamNum) }
+                ];
+            } else {
+                const leftTopName = String(leftIsT1 ? cs.t1Left : cs.t2Left);
+                const leftBottomName = String(leftIsT1 ? cs.t1Right : cs.t2Right);
+                const rightTopName = String(leftIsT1 ? cs.t2Right : cs.t1Right);
+                const rightBottomName = String(leftIsT1 ? cs.t2Left : cs.t1Left);
+
+                const isLeftServing = (servingTeam === leftTeamNum);
+
+                let leftTopX = 44;
+                let leftBottomX = 44;
+                if (!isLeftServing) {
+                    const leftReceiverY = 210 - rightServerY;
+                    leftTopX = (leftReceiverY === 58) ? 44 : 136;
+                    leftBottomX = (leftReceiverY === 152) ? 44 : 136;
+                }
+
+                let rightTopX = 396;
+                let rightBottomX = 396;
+                if (isLeftServing) {
+                    const rightReceiverY = 210 - leftServerY;
+                    rightTopX = (rightReceiverY === 58) ? 396 : 304;
+                    rightBottomX = (rightReceiverY === 152) ? 396 : 304;
+                }
+
+                dots = [
+                    { team: leftTeamNum, x: leftTopX, y: 58, name: leftTopName, color: leftIsT1 ? '#e11d48' : '#059669', isServer: isLeftServing && (leftServerY === 58) },
+                    { team: leftTeamNum, x: leftBottomX, y: 152, name: leftBottomName, color: leftIsT1 ? '#e11d48' : '#059669', isServer: isLeftServing && (leftServerY === 152) },
+                    { team: rightTeamNum, x: rightTopX, y: 58, name: rightTopName, color: leftIsT1 ? '#059669' : '#e11d48', isServer: !isLeftServing && (rightServerY === 58) },
+                    { team: rightTeamNum, x: rightBottomX, y: 152, name: rightBottomName, color: leftIsT1 ? '#059669' : '#e11d48', isServer: !isLeftServing && (rightServerY === 152) }
+                ];
+            }
+
+            const serverDot = dots.find(d => d.isServer) || dots[0];
+            const receiverDot = dots.find(d => d.team !== serverDot.team && Math.abs(d.y - (210 - serverDot.y)) < 20) || dots[dots.length - 1];
+            
+            const dx = receiverDot.x - serverDot.x, dy = receiverDot.y - serverDot.y;
+            const dist = Math.hypot(dx, dy) || 1;
+            const padStart = Math.min(82, dist * 0.32);
+            const padEnd = Math.min(86, dist * 0.34);
+            const startX = serverDot.x + (dx / dist) * padStart;
+            const startY = serverDot.y + (dy / dist) * padStart;
+            const endX = receiverDot.x - (dx / dist) * padEnd;
+            const endY = receiverDot.y - (dy / dist) * padEnd;
+
+            document.getElementById('courtDynamicVectors').innerHTML = `
+                <line x1="${startX}" y1="${startY}" x2="${endX}" y2="${endY}" stroke="#fde047" stroke-width="2.8" marker-end="url(#arrowhead)" class="serve-trajectory-line" />
+            `;
+
+            document.getElementById('courtSvgPlayers').innerHTML = dots.map(d => `
+                <div class="absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-none transition-all duration-300" style="left: ${(d.x / 440) * 100}%; top: ${(d.y / 210) * 100}%;">
+                    ${d.isServer ? `<div class="absolute -top-1 w-6 h-6 rounded-full border-2 border-amber-300 bg-amber-300/30 serve-blinking"></div>` : ''}
+                    <div class="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold text-white shadow-md border ${d.isServer ? 'border-amber-200' : 'border-white'}" style="background-color: ${d.color};">
+                        <i class="fa-solid fa-user text-[7px]"></i>
+                    </div>
+                    <div class="mt-0.5 px-1.5 py-0.2 rounded bg-white/95 border ${d.isServer ? 'border-amber-500 text-orange-700 font-extrabold' : 'border-stone-200 text-stone-900 font-bold'} text-[9px] whitespace-nowrap shadow-sm leading-tight">
+                        ${String(d.name || 'VĐV').slice(0, 12)}
+                    </div>
+                </div>
+            `).join('');
+
+            const serverSel = document.getElementById('selectCurrentServerPlayer');
+            const receiverSel = document.getElementById('selectCurrentReceiverPlayer');
+            if (serverSel && receiverSel) {
+                const p1Names = (m.team1PlayerIds || []).map(pid => getPlayerById(m.club1Id, pid)?.name).filter(Boolean);
+                const p2Names = (m.team2PlayerIds || []).map(pid => getPlayerById(m.club2Id, pid)?.name).filter(Boolean);
+
+                const servingRoster = servingTeam === 1 ? (p1Names.length ? p1Names : [cl1]) : (p2Names.length ? p2Names : [cl2]);
+                const receivingRoster = servingTeam === 1 ? (p2Names.length ? p2Names : [cl2]) : (p1Names.length ? p1Names : [cl1]);
+
+                serverSel.innerHTML = servingRoster.map(name => `<option value="${name}">${name}</option>`).join('');
+                serverSel.value = serverDot.name;
+
+                receiverSel.innerHTML = receivingRoster.map(name => `<option value="${name}">${name}</option>`).join('');
+                receiverSel.value = receiverDot.name;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            enforceRefereeSecurityLock('Vui lòng nhập mật khẩu Trọng tài để truy cập bảng điểm.');
+            connectRealtimeSync();
+            renderRefereeApp();
+        });
+    </script>
+</body>
+</html>
