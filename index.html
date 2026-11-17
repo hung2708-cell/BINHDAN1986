@@ -284,7 +284,7 @@
             <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-stone-200/90 shadow-2xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5">
                 <div>
                     <h2 class="text-base sm:text-lg font-extrabold text-stone-900">Bảng xếp hạng Vòng bảng</h2>
-                    <p class="text-[11px] sm:text-xs text-stone-500">Thắng: <strong class="text-emerald-600">2đ</strong> • Hòa: <strong class="text-amber-600">1đ</strong> • Thua: <strong class="text-rose-600">0đ</strong> (Ưu tiên Điểm → Đối đầu → Hiệu số trận thắng).</p>
+                    <p class="text-[11px] sm:text-xs text-stone-500">Thắng: <strong class="text-emerald-600">3đ</strong> • Hòa: <strong class="text-amber-600">2đ</strong> • Thua: <strong class="text-rose-600">1đ</strong> (Bỏ cuộc 0đ. Ưu tiên Điểm → Đối đầu → Hiệu số hiệp → Hiệu số điểm).</p>
                 </div>
                 <div id="standings-toolbar-actions" class="flex gap-2 w-full sm:w-auto justify-end">
                     <button onclick="pullStateFromFirebase(false)" class="px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 active:scale-95 text-stone-600 transition text-xs font-bold" title="Đồng bộ từ Firebase"><i class="fa-solid fa-rotate"></i></button>
@@ -2071,11 +2071,11 @@
             });
 
             return [
-                mk(1, 'DOI', 'Đôi Nam', 15),
-                mk(2, 'DOI', 'Đôi Nữ', 15),
-                mk(3, 'DOI', 'Đôi Nam Nữ 1', 15),
-                mk(4, 'DOI', 'Đôi Nam Nữ 2', 15),
-                mk(5, 'DON', 'Đơn Quyết Định', 21)
+                mk(1, 'DOI', 'Đôi Nữ', 15),
+                mk(2, 'DOI', 'Đôi Nam', 15),
+                mk(3, 'DOI', 'Đôi Nam Nữ', 15),
+                mk(4, 'DOI', 'Đôi Nam Nữ', 15),
+                mk(5, 'DON', 'Đơn Quyết Định (áp dụng luật trực tiếp)', 21)
             ];
         }
 
@@ -3070,18 +3070,20 @@
 
                     let c1Pts = 0, c2Pts = 0;
                     if (tieSt.c1Wins > tieSt.c2Wins) {
-                        statsMap[c1Id].won += 1; statsMap[c1Id].points += 2; statsMap[c2Id].lost += 1;
+                        statsMap[c1Id].won += 1; statsMap[c1Id].points += 3; // Thắng 3 điểm
+                        statsMap[c2Id].lost += 1; statsMap[c2Id].points += 1; // Thua 1 điểm
                         statsMap[c1Id].headToHead[c2Id] = 1; statsMap[c2Id].headToHead[c1Id] = -1;
-                        c1Pts = 2; c2Pts = 0;
+                        c1Pts = 3; c2Pts = 1;
                     } else if (tieSt.c2Wins > tieSt.c1Wins) {
-                        statsMap[c2Id].won += 1; statsMap[c2Id].points += 2; statsMap[c1Id].lost += 1;
+                        statsMap[c2Id].won += 1; statsMap[c2Id].points += 3; // Thắng 3 điểm
+                        statsMap[c1Id].lost += 1; statsMap[c1Id].points += 1; // Thua 1 điểm
                         statsMap[c2Id].headToHead[c1Id] = 1; statsMap[c1Id].headToHead[c2Id] = -1;
-                        c1Pts = 0; c2Pts = 2;
+                        c1Pts = 1; c2Pts = 3;
                     } else {
-                        statsMap[c1Id].draw += 1; statsMap[c1Id].points += 1;
-                        statsMap[c2Id].draw += 1; statsMap[c2Id].points += 1;
+                        statsMap[c1Id].draw += 1; statsMap[c1Id].points += 2; // Hòa 2 điểm
+                        statsMap[c2Id].draw += 1; statsMap[c2Id].points += 2; // Hòa 2 điểm
                         statsMap[c1Id].headToHead[c2Id] = 0; statsMap[c2Id].headToHead[c1Id] = 0;
-                        c1Pts = 1; c2Pts = 1;
+                        c1Pts = 2; c2Pts = 2;
                     }
 
                     completedTies.push({
@@ -3975,7 +3977,7 @@
                 list.forEach((st) => {
                     exportData.push({
                         "Bảng Đấu": gName, "Thứ Tự / Hạng": st.rankLabel, "Tên Đội / CLB": st.name, "Số Cặp Đấu": st.played,
-                        "Thắng Tổng (2đ)": st.won, "Hòa Tổng (1đ)": st.draw, "Thua Tổng (0đ)": st.lost,
+                        "Thắng Tổng (3đ)": st.won, "Hòa Tổng (2đ)": st.draw, "Thua Tổng (1đ)": st.lost,
                         "Hiệu Số Trận": `${st.matchWins}-${st.matchLosses}`, "Điểm Tổng": st.points, "Trạng Thái": st.series
                     });
                 });
@@ -4301,10 +4303,20 @@
             if(m) { 
                 m.score1 = s1; m.score2 = s2; 
                 const target = m.catKey === 'DON' ? 21 : 15;
-                const cap = target + 2;
-                const isWon = appState.winByTwo
-                    ? ((s1 >= target && s1 - s2 >= 2) || (s2 >= target && s2 - s1 >= 2) || s1 >= cap || s2 >= cap)
-                    : (s1 >= target || s2 >= target);
+            let isWon = false;
+            
+            if (m.catKey === 'DON') {
+                // Đơn đánh chạm 21 trực tiếp
+                isWon = (s1 >= 21 || s2 >= 21);
+            } else {
+                if (appState.winByTwo) {
+                    // Loại trực tiếp: chạm 15, cách 2, max 18
+                    isWon = ((s1 >= target && s1 - s2 >= 2) || (s2 >= target && s2 - s1 >= 2) || s1 >= 18 || s2 >= 18);
+                } else {
+                    // Vòng bảng: chạm 15 trực tiếp
+                    isWon = (s1 >= target || s2 >= target);
+                }
+            }
                 if (s1 === 0 && s2 === 0) m.status = 'UPCOMING';
                 else m.status = isWon ? 'FINISHED' : 'LIVE';
                 saveAppState(); 
