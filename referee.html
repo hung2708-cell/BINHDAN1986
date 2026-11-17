@@ -1502,8 +1502,15 @@ if (!targetTie && selectedMatchId) {
         function evaluateMatchWinCondition(m) {
             const isSingles = (m.catKey === 'DON');
             const target = isSingles ? 21 : 15;
+            const cap = target + 2;
             const s1 = parseInt(m.score1) || 0, s2 = parseInt(m.score2) || 0;
-            if (s1 >= target || s2 >= target) {
+            const useWinByTwo = Boolean(state && state.winByTwo);
+
+            const isWon = useWinByTwo
+                ? ((s1 >= target && s1 - s2 >= 2) || (s2 >= target && s2 - s1 >= 2) || s1 >= cap || s2 >= cap)
+                : (s1 >= target || s2 >= target);
+
+            if (isWon) {
                 return { isWon: true, winnerScore: Math.max(s1, s2), loserScore: Math.min(s1, s2) };
             }
             return { isWon: false };
@@ -2294,7 +2301,10 @@ if (!targetTie && selectedMatchId) {
             }
 
             const cleanStageLabel = (m.catLabel || '').replace(/^(Bảng [^•]+•\s*)?(Lượt \d+\s*•\s*)?(Vòng \d+\s*•\s*)?/i, '');
-            const ruleTag = isSingles ? 'Chạm 21 • 11đ đổi sân' : 'Chạm 15 • 8đ đổi sân';
+            const useWinByTwo = Boolean(state && state.winByTwo);
+            const ruleTag = isSingles
+                ? (useWinByTwo ? 'Chạm 21 (Cách 2, trần 23) • 11đ đổi sân' : 'Chạm 21 • 11đ đổi sân')
+                : (useWinByTwo ? 'Chạm 15 (Cách 2, trần 17) • 8đ đổi sân' : 'Chạm 15 • 8đ đổi sân');
             document.getElementById('liveMatchStageBadge').textContent = `${cleanStageLabel} (${ruleTag})`;
 
             const servingTeam = m.servingTeam || 1;
