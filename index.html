@@ -1187,9 +1187,13 @@
                 if (!appState.ties) appState.ties = [];
                 if (!appState.customGroups) appState.customGroups = ['Bảng A', 'Bảng B'];
 
+                teams = appState.clubs;
+                matches = [];
+                appState.ties.forEach(t => (t.matches || []).forEach(m => matches.push(m)));
+
                 if (isAdminLoggedIn() && runFullTournamentAutomation()) {
-    await pushStateToFirebase();
-}
+                    await pushStateToFirebase();
+                }
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
                 initApp();
                 updateFirebaseStatusUI('OK', DEFAULT_SLOGAN);
@@ -1793,16 +1797,17 @@
             setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 2500);
         }
 
-        window.addEventListener('storage', (e) => {
+        window.addEventListener('storage', async (e) => {
             if (e.key === STORAGE_KEY && e.newValue) {
                 try {
                     appState = JSON.parse(e.newValue);
-                    if (runFullTournamentAutomation()) {
-    await pushStateToFirebase();
-}
-                    else {
-                        initApp();
+                    teams = appState.clubs || [];
+                    matches = [];
+                    (appState.ties || []).forEach(t => (t.matches || []).forEach(m => matches.push(m)));
+                    if (isAdminLoggedIn() && runFullTournamentAutomation()) {
+                        await pushStateToFirebase();
                     }
+                    initApp();
                 } catch (err) {}
             }
         });
@@ -2442,6 +2447,7 @@
             const bracketBanner = document.getElementById('bracket-champion-banner');
 
             if (!champs.serieA && !champs.serieB) {
+                __celebratedChampionKey = '';
                 if (homeBanner) homeBanner.classList.add('hidden');
                 if (bracketBanner) bracketBanner.classList.add('hidden');
                 return;
@@ -4116,7 +4122,7 @@
                 renderMatchesSchedule();
             }
             switchTab(targetTab);
-        }
+        };
 
         function startFirebaseRealtimeStream() {
             if (!window.EventSource) return;
@@ -4132,6 +4138,9 @@
                             if (!appState.clubs) appState.clubs = [];
                             if (!appState.ties) appState.ties = [];
                             if (!appState.customGroups) appState.customGroups = ['Bảng A', 'Bảng B'];
+                            teams = appState.clubs;
+                            matches = [];
+                            appState.ties.forEach(t => (t.matches || []).forEach(m => matches.push(m)));
                             if (isAdminLoggedIn() && runFullTournamentAutomation()) pushStateToFirebase();
                             localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
                             initApp();
@@ -4144,7 +4153,7 @@
                 evtSource.addEventListener('put', handleStreamUpdate);
                 evtSource.addEventListener('patch', handleStreamUpdate);
             } catch (e) {}
-        };
+        }
     </script>
 </body>
 </html>
