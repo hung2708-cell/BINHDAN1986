@@ -1505,13 +1505,22 @@
         function evaluateMatchWinCondition(m) {
             const isSingles = (m.catKey === 'DON');
             const target = isSingles ? 21 : 15;
-            const cap = target + 2;
             const s1 = parseInt(m.score1) || 0, s2 = parseInt(m.score2) || 0;
             const useWinByTwo = Boolean(state && state.winByTwo);
+            let isWon = false;
 
-            const isWon = useWinByTwo
-                ? ((s1 >= target && s1 - s2 >= 2) || (s2 >= target && s2 - s1 >= 2) || s1 >= cap || s2 >= cap)
-                : (s1 >= target || s2 >= target);
+            if (isSingles) {
+                // Đơn đánh chạm 21 trực tiếp
+                isWon = (s1 >= 21 || s2 >= 21);
+            } else {
+                if (useWinByTwo) {
+                    // Loại trực tiếp: chạm 15, cách 2, max 18
+                    isWon = ((s1 >= target && s1 - s2 >= 2) || (s2 >= target && s2 - s1 >= 2) || s1 >= 18 || s2 >= 18);
+                } else {
+                    // Vòng bảng: chạm 15 trực tiếp
+                    isWon = (s1 >= target || s2 >= target);
+                }
+            }
 
             if (isWon) {
                 return { isWon: true, winnerScore: Math.max(s1, s2), loserScore: Math.min(s1, s2) };
