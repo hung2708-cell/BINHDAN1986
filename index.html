@@ -250,15 +250,20 @@
                 <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-2.5">
                     <div>
                         <h2 class="text-base sm:text-lg font-extrabold text-stone-900">Lịch thi đấu theo Lượt & Sân</h2>
-                        <p class="text-[11px] sm:text-xs text-stone-500">Bao gồm Vòng Bảng & các vòng Knock-out tự động tạo.</p>
+                        <p class="text-[11px] sm:text-xs text-stone-500">Tìm nhanh lịch của tôi theo Tên Đội hoặc Tên VĐV • Dự kiến mỗi lượt ~60 phút.</p>
                     </div>
-                    <div class="flex items-center gap-2 w-full lg:w-auto justify-between lg:justify-end">
-                        <div id="wave-filter-buttons" class="flex-1 lg:flex-initial flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5"></div>
+                    <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-between lg:justify-end">
+                        <div class="relative flex-1 sm:w-56 lg:w-60 min-w-[180px]">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-xs"></i>
+                            <input type="text" id="match-search-input" oninput="filterMatchesByKeyword(this.value)" placeholder="Tìm tên VĐV hoặc CLB..." class="w-full bg-stone-50 border border-stone-300 rounded-xl pl-8 pr-7 py-1.5 text-xs font-semibold text-stone-900 focus:outline-none focus:border-brand-500 focus:bg-white">
+                            <button type="button" id="clear-match-search-btn" onclick="clearMatchKeywordFilter()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 hover:text-rose-600 p-0.5"><i class="fa-solid fa-circle-xmark text-xs"></i></button>
+                        </div>
                         <button type="button" onclick="openSpectatorQrModal('MATCHES')" class="shrink-0 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-extrabold flex items-center gap-1.5">
                             <i class="fa-solid fa-qrcode text-brand-600"></i> QR Lịch Đấu
                         </button>
                     </div>
                 </div>
+                <div id="wave-filter-buttons" class="w-full flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1"></div>
                 <div id="court-filter-buttons" class="w-full flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-2.5 border-t border-stone-100">
                     <button onclick="filterCourt('ALL')" class="court-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold bg-brand-600 text-white transition">Tất cả Sân</button>
                     <button onclick="filterCourt('Sân 1')" class="court-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold bg-stone-100 text-stone-700 hover:bg-stone-200 transition">Sân 1</button>
@@ -286,6 +291,17 @@
                 </div>
             </div>
             <div id="standings-groups-container" class="space-y-4"></div>
+            <!-- BẢNG VÀNG MVP / TOP VĐV XUẤT SẮC -->
+            <div class="bg-white border border-amber-200/90 rounded-2xl p-3.5 sm:p-4 space-y-3 shadow-2xs">
+                <div class="flex items-center justify-between border-b border-stone-100 pb-2">
+                    <h3 class="text-sm sm:text-base font-extrabold text-stone-900 flex items-center">
+                        <i class="fa-solid fa-star text-amber-500 mr-2"></i> Bảng Vàng VĐV Xuất Sắc (MVP)
+                    </h3>
+                    <span class="text-[10px] sm:text-xs font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">Tự động thống kê</span>
+                </div>
+                <div id="mvp-players-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5"></div>
+            </div>
+
             <div class="space-y-3 pt-1">
                 <h3 class="text-sm sm:text-base font-extrabold text-stone-900 flex items-center">
                     <i class="fa-solid fa-check-double text-emerald-600 mr-2"></i> Cặp đấu đã kết thúc (Đã khóa)
@@ -465,18 +481,44 @@
                 </div>
             </div>
 
-            <div class="bg-white border border-stone-200/90 p-4 sm:p-5 rounded-2xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 shadow-2xs">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-sliders"></i></div>
-                    <div>
-                        <h2 class="text-base sm:text-lg font-extrabold text-stone-900">Quản trị Giải đấu</h2>
-                        <p class="text-[11px] sm:text-xs text-stone-500">Tự động tiến vòng theo luật thi đấu & dồn sân trống liên tục.</p>
+            <div class="bg-white border border-stone-200/90 p-4 sm:p-5 rounded-2xl space-y-3.5 shadow-2xs">
+                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-sliders"></i></div>
+                        <div>
+                            <h2 class="text-base sm:text-lg font-extrabold text-stone-900">Quản trị Giải đấu & Điều lệ</h2>
+                            <p class="text-[11px] sm:text-xs text-stone-500">Cấu hình luật thắng điểm, giờ thi đấu & tự động tiến vòng.</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 sm:flex sm:flex-wrap gap-2 w-full lg:w-auto">
+                        <button onclick="manualTriggerAdvanceAndCompact()" class="justify-center px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-white text-xs font-bold flex items-center shadow-2xs"><i class="fa-solid fa-forward-fast mr-1"></i> Cập nhật vòng</button>
+                        <button onclick="generateScheduleByGroups()" class="justify-center px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center"><i class="fa-solid fa-calendar-check mr-1"></i> Xếp lịch</button>
+                        <button onclick="confirmResetDefault()" class="justify-center px-3 py-2 rounded-xl bg-stone-100 text-rose-600 hover:bg-rose-50 text-xs font-bold border border-stone-200 flex items-center"><i class="fa-solid fa-rotate-right mr-1"></i> Mẫu</button>
                     </div>
                 </div>
-                <div class="grid grid-cols-3 sm:flex sm:flex-wrap gap-2 w-full lg:w-auto">
-                    <button onclick="manualTriggerAdvanceAndCompact()" class="justify-center px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-white text-xs font-bold flex items-center shadow-2xs"><i class="fa-solid fa-forward-fast mr-1"></i> Cập nhật vòng</button>
-                    <button onclick="generateScheduleByGroups()" class="justify-center px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center"><i class="fa-solid fa-calendar-check mr-1"></i> Xếp lịch</button>
-                    <button onclick="confirmResetDefault()" class="justify-center px-3 py-2 rounded-xl bg-stone-100 text-rose-600 hover:bg-rose-50 text-xs font-bold border border-stone-200 flex items-center"><i class="fa-solid fa-rotate-right mr-1"></i> Mẫu</button>
+
+                <!-- TÙY CHỈNH LUẬT THẮNG CÁCH 2 ĐIỂM & GIỜ BẮT ĐẦU GIẢI -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-3 border-t border-stone-100 bg-stone-50/70 p-3 rounded-xl">
+                    <div>
+                        <label class="block text-[11px] font-bold text-stone-600 mb-1">Luật thắng ván (Đôi 15 / Đơn 21)</label>
+                        <select id="admin-win-by-two-select" onchange="updateTournamentRulesConfig()" class="compact-select w-full bg-white border border-stone-300 rounded-xl px-3 py-2 text-xs font-bold text-stone-800">
+                            <option value="0">Chạm 15 / 21 thắng ngay (Không cách 2)</option>
+                            <option value="1">Cách biệt 2 điểm (Điểm trần 17 / 23)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-stone-600 mb-1">Giờ khai mạc (Dự kiến Lượt 1)</label>
+                        <input type="time" id="admin-start-time-input" value="08:00" onchange="updateTournamentRulesConfig()" class="w-full bg-white border border-stone-300 rounded-xl px-3 py-1.5 text-xs font-bold text-stone-800">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-stone-600 mb-1">Thời lượng mỗi Lượt (Phút)</label>
+                        <select id="admin-wave-duration-select" onchange="updateTournamentRulesConfig()" class="compact-select w-full bg-white border border-stone-300 rounded-xl px-3 py-2 text-xs font-bold text-stone-800">
+                            <option value="45">45 phút / Lượt</option>
+                            <option value="60" selected>60 phút / Lượt</option>
+                            <option value="75">75 phút / Lượt</option>
+                            <option value="90">90 phút / Lượt</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -919,6 +961,31 @@
         if (!appState.ties) appState.ties = DEFAULT_TIES;
         if (!appState.customGroups) appState.customGroups = ['Bảng A', 'Bảng B'];
         if (!appState.tournamentName) appState.tournamentName = 'Giải Pickleball Bính Dần 1986';
+        if (appState.winByTwo === undefined) appState.winByTwo = false;
+        if (!appState.startTime) appState.startTime = '08:00';
+        if (!appState.waveDuration) appState.waveDuration = 60;
+
+        function updateTournamentRulesConfig() {
+            if (!isAdminLoggedIn()) { openLoginModal(); return; }
+            const winSel = document.getElementById('admin-win-by-two-select');
+            const timeInp = document.getElementById('admin-start-time-input');
+            const durSel = document.getElementById('admin-wave-duration-select');
+            if (winSel) appState.winByTwo = (winSel.value === '1');
+            if (timeInp && timeInp.value) appState.startTime = timeInp.value;
+            if (durSel) appState.waveDuration = parseInt(durSel.value, 10) || 60;
+            saveAppState();
+            showToast('✅ Đã lưu cấu hình Điều lệ & Giờ thi đấu lên Firebase!');
+        }
+
+        function getEstimatedWaveTime(waveNum) {
+            const baseStr = appState.startTime || '08:00';
+            const dur = parseInt(appState.waveDuration, 10) || 60;
+            const [hh, mm] = baseStr.split(':').map(n => parseInt(n, 10) || 0);
+            const totalMins = hh * 60 + mm + Math.max(0, (waveNum - 1)) * dur;
+            const outH = Math.floor(totalMins / 60) % 24;
+            const outM = totalMins % 60;
+            return `${String(outH).padStart(2, '0')}:${String(outM).padStart(2, '0')}`;
+        }
 
         let teams = appState.clubs;
         let matches = [];
@@ -2542,28 +2609,15 @@
             if(!container) return;
 
             const allTies = getAllStructuredTies();
-            let html = '';
+            let activeCardsHtml = '';
+            let emptyCourts = [];
 
             COURTS_LIST.forEach(courtName => {
                 const courtTies = allTies.filter(t => t.court === courtName);
                 const qrBtnHtml = `<button type="button" onclick="openSpectatorQrModal('${courtName}')" class="w-6 h-6 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 flex items-center justify-center shrink-0" title="Tạo mã QR riêng cho ${courtName}"><i class="fa-solid fa-qrcode text-[11px] text-brand-600"></i></button>`;
                 
                 if (courtTies.length === 0) {
-                    html += `
-                        <div class="bg-white/70 border border-stone-200 rounded-2xl p-3.5 flex flex-col justify-between space-y-2">
-                            <div class="flex items-center justify-between pb-1.5 border-b border-stone-100 gap-1">
-                                <div class="flex items-center gap-1.5">
-                                    <span class="text-xs font-extrabold text-stone-700"><i class="fa-solid fa-location-dot mr-1 text-orange-500"></i> ${courtName}</span>
-                                    ${qrBtnHtml}
-                                </div>
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-stone-100 text-stone-400">Trống</span>
-                            </div>
-                            <div class="py-1 text-center text-xs text-stone-400 italic">Chưa có lịch thi đấu</div>
-                            <div class="pt-1.5 border-t border-stone-100 flex justify-end text-[11px]">
-                                ${renderRefereeAccessAction(courtName, 'inline', false, '', '')}
-                            </div>
-                        </div>
-                    `;
+                    emptyCourts.push(courtName);
                 } else {
                     const sortedTies = [...courtTies].sort((a, b) => (a.wave || 1) - (b.wave || 1));
                     let activeTie = sortedTies.find(t => evaluateTieStatus(t.matches).isLive);
@@ -2571,10 +2625,22 @@
                         activeTie = sortedTies.find(t => !evaluateTieStatus(t.matches).isCompleted) || sortedTies[sortedTies.length - 1];
                     }
 
+                    // Tìm cặp đấu kế tiếp (On-Deck) trên cùng sân để 2 đội sau chuẩn bị khởi động
+                    const activeIdx = sortedTies.findIndex(t => t.id === activeTie.id);
+                    const onDeckTie = sortedTies.slice(activeIdx + 1).find(t => !evaluateTieStatus(t.matches).isCompleted);
+                    let onDeckHtml = '';
+                    if (onDeckTie) {
+                        onDeckHtml = `
+                            <div class="mt-1.5 px-2 py-1 rounded-lg bg-amber-50/95 border border-amber-200/90 flex items-center justify-between text-[10px] text-amber-900">
+                                <span class="truncate font-bold"><i class="fa-solid fa-hourglass-half text-orange-500 mr-1"></i>Kế tiếp (~${getEstimatedWaveTime(onDeckTie.wave)}): ${getClubName(onDeckTie.club1Id)} vs ${getClubName(onDeckTie.club2Id)}</span>
+                            </div>
+                        `;
+                    }
+
                     const completedOnCourt = sortedTies.filter(t => evaluateTieStatus(t.matches).isCompleted && t.id !== activeTie.id);
                     const lastFinishedTie = completedOnCourt.length > 0 ? completedOnCourt[completedOnCourt.length - 1] : null;
                     let lastFinishedHtml = '';
-                    if (lastFinishedTie) {
+                    if (lastFinishedTie && !onDeckTie) {
                         const lSt = evaluateTieStatus(lastFinishedTie.matches);
                         lastFinishedHtml = `
                             <div onclick="openCourtDetailModal('${courtName}', '${lastFinishedTie.club1Id}', '${lastFinishedTie.club2Id}', '${lastFinishedTie.id}')" class="cursor-pointer mt-1.5 px-2 py-1 rounded-lg bg-emerald-50/90 hover:bg-emerald-100 border border-emerald-200 flex items-center justify-between text-[10px] text-emerald-800">
@@ -2594,10 +2660,10 @@
                     } else if (tieSt.isLive) {
                         statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-brand-700 animate-pulse">LIVE • Lượt ${activeTie.wave} (${tieSt.c1Wins}-${tieSt.c2Wins})</span>`;
                     } else {
-                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">${activeTie.knockoutRound ? 'Knock-out' : `Sẵn sàng • Lượt ${activeTie.wave}`}</span>`;
+                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">${activeTie.knockoutRound ? 'Knock-out' : `${getEstimatedWaveTime(activeTie.wave)} • Lượt ${activeTie.wave}`}</span>`;
                     }
 
-                    html += `
+                    activeCardsHtml += `
                         <div class="bg-white border ${tieSt.isLive ? 'border-brand-400 shadow-sm' : 'border-stone-200/90'} rounded-2xl p-3.5 flex flex-col justify-between space-y-2">
                             <div class="flex items-center justify-between pb-1.5 border-b border-stone-100 gap-1">
                                 <div class="flex items-center gap-1.5">
@@ -2610,6 +2676,7 @@
                                 <div class="text-[10px] font-semibold text-stone-400 truncate">${activeTie.group}</div>
                                 <div class="text-xs sm:text-sm font-extrabold text-stone-900 truncate">${cName1} vs ${cName2}</div>
                                 <div class="text-[11px] text-stone-500">Tỷ số: <strong class="text-stone-800">${tieSt.c1Wins} - ${tieSt.c2Wins}</strong> (${tieSt.finishedCount}/${tieSt.totalCount} trận)</div>
+                                ${onDeckHtml}
                                 ${lastFinishedHtml}
                             </div>
                             <div class="flex justify-between items-center pt-1.5 border-t border-stone-100 text-xs gap-2">
@@ -2620,11 +2687,23 @@
                     `;
                 }
             });
-            container.innerHTML = html;
+
+            let emptySummaryHtml = '';
+            if (emptyCourts.length > 0) {
+                emptySummaryHtml = `
+                    <div class="col-span-full bg-white/75 border border-dashed border-stone-300 rounded-2xl px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-stone-500">
+                        <span class="font-semibold"><i class="fa-solid fa-circle-pause text-stone-400 mr-1.5"></i>Sân đang trống lịch (${emptyCourts.length}): <strong class="text-stone-700">${emptyCourts.join(', ')}</strong></span>
+                        <span class="text-[11px] italic">Tự động hiển thị khi có trận đấu được xếp</span>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = activeCardsHtml + emptySummaryHtml;
         }
 
         let currentCourtFilter = 'ALL';
         let currentWaveFilter = 'ALL';
+        let currentMatchKeyword = '';
 
         function filterCourt(courtFilter) {
             currentCourtFilter = courtFilter;
@@ -2634,6 +2713,34 @@
         function filterWave(waveFilter) {
             currentWaveFilter = waveFilter;
             renderMatchesSchedule();
+        }
+
+        function filterMatchesByKeyword(kw) {
+            currentMatchKeyword = String(kw || '').trim().toLowerCase();
+            const clearBtn = document.getElementById('clear-match-search-btn');
+            if (clearBtn) clearBtn.classList.toggle('hidden', !currentMatchKeyword);
+            renderMatchesSchedule();
+        }
+
+        function clearMatchKeywordFilter() {
+            const inp = document.getElementById('match-search-input');
+            if (inp) inp.value = '';
+            filterMatchesByKeyword('');
+        }
+
+        function doesTieMatchKeyword(tie, kw) {
+            if (!kw) return true;
+            const c1 = teams.find(c => c.id === tie.club1Id);
+            const c2 = teams.find(c => c.id === tie.club2Id);
+            const haystacks = [
+                c1?.name || '',
+                c2?.name || '',
+                tie.group || '',
+                tie.court || '',
+                ...(c1?.players || []).map(p => p.name || ''),
+                ...(c2?.players || []).map(p => p.name || '')
+            ];
+            return haystacks.some(s => s.toLowerCase().includes(kw));
         }
 
         function renderMatchesSchedule() {
@@ -2673,16 +2780,20 @@
                 return;
             }
 
-            container.innerHTML = wavesToShow.map(waveNum => {
+            const renderedWavesHtml = wavesToShow.map(waveNum => {
                 let waveTies = allTies.filter(t => (t.wave || 1) === waveNum);
                 if (currentCourtFilter !== 'ALL') {
                     waveTies = waveTies.filter(t => t.court === currentCourtFilter);
+                }
+                if (currentMatchKeyword) {
+                    waveTies = waveTies.filter(t => doesTieMatchKeyword(t, currentMatchKeyword));
                 }
 
                 if (waveTies.length === 0) return '';
 
                 waveTies.sort((a, b) => COURTS_LIST.indexOf(a.court) - COURTS_LIST.indexOf(b.court));
                 const isKoWave = waveTies.some(t => t.knockoutRound);
+                const estTime = getEstimatedWaveTime(waveNum);
 
                 const cardsHtml = waveTies.map(tie => {
                     const c1Name = getClubName(tie.club1Id);
@@ -2727,9 +2838,14 @@
                 return `
                     <div class="bg-white/70 border border-stone-200/80 rounded-2xl p-3 sm:p-4 space-y-3">
                         <div class="flex items-center justify-between border-b border-stone-100 pb-2 gap-2">
-                            <span class="px-2.5 py-1 rounded-lg ${isKoWave ? 'bg-purple-700' : 'bg-stone-800'} text-white text-[11px] font-bold uppercase tracking-wide shrink-0">
-                                ${isKoWave ? `Vòng Knock-out (Lượt ${waveNum})` : `Lượt ${waveNum}`}
-                            </span>
+                            <div class="flex items-center gap-2 min-w-0">
+                                <span class="px-2.5 py-1 rounded-lg ${isKoWave ? 'bg-purple-700' : 'bg-stone-800'} text-white text-[11px] font-bold uppercase tracking-wide shrink-0">
+                                    ${isKoWave ? `Vòng Knock-out (Lượt ${waveNum})` : `Lượt ${waveNum}`}
+                                </span>
+                                <span class="px-2 py-0.5 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-extrabold shrink-0">
+                                    <i class="fa-regular fa-clock mr-1"></i>~${estTime}
+                                </span>
+                            </div>
                             <span class="text-[11px] font-medium text-stone-500 truncate">${waveTies.length} sân thi đấu</span>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
@@ -2738,6 +2854,8 @@
                     </div>
                 `;
             }).join('');
+
+            container.innerHTML = renderedWavesHtml || `<div class="text-center py-10 text-stone-400 bg-white rounded-2xl border border-stone-200 text-xs">Không tìm thấy lịch thi đấu phù hợp với từ khóa "${currentMatchKeyword}".</div>`;
         }
 
         function openCourtDetailModal(courtName, club1Id, club2Id, tieId = null) {
@@ -2784,7 +2902,7 @@
             document.getElementById('detail-modal-title').textContent = `${displayCourt}${waveNum ? ` (Lượt ${waveNum})` : ''}: ${c1Name} (${tieSt.c1Wins}) - (${tieSt.c2Wins}) ${c2Name}`;
             document.getElementById('detail-modal-subtitle').textContent = tieSt.isCompleted
                 ? `🏆 ${tieSt.winnerSide === 1 ? c1Name : c2Name} thắng (${tieSt.c1Wins}-${tieSt.c2Wins}) • Đã khóa trọng tài Lượt ${waveNum} (Chỉ Admin được chỉnh sửa)`
-                : (isAdmin ? `Quản trị viên có thể nhập tỷ số trực tiếp bên dưới` : `Chạm ${WINS_TO_CLINCH_TIE} trận thắng kết thúc cặp đấu`);
+                : (isAdmin ? `Quản trị viên có thể nhập tỷ số trực tiếp bên dưới` : `Dự kiến ~${getEstimatedWaveTime(waveNum || 1)} • Chạm ${WINS_TO_CLINCH_TIE} trận thắng kết thúc cặp đấu`);
 
             const refWrap = document.getElementById('detail-modal-referee-action-wrap');
             if (refWrap) refWrap.innerHTML = renderRefereeAccessAction(displayCourt, 'modal', tieSt.isCompleted, resolvedTieId, waveNum);
@@ -2853,6 +2971,29 @@
                 `;
             }).join('') : '<div class="text-center text-stone-400 py-6 text-xs">Chưa có nội dung thi đấu nào.</div>';
 
+            const tieLogs = [];
+            tieMatches.forEach(m => {
+                (m.logs || []).forEach(l => tieLogs.push(l));
+            });
+            tieLogs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            if (tieLogs.length > 0) {
+                const logsPreviewHtml = tieLogs.slice(0, 12).map(l => `
+                    <div class="flex items-start justify-between gap-2 text-[10.5px] py-1 border-b border-stone-100 last:border-0">
+                        <span class="text-stone-700 font-medium leading-snug"><strong class="font-mono text-stone-500">[${l.time}]</strong> ${l.detail}</span>
+                        <span class="px-1.5 py-0.2 rounded bg-amber-50 border border-amber-200 text-amber-900 font-mono font-bold shrink-0">${l.score}</span>
+                    </div>
+                `).join('');
+                document.getElementById('detail-modal-content').innerHTML += `
+                    <details class="bg-stone-50 border border-stone-200 rounded-xl p-2.5 mt-2">
+                        <summary class="cursor-pointer text-[11px] font-extrabold text-stone-700 flex items-center justify-between">
+                            <span><i class="fa-solid fa-clock-rotate-left text-amber-600 mr-1.5"></i>Nhật ký diễn biến trận đấu (${tieLogs.length} sự kiện)</span>
+                            <span class="text-[10px] text-brand-600 underline">Xem chi tiết</span>
+                        </summary>
+                        <div class="mt-2 pt-1.5 border-t border-stone-200 max-h-40 overflow-y-auto">${logsPreviewHtml}</div>
+                    </details>
+                `;
+            }
+
             document.getElementById('match-detail-modal').classList.remove('hidden');
             document.getElementById('match-detail-modal').classList.add('flex');
         }
@@ -2889,7 +3030,8 @@
             teams.forEach(t => { 
                 statsMap[t.id] = { 
                     id: t.id, name: t.name, group: (t.group && String(t.group).trim()) || 'Bảng A',
-                    played: 0, won: 0, draw: 0, lost: 0, matchWins: 0, matchLosses: 0, points: 0, headToHead: {} 
+                    played: 0, won: 0, draw: 0, lost: 0, matchWins: 0, matchLosses: 0,
+                    gamePtsFor: 0, gamePtsAgainst: 0, points: 0, headToHead: {} 
                 }; 
             });
 
@@ -2900,8 +3042,19 @@
                 const c1Id = tie.club1Id, c2Id = tie.club2Id;
                 const c1Name = getClubName(c1Id), c2Name = getClubName(c2Id);
 
-                if (!statsMap[c1Id]) statsMap[c1Id] = { id: c1Id, name: c1Name, group: tie.group, played: 0, won: 0, draw: 0, lost: 0, matchWins: 0, matchLosses: 0, points: 0, headToHead: {} };
-                if (!statsMap[c2Id]) statsMap[c2Id] = { id: c2Id, name: c2Name, group: tie.group, played: 0, won: 0, draw: 0, lost: 0, matchWins: 0, matchLosses: 0, points: 0, headToHead: {} };
+                if (!statsMap[c1Id]) statsMap[c1Id] = { id: c1Id, name: c1Name, group: tie.group, played: 0, won: 0, draw: 0, lost: 0, matchWins: 0, matchLosses: 0, gamePtsFor: 0, gamePtsAgainst: 0, points: 0, headToHead: {} };
+                if (!statsMap[c2Id]) statsMap[c2Id] = { id: c2Id, name: c2Name, group: tie.group, played: 0, won: 0, draw: 0, lost: 0, matchWins: 0, matchLosses: 0, gamePtsFor: 0, gamePtsAgainst: 0, points: 0, headToHead: {} };
+
+                (tie.matches || []).forEach(m => {
+                    if (m.status === 'FINISHED') {
+                        const s1 = parseInt(m.score1) || 0;
+                        const s2 = parseInt(m.score2) || 0;
+                        statsMap[c1Id].gamePtsFor += s1;
+                        statsMap[c1Id].gamePtsAgainst += s2;
+                        statsMap[c2Id].gamePtsFor += s2;
+                        statsMap[c2Id].gamePtsAgainst += s1;
+                    }
+                });
 
                 const tieSt = evaluateTieStatus(tie.matches);
                 if (tieSt.finishedCount === 0) return;
@@ -2955,6 +3108,8 @@
                         if (a.headToHead[b.id] !== undefined && a.headToHead[b.id] !== 0) return -a.headToHead[b.id];
                         const diffA = a.matchWins - a.matchLosses, diffB = b.matchWins - b.matchLosses;
                         if (diffB !== diffA) return diffB - diffA;
+                        const ptDiffA = a.gamePtsFor - a.gamePtsAgainst, ptDiffB = b.gamePtsFor - b.gamePtsAgainst;
+                        if (ptDiffB !== ptDiffA) return ptDiffB - ptDiffA;
                         return b.matchWins - a.matchWins;
                     });
                 }
@@ -2972,6 +3127,83 @@
             });
 
             return groupedStandings;
+        }
+
+        function renderMvpPlayersBoard() {
+            const container = document.getElementById('mvp-players-container');
+            if (!container) return;
+
+            const playerStats = {};
+            const allTies = getAllStructuredTies();
+
+            allTies.forEach(tie => {
+                const c1 = teams.find(c => c.id === tie.club1Id);
+                const c2 = teams.find(c => c.id === tie.club2Id);
+                (tie.matches || []).forEach(m => {
+                    if (m.status !== 'FINISHED') return;
+                    const s1 = parseInt(m.score1) || 0;
+                    const s2 = parseInt(m.score2) || 0;
+                    if (s1 === s2) return;
+                    const side1Won = s1 > s2;
+
+                    const recordSide = (clubObj, pIds, isWin, ptsDiff) => {
+                        if (!clubObj || !Array.isArray(pIds)) return;
+                        pIds.forEach(pid => {
+                            const pObj = (clubObj.players || []).find(p => p.id === pid);
+                            if (!pObj) return;
+                            if (!playerStats[pid]) {
+                                playerStats[pid] = {
+                                    id: pid,
+                                    name: pObj.name,
+                                    clubName: clubObj.name,
+                                    level: pObj.level || 'A',
+                                    played: 0,
+                                    won: 0,
+                                    ptsDiff: 0
+                                };
+                            }
+                            playerStats[pid].played += 1;
+                            if (isWin) playerStats[pid].won += 1;
+                            playerStats[pid].ptsDiff += ptsDiff;
+                        });
+                    };
+
+                    recordSide(c1, m.team1PlayerIds, side1Won, s1 - s2);
+                    recordSide(c2, m.team2PlayerIds, !side1Won, s2 - s1);
+                });
+            });
+
+            const ranking = Object.values(playerStats)
+                .filter(p => p.played > 0)
+                .sort((a, b) => {
+                    if (b.won !== a.won) return b.won - a.won;
+                    const rateA = a.won / a.played, rateB = b.won / b.played;
+                    if (Math.abs(rateB - rateA) > 0.001) return rateB - rateA;
+                    return b.ptsDiff - a.ptsDiff;
+                })
+                .slice(0, 8);
+
+            if (ranking.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-4 text-xs text-stone-400 italic">Chưa có dữ liệu trận hoàn thành để xếp hạng VĐV.</div>`;
+                return;
+            }
+
+            container.innerHTML = ranking.map((p, idx) => {
+                const winRate = Math.round((p.won / p.played) * 100);
+                const medalIcon = idx === 0 ? '👑' : (idx === 1 ? '🥈' : (idx === 2 ? '🥉' : `#${idx + 1}`));
+                return `
+                    <div class="bg-stone-50/80 border ${idx === 0 ? 'border-amber-400 bg-amber-50/60' : 'border-stone-200'} rounded-xl p-2.5 flex items-center justify-between gap-2">
+                        <div class="min-w-0">
+                            <div class="text-xs font-extrabold text-stone-900 truncate">${medalIcon} ${p.name} <span class="text-[10px] font-bold text-amber-700">(${p.level})</span></div>
+                            <div class="text-[10px] text-stone-500 truncate">${p.clubName}</div>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <div class="text-xs font-black text-emerald-700">${p.won}/${p.played} trận</div>
+                            <div class="text-[10px] font-bold text-stone-500">${winRate}% • ${p.ptsDiff >= 0 ? '+' : ''}${p.ptsDiff}đ</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         function renderStandings() {
@@ -3053,6 +3285,7 @@
                 }
             }
 
+            renderMvpPlayersBoard();
             const completedContainer = document.getElementById('completed-ties-container');
             const completedTies = window.__completedTiesCache || [];
             if (completedContainer) {
@@ -4068,8 +4301,12 @@
             if(m) { 
                 m.score1 = s1; m.score2 = s2; 
                 const target = m.catKey === 'DON' ? 21 : 15;
+                const cap = target + 2;
+                const isWon = appState.winByTwo
+                    ? ((s1 >= target && s1 - s2 >= 2) || (s2 >= target && s2 - s1 >= 2) || s1 >= cap || s2 >= cap)
+                    : (s1 >= target || s2 >= target);
                 if (s1 === 0 && s2 === 0) m.status = 'UPCOMING';
-                else m.status = (s1 >= target || s2 >= target) ? 'FINISHED' : 'LIVE';
+                else m.status = isWon ? 'FINISHED' : 'LIVE';
                 saveAppState(); 
                 showToast('✅ Cập nhật tỷ số & đồng bộ lên Firebase!'); 
             }
@@ -4077,6 +4314,12 @@
 
         function initApp() {
             applyRoleUI();
+            const winSel = document.getElementById('admin-win-by-two-select');
+            const timeInp = document.getElementById('admin-start-time-input');
+            const durSel = document.getElementById('admin-wave-duration-select');
+            if (winSel) winSel.value = appState.winByTwo ? '1' : '0';
+            if (timeInp && appState.startTime) timeInp.value = appState.startTime;
+            if (durSel && appState.waveDuration) durSel.value = String(appState.waveDuration);
             enforceTieClinchRules();
             teams = appState.clubs || [];
             matches = [];
