@@ -2168,7 +2168,7 @@
         function triggerSideOutOrNextServer() {
             if (!enforceRefereeSecurityLock()) return;
             const now = Date.now();
-            if (now - __lastScoreTapAt < 50) return; // Đã giảm xuống 50ms
+            if (now - __lastScoreTapAt < 50) return; 
             __lastScoreTapAt = now;
 
             const activeId = getCourtSelectedMatchId(currentAssignedCourt);
@@ -2189,12 +2189,32 @@
 
                 if (curServerNum === 1) {
                     m.serverNum = 2;
+                    
+                    // Cập nhật m.teamXName cho người giao số 2 (người còn lại đang đứng đúng ô)
+                    const servingScore = curTeam === 1 ? (parseInt(m.score1) || 0) : (parseInt(m.score2) || 0);
+                    const serveFromRightBox = getServeFromRightBox(servingScore, false, 2);
+                    if (curTeam === 1) {
+                        m.team1Name = serveFromRightBox ? m.courtState.t1Right : m.courtState.t1Left;
+                    } else {
+                        m.team2Name = serveFromRightBox ? m.courtState.t2Right : m.courtState.t2Left;
+                    }
+
                     recordMatchLog(m, 'SERVE_CHANGE', `Chuyển sang người giao bóng số 2`);
                     showToast(`2️⃣ Người giao bóng số 2 (Đồng đội giao)!`);
                 } else {
                     m.servingTeam = curTeam === 1 ? 2 : 1;
                     m.serverNum = 1;
                     const newServerClub = getClubById(m.servingTeam === 1 ? m.club1Id : m.club2Id).name;
+                    
+                    // Xác định người giao bóng số 1 của đội vừa giành quyền giao bóng
+                    const newTeamScore = m.servingTeam === 1 ? (parseInt(m.score1) || 0) : (parseInt(m.score2) || 0);
+                    const serveFromRightBox = getServeFromRightBox(newTeamScore, false, 1);
+                    if (m.servingTeam === 1) {
+                        m.team1Name = serveFromRightBox ? m.courtState.t1Right : m.courtState.t1Left;
+                    } else {
+                        m.team2Name = serveFromRightBox ? m.courtState.t2Right : m.courtState.t2Left;
+                    }
+
                     recordMatchLog(m, 'SERVE_CHANGE', `Đổi giao bóng sang ${newServerClub} (Lượt 1)`);
                     showToast(`🔄 Đổi giao bóng sang ${newServerClub} (Lượt 1)!`);
                 }
@@ -2467,6 +2487,32 @@
                 const leftBottomName = String(leftIsT1 ? cs.t1Right : cs.t2Right);
                 const rightTopName = String(leftIsT1 ? cs.t2Right : cs.t1Right);
                 const rightBottomName = String(leftIsT1 ? cs.t2Left : cs.t1Left);
+
+                // Lấy ra tên của người giao bóng và người đỡ bóng hợp lệ dựa theo logic: 
+                // Người giao bóng ở ô tương ứng với điểm số hiện tại
+                // Người đỡ bóng ở chéo sân tương ứng.
+                let activeServerName = "";
+                let activeReceiverName = "";
+                
+                if (isLeftServing) {
+                    activeServerName = (leftServerY === 152) ? leftBottomName : leftTopName;
+                    activeReceiverName = (leftServerY === 152) ? rightTopName : rightBottomName;
+                } else {
+                    activeServerName = (rightServerY === 58) ? rightTopName : rightBottomName;
+                    activeReceiverName = (rightServerY === 58) ? leftBottomName : leftTopName;
+                }
+
+                // Cập nhật lại teamXName trong match object nếu nó chưa phản ánh đúng người đang giao bóng
+                if (isLeftServing && m.team1Name !== activeServerName && leftIsT1) {
+                    m.team1Name = activeServerName;
+                } else if (isLeftServing && m.team2Name !== activeServerName && !leftIsT1) {
+                    m.team2Name = activeServerName;
+                } else if (!isLeftServing && m.team2Name !== activeServerName && !leftIsT1) {
+                    m.team2Name = activeServerName;
+                } else if (!isLeftServing && m.team1Name !== activeServerName && leftIsT1) {
+                    m.team1Name = activeServerName;
+                }
+
 
                 // Vị trí chiều ngang (X):
                 // - Đội giao bóng: Cả 2 đứng ở vạch cuối sân (x = 44 bên trái / x = 396 bên phải)
