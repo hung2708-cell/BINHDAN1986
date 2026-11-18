@@ -1993,7 +1993,8 @@
 
             const activeId = getCourtSelectedMatchId(currentAssignedCourt);
             const { match: m } = findMatchById(activeId);
-            if (!m || m.status === 'SKIPPED' || teamNum !== (m.servingTeam || 1)) return;
+            if (!m || m.status === 'SKIPPED') return;
+            if (m.status !== 'FINISHED' && teamNum !== (m.servingTeam || 1)) return;
             
             const isSingles = (m.catKey === 'DON');
             const req = getRequiredPlayerCount(m);
@@ -2373,14 +2374,12 @@
 
                 if (m.status === 'SKIPPED') {
                     actionEl.innerHTML = `<div class="col-span-4 ref-score-btn rounded-lg bg-stone-100 border border-stone-200 text-stone-500 font-extrabold text-[11px] flex items-center justify-center">⏭️ Không đấu</div>`;
-                } else if (m.status === 'SKIPPED_BUT_FINISHED') { // Đã sửa để luôn hiện nút +/- kể cả khi xong trận
 
-                    actionEl.innerHTML = `<div class="col-span-4 ref-score-btn rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-800 font-extrabold text-xs flex items-center justify-center"><i class="fa-solid fa-lock mr-1"></i> ĐÃ XONG</div>`;
                 } else if (!fullLineup) {
                     actionEl.innerHTML = `<button type="button" onclick="openMissingLineupStep()" class="col-span-4 ref-score-btn rounded-lg bg-rose-50 border border-brand-300 text-brand-700 font-extrabold text-[11px] flex items-center justify-center gap-1"><i class="fa-solid fa-user-plus"></i> Chọn VĐV</button>`;
                 } else if (needToss) {
                     actionEl.innerHTML = `<button type="button" onclick="openCoinTossModal(true)" class="col-span-4 ref-score-btn rounded-lg bg-amber-100 border border-amber-400 text-amber-900 font-extrabold text-[11px] flex items-center justify-center gap-1"><i class="fa-solid fa-coins text-orange-600"></i> Bốc thăm</button>`;
-                } else if (isServing) {
+                } else if (isServing || m.status === 'FINISHED') {
                     const btnGradient = isT1 ? 'from-brand-600 to-orange-500 text-white' : 'from-emerald-600 to-teal-500 text-white';
                     actionEl.innerHTML = `
                         <button type="button" onclick="adjustLiveScore(${teamNum}, -1)" class="col-span-1 ref-score-btn rounded-lg bg-white border border-stone-300 hover:bg-stone-100 active:scale-95 text-stone-500 font-bold text-xs shadow-sm" title="Giảm 1 điểm">-1</button>
