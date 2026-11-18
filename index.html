@@ -2937,10 +2937,10 @@
                     ? `<span class="text-[10px] font-bold text-stone-400 italic">Đủ 3 thắng</span>`
                     : (isAdmin
                         ? `
-                            <input type="number" min="0" inputmode="numeric" id="popup-s1-${m.id}" value="${s1}" class="popup-score-input w-9 bg-stone-50 border border-stone-300 rounded-lg text-center font-score font-black text-brand-600 text-xs py-1">
+                            <input type="number" min="0" inputmode="numeric" id="popup-s1-${m.id}" value="${s1}" class="popup-score-input w-9 bg-stone-50 border border-stone-300 rounded-lg text-center font-score font-black text-brand-600 text-xs py-1" ${isFinished ? 'disabled' : ''}>
                             <span class="text-stone-400 font-bold text-xs">-</span>
-                            <input type="number" min="0" inputmode="numeric" id="popup-s2-${m.id}" value="${s2}" class="popup-score-input w-9 bg-stone-50 border border-stone-300 rounded-lg text-center font-score font-black text-emerald-700 text-xs py-1">
-                            <button type="button" onclick="savePopupMatchScore('${m.id}')" class="px-2 py-1 rounded-lg bg-brand-600 text-white text-[10px] font-bold shrink-0">Lưu</button>
+                            <input type="number" min="0" inputmode="numeric" id="popup-s2-${m.id}" value="${s2}" class="popup-score-input w-9 bg-stone-50 border border-stone-300 rounded-lg text-center font-score font-black text-emerald-700 text-xs py-1" ${isFinished ? 'disabled' : ''}>
+                            <button type="button" onclick="savePopupMatchScore('${m.id}')" class="px-2 py-1 rounded-lg ${isFinished ? 'bg-stone-400 cursor-not-allowed' : 'bg-brand-600 hover:bg-brand-500'} text-white text-[10px] font-bold shrink-0" ${isFinished ? 'disabled' : ''}>Lưu</button>
                           `
                         : `
                             <span class="px-2 py-0.5 rounded-lg bg-stone-100 font-score font-black text-brand-600 text-sm">${s1}</span>
@@ -4414,3 +4414,4 @@
     </script>
 </body>
 </html>
+
