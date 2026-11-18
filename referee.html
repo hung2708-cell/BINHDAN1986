@@ -1502,7 +1502,7 @@
             showToast(`🚑 Đã thay y tế: ${outPlayer.name} ➔ ${inPlayer.name}`);
         }
 
-        function evaluateMatchWinCondition(m) {
+                function evaluateMatchWinCondition(m) {
             const isSingles = (m.catKey === 'DON');
             const target = isSingles ? 21 : 15;
             const s1 = parseInt(m.score1) || 0, s2 = parseInt(m.score2) || 0;
@@ -1515,7 +1515,8 @@
             } else {
                 if (useWinByTwo) {
                     // Loại trực tiếp: chạm 15, cách 2, max 18
-                    isWon = ((s1 >= target && s1 - s2 >= 2) || (s2 >= target && s2 - s1 >= 2) || s1 >= 18 || s2 >= 18);
+                    // Trận đấu chỉ kết thúc nếu 1 đội đạt 15 điểm trở lên VÀ cách biệt 2 điểm, HOẶC chạm trần 18 điểm
+                    isWon = ((s1 >= 15 && s1 - s2 >= 2) || (s2 >= 15 && s2 - s1 >= 2) || s1 >= 18 || s2 >= 18);
                 } else {
                     // Vòng bảng: chạm 15 trực tiếp
                     isWon = (s1 >= target || s2 >= target);
