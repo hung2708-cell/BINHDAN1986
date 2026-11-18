@@ -2984,10 +2984,10 @@
                     </div>
                 `).join('');
                 document.getElementById('detail-modal-content').innerHTML += `
-                    <details class="bg-stone-50 border border-stone-200 rounded-xl p-2.5 mt-2">
+                    <details open class="bg-stone-50 border border-stone-200 rounded-xl p-2.5 mt-2">
                         <summary class="cursor-pointer text-[11px] font-extrabold text-stone-700 flex items-center justify-between">
                             <span><i class="fa-solid fa-clock-rotate-left text-amber-600 mr-1.5"></i>Nhật ký diễn biến trận đấu (${tieLogs.length} sự kiện)</span>
-                            <span class="text-[10px] text-brand-600 underline">Xem chi tiết</span>
+                            <span class="text-[10px] text-brand-600 underline">Ẩn bớt</span>
                         </summary>
                         <div class="mt-2 pt-1.5 border-t border-stone-200 max-h-40 overflow-y-auto">${logsPreviewHtml}</div>
                     </details>
