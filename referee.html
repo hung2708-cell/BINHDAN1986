@@ -2319,11 +2319,14 @@
                 rotBanner.classList.add('hidden');
             }
 
-            const cleanStageLabel = (m.catLabel || '').replace(/^(Bảng [^•]+•\s*)?(Lượt \d+\s*•\s*)?(Vòng \d+\s*•\s*)?/i, '');
+                        const cleanStageLabel = (m.catLabel || '').replace(/^(Bảng [^•]+•\s*)?(Lượt \d+\s*•\s*)?(Vòng \d+\s*•\s*)?/i, '');
             const useWinByTwo = Boolean(state && state.winByTwo);
+            
+            // Theo điều lệ: Đôi chạm 15 (cách 2 max 18 vòng loại), Đơn chạm 21 trực tiếp
             const ruleTag = isSingles
-                ? (useWinByTwo ? 'Chạm 21 (Cách 2, trần 23) • 11đ đổi sân' : 'Chạm 21 • 11đ đổi sân')
-                : (useWinByTwo ? 'Chạm 15 (Cách 2, trần 17) • 8đ đổi sân' : 'Chạm 15 • 8đ đổi sân');
+                ? 'Chạm 21 (Trực tiếp) • 11đ đổi sân'
+                : (useWinByTwo ? 'Chạm 15 (Cách 2, Max 18) • 8đ đổi sân' : 'Chạm 15 (Trực tiếp) • 8đ đổi sân');
+                
             document.getElementById('liveMatchStageBadge').textContent = `${cleanStageLabel} (${ruleTag})`;
 
             const servingTeam = m.servingTeam || 1;
