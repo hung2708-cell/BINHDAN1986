@@ -1582,11 +1582,18 @@
         }
 
         // Tính ô giao bóng chuẩn luật Pickleball (0-0-2 đầu trận giao từ ô Phải/Chẵn của đội giao bóng)
-        function getServeFromRightBox(servingTeamScore, isSingles, serverNum) {
+        function getServeFromRightBox(servingTeamScore, isSingles, serverNum, receivingScore = 0) {
             const isEvenScore = (servingTeamScore % 2 === 0);
             if (isSingles) return isEvenScore;
-            // Trong đánh đôi: Khi bắt đầu trận (0-0-2), người giao bóng đầu tiên (serverNum === 2) luôn đứng ở ô Phải (ô chẵn)
-            return isEvenScore;
+            
+            // Ngoại lệ đầu trận: Người giao bóng đầu tiên của trận đấu (0-0-2) luôn đứng ô Phải
+            if (servingTeamScore === 0 && receivingScore === 0 && serverNum === 2) {
+                return true;
+            }
+            
+            // Lượt giao bóng số 1 sẽ đứng tương ứng với điểm chẵn/lẻ. Lượt 2 sẽ đứng ở ô còn lại.
+            if (serverNum === 1) return isEvenScore;
+            return !isEvenScore;
         }
 
 
@@ -1614,7 +1621,7 @@
             const servingTeam = m.servingTeam || 1;
             const serverNum = isSingles ? 1 : (m.serverNum || 2);
             const servingScore = servingTeam === 1 ? (parseInt(m.score1) || 0) : (parseInt(m.score2) || 0);
-            const serveFromRightBox = getServeFromRightBox(servingScore, isSingles, serverNum);
+            const serveFromRightBox = getServeFromRightBox(servingScore, isSingles, serverNum, receivingScore);
 
             const syncRosterOrderByName = (clubId, arrKey, primaryName, isRightSlot) => {
                 const ids = [...(m[arrKey] || [])];
@@ -1664,7 +1671,7 @@
             const serverNum = isSingles ? 1 : (m.serverNum || 2);
             const servingScore = servingTeam === 1 ? (parseInt(m.score1) || 0) : (parseInt(m.score2) || 0);
             // Người đỡ bóng hợp lệ luôn đứng ở ô cùng tính chất (Phải đỡ Phải, Trái đỡ Trái) chéo sân
-            const receiveFromRightBox = getServeFromRightBox(servingScore, isSingles, serverNum);
+            const receiveFromRightBox = getServeFromRightBox(servingScore, isSingles, serverNum, receivingScore);
 
             const syncReceiverRosterOrder = (clubId, arrKey, primaryName, isRightSlot) => {
                 const ids = [...(m[arrKey] || [])];
@@ -2439,7 +2446,7 @@
             //   - Sân Trái (hướng sang phải): Ô Phải (Chẵn) ở DƯỚI (y = 152), Ô Trái (Lẻ) ở TRÊN (y = 58)
             //   - Sân Phải (hướng sang trái): Ô Phải (Chẵn) ở TRÊN (y = 58), Ô Trái (Lẻ) ở DƯỚI (y = 152)
             // =========================================================================
-            const serveFromRightBox = getServeFromRightBox(servingScore, isSingles, serverNum);
+            const serveFromRightBox = getServeFromRightBox(servingScore, isSingles, serverNum, receivingScore);
             const leftServerY = serveFromRightBox ? 152 : 58;
             const rightServerY = serveFromRightBox ? 58 : 152;
             const isLeftServing = (servingTeam === leftTeamNum);
@@ -2567,4 +2574,3 @@
     </script>
 </body>
 </html>
-
