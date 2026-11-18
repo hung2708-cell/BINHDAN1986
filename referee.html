@@ -2001,7 +2001,7 @@
         function adjustLiveScore(teamNum, delta) {
             if (!enforceRefereeSecurityLock()) return;
             const now = Date.now();
-            if (now - __lastScoreTapAt < 220) return;
+            if (now - __lastScoreTapAt < 50) return; // Đã giảm xuống 50ms để bấm nhạy hơn
             if (now < __courtSwapFreezeUntil) {
                 showToast('⏳ Đang đổi sân, vui lòng chờ 1 giây...');
                 return;
@@ -2144,7 +2144,7 @@
         function triggerSideOutOrNextServer() {
             if (!enforceRefereeSecurityLock()) return;
             const now = Date.now();
-            if (now - __lastScoreTapAt < 220) return;
+            if (now - __lastScoreTapAt < 50) return; // Đã giảm xuống 50ms
             __lastScoreTapAt = now;
 
             const activeId = getCourtSelectedMatchId(currentAssignedCourt);
