@@ -990,89 +990,89 @@
         }
 
         function evaluateTieStatus(tieMatches) {
-    let c1Wins = 0;
-    let c2Wins = 0;
-    let finishedCount = 0;
-    // Nhận diện vòng bảng nếu tên có chữ "Bảng"
-    const isGroupStage = (tieMatches || []).some(m => (m.catLabel || '').toLowerCase().includes('bảng'));
+            let c1Wins = 0;
+            let c2Wins = 0;
+            let finishedCount = 0;
+            // Nhận diện vòng bảng nếu tên có chữ "Bảng"
+            const isGroupStage = (tieMatches || []).some(m => (m.catLabel || '').toLowerCase().includes('bảng'));
 
-    (tieMatches || []).forEach(m => {
-        if (m.status === 'FINISHED') {
-            finishedCount++;
-            const s1 = parseInt(m.score1) || 0;
-            const s2 = parseInt(m.score2) || 0;
-            if (s1 > s2) c1Wins++;
-            else if (s2 > s1) c2Wins++;
+            (tieMatches || []).forEach(m => {
+                if (m.status === 'FINISHED') {
+                    finishedCount++;
+                    const s1 = parseInt(m.score1) || 0;
+                    const s2 = parseInt(m.score2) || 0;
+                    if (s1 > s2) c1Wins++;
+                    else if (s2 > s1) c2Wins++;
+                }
+            });
+
+            const isClinched = (c1Wins >= 3 || c2Wins >= 3);
+            
+            let allResolved = false;
+            if (isGroupStage) {
+                // Vòng bảng không đánh đơn, tính 4 trận đôi. Hòa 2-2 là hoàn tất hợp lệ.
+                const doublesMatches = (tieMatches || []).filter(m => m.catKey !== 'DON');
+                allResolved = doublesMatches.length > 0 && doublesMatches.every(m => m.status === 'FINISHED' || m.status === 'SKIPPED');
+            } else {
+                // Vòng trong đánh đủ hoặc tới khi chạm 3
+                allResolved = (tieMatches || []).length > 0 && (tieMatches || []).every(m => m.status === 'FINISHED' || m.status === 'SKIPPED');
+            }
+
+            const isCompleted = isClinched || allResolved;
+            const isLive = !isCompleted && (
+                (tieMatches || []).some(m => m.status === 'LIVE' || (m.status !== 'FINISHED' && m.status !== 'SKIPPED' && ((parseInt(m.score1) || 0) > 0 || (parseInt(m.score2) || 0) > 0))) ||
+                finishedCount > 0
+            );
+
+            return {
+                c1Wins,
+                c2Wins,
+                finishedCount,
+                totalCount: (tieMatches || []).length,
+                isClinched,
+                isCompleted,
+                isLive,
+                winnerSide: c1Wins > c2Wins ? 1 : (c2Wins > c1Wins ? 2 : 0),
+                isGroupStage
+            };
         }
-    });
-
-    const isClinched = (c1Wins >= 3 || c2Wins >= 3);
-    
-    let allResolved = false;
-    if (isGroupStage) {
-        // Vòng bảng không đánh đơn, tính 4 trận đôi. Hòa 2-2 là hoàn tất hợp lệ.
-        const doublesMatches = (tieMatches || []).filter(m => m.catKey !== 'DON');
-        allResolved = doublesMatches.length > 0 && doublesMatches.every(m => m.status === 'FINISHED' || m.status === 'SKIPPED');
-    } else {
-        // Vòng trong đánh đủ hoặc tới khi chạm 3
-        allResolved = (tieMatches || []).length > 0 && (tieMatches || []).every(m => m.status === 'FINISHED' || m.status === 'SKIPPED');
-    }
-
-    const isCompleted = isClinched || allResolved;
-    const isLive = !isCompleted && (
-        (tieMatches || []).some(m => m.status === 'LIVE' || (m.status !== 'FINISHED' && m.status !== 'SKIPPED' && ((parseInt(m.score1) || 0) > 0 || (parseInt(m.score2) || 0) > 0))) ||
-        finishedCount > 0
-    );
-
-    return {
-        c1Wins,
-        c2Wins,
-        finishedCount,
-        totalCount: (tieMatches || []).length,
-        isClinched,
-        isCompleted,
-        isLive,
-        winnerSide: c1Wins > c2Wins ? 1 : (c2Wins > c1Wins ? 2 : 0),
-        isGroupStage
-    };
-}
 
         function enforceTieClinchRules() {
-    (state.ties || []).forEach(tie => {
-        const tMatches = tie.matches || [];
-        const st = evaluateTieStatus(tMatches);
-        
-        if (st.isGroupStage) {
-            // Vòng bảng: Ép trạng thái trận Đơn thành Bỏ Qua (SKIPPED)
-            tMatches.forEach(m => {
-                if (m.catKey === 'DON' && m.status !== 'SKIPPED') {
-                    m.status = 'SKIPPED';
+            (state.ties || []).forEach(tie => {
+                const tMatches = tie.matches || [];
+                const st = evaluateTieStatus(tMatches);
+                
+                if (st.isGroupStage) {
+                    // Vòng bảng: Ép trạng thái trận Đơn thành Bỏ Qua (SKIPPED)
+                    tMatches.forEach(m => {
+                        if (m.catKey === 'DON' && m.status !== 'SKIPPED') {
+                            m.status = 'SKIPPED';
+                        }
+                    });
                 }
-            });
-        }
 
-        if (st.isClinched || st.isCompleted) {
-            tie.status = 'FINISHED';
-            tMatches.forEach(m => {
-                if (m.status !== 'FINISHED' && m.status !== 'SKIPPED') {
-                    m.status = 'SKIPPED';
-                }
-            });
-        } else {
-            tie.status = st.isLive ? 'LIVE' : 'UPCOMING';
-            tMatches.forEach(m => {
-                // Hỗ trợ khôi phục lại trận nếu trọng tài bấm trừ lùi điểm từ Finished -> Live
-                if (m.status === 'SKIPPED') {
-                    if (st.isGroupStage && m.catKey === 'DON') {
-                        // Vòng bảng trận Đơn vẫn giữ SKIPPED
-                    } else {
-                        m.status = 'UPCOMING';
-                    }
+                if (st.isClinched || st.isCompleted) {
+                    tie.status = 'FINISHED';
+                    tMatches.forEach(m => {
+                        if (m.status !== 'FINISHED' && m.status !== 'SKIPPED') {
+                            m.status = 'SKIPPED';
+                        }
+                    });
+                } else {
+                    tie.status = st.isLive ? 'LIVE' : 'UPCOMING';
+                    tMatches.forEach(m => {
+                        // Hỗ trợ khôi phục lại trận nếu trọng tài bấm trừ lùi điểm từ Finished -> Live
+                        if (m.status === 'SKIPPED') {
+                            if (st.isGroupStage && m.catKey === 'DON') {
+                                // Vòng bảng trận Đơn vẫn giữ SKIPPED
+                            } else {
+                                m.status = 'UPCOMING';
+                            }
+                        }
+                    });
                 }
             });
         }
-    });
-}
 
         function getActiveCourtsWithMatches() {
             const allMatches = getAllMatchesFlat();
@@ -1530,21 +1530,21 @@
             showToast(`🚑 Đã thay y tế: ${outPlayer.name} ➔ ${inPlayer.name}`);
         }
 
-                function evaluateMatchWinCondition(m) {
-    const isSingles = (m.catKey === 'DON');
-    const target = isSingles ? 21 : 15;
-    const s1 = parseInt(m.score1) || 0, s2 = parseInt(m.score2) || 0;
-    
-    // Đôi đánh chạm 15, cách 2. Đơn đánh chạm 21, cách 2.
-    let isWon = false;
-    if (s1 >= target && s1 - s2 >= 2) isWon = true;
-    if (s2 >= target && s2 - s1 >= 2) isWon = true;
+        function evaluateMatchWinCondition(m) {
+            const isSingles = (m.catKey === 'DON');
+            const target = isSingles ? 21 : 15;
+            const s1 = parseInt(m.score1) || 0, s2 = parseInt(m.score2) || 0;
+            
+            // Đôi đánh chạm 15, cách 2. Đơn đánh chạm 21, cách 2.
+            let isWon = false;
+            if (s1 >= target && s1 - s2 >= 2) isWon = true;
+            if (s2 >= target && s2 - s1 >= 2) isWon = true;
 
-    if (isWon) {
-        return { isWon: true, winnerScore: Math.max(s1, s2), loserScore: Math.min(s1, s2) };
-    }
-    return { isWon: false };
-}
+            if (isWon) {
+                return { isWon: true, winnerScore: Math.max(s1, s2), loserScore: Math.min(s1, s2) };
+            }
+            return { isWon: false };
+        }
 
         function syncMatchCourtStateFromLineup(m, preservePositions = false) {
             const c1 = getClubById(m.club1Id), c2 = getClubById(m.club2Id);
@@ -2011,21 +2011,24 @@
             const activeId = getCourtSelectedMatchId(currentAssignedCourt);
             const { match: m } = findMatchById(activeId);
             if (!m || m.status === 'SKIPPED') return;
-            // --- BẮT ĐẦU PHẦN LOGIC MỚI ---
-    if (m.status === 'FINISHED') {
-        if (delta > 0) {
-            showToast('⚠️ Nội dung đã kết thúc! Bấm Trừ (-) nếu ghi nhầm điểm.');
-            return;
-        }
-        // Nếu bấm trừ, khôi phục trận đấu về LIVE để đánh tiếp
-        m.status = 'LIVE';
-    } else if (teamNum !== (m.servingTeam || 1)) {
-        return; // Normal live match: only server can score
-    }
-    // --- KẾT THÚC PHẦN LOGIC MỚI ---
+            
+            const isSingles = (m.catKey === 'DON');
 
-    const curScore = teamNum === 1 ? (parseInt(m.score1) || 0) : (parseInt(m.score2) || 0);
-    if (delta < 0 && curScore <= 0) return;
+            // --- BẮT ĐẦU PHẦN LOGIC MỚI ---
+            if (m.status === 'FINISHED') {
+                if (delta > 0) {
+                    showToast('⚠️ Nội dung đã kết thúc! Bấm Trừ (-) nếu ghi nhầm điểm.');
+                    return;
+                }
+                // Nếu bấm trừ, khôi phục trận đấu về LIVE để đánh tiếp
+                m.status = 'LIVE';
+            } else if (teamNum !== (m.servingTeam || 1)) {
+                return; // Normal live match: only server can score
+            }
+            // --- KẾT THÚC PHẦN LOGIC MỚI ---
+
+            const curScore = teamNum === 1 ? (parseInt(m.score1) || 0) : (parseInt(m.score2) || 0);
+            if (delta < 0 && curScore <= 0) return;
 
             m.status = 'LIVE';
             if (!m.courtState) syncMatchCourtStateFromLineup(m, false);
@@ -2340,11 +2343,11 @@
             
             // Theo điều lệ: Đôi chạm 15 (cách 2 max 18 vòng loại), Đơn chạm 21 trực tiếp
             // Thay đổi đoạn định nghĩa ruleTag
-const ruleTag = isSingles
-    ? 'Chạm 21 (Cách 2) • 11đ đổi sân'
-    : 'Chạm 15 (Cách 2) • 8đ đổi sân';
-    
-document.getElementById('liveMatchStageBadge').textContent = `${cleanStageLabel} (${ruleTag})`;
+            const ruleTag = isSingles
+                ? 'Chạm 21 (Cách 2) • 11đ đổi sân'
+                : 'Chạm 15 (Cách 2) • 8đ đổi sân';
+                
+            document.getElementById('liveMatchStageBadge').textContent = `${cleanStageLabel} (${ruleTag})`;
 
             const servingTeam = m.servingTeam || 1;
             const serverNum = isSingles ? 1 : (m.serverNum || 2);
@@ -2543,4 +2546,3 @@ document.getElementById('liveMatchStageBadge').textContent = `${cleanStageLabel}
     </script>
 </body>
 </html>
-
