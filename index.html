@@ -4295,7 +4295,7 @@
             `}).join('');
         }
 
-        function updateMatchDirect(id) {
+                function updateMatchDirect(id) {
             if (!isAdminLoggedIn()) { openLoginModal(); return; }
             const s1 = parseInt(document.getElementById(`admin-s1-${id}`).value) || 0;
             const s2 = parseInt(document.getElementById(`admin-s2-${id}`).value) || 0;
@@ -4311,7 +4311,7 @@
             } else {
                 if (appState.winByTwo) {
                     // Loại trực tiếp: chạm 15, cách 2, max 18
-                    isWon = ((s1 >= target && s1 - s2 >= 2) || (s2 >= target && s2 - s1 >= 2) || s1 >= 18 || s2 >= 18);
+                    isWon = ((s1 >= 15 && s1 - s2 >= 2) || (s2 >= 15 && s2 - s1 >= 2) || s1 >= 18 || s2 >= 18);
                 } else {
                     // Vòng bảng: chạm 15 trực tiếp
                     isWon = (s1 >= target || s2 >= target);
