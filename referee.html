@@ -1589,6 +1589,19 @@
             return isEvenScore;
         }
 
+
+        function syncRosterOrderByName(m, side, primaryName, isRightSlot) {
+            const clubId = side === 1 ? m.club1Id : m.club2Id;
+            const arrKey = side === 1 ? 'team1PlayerIds' : 'team2PlayerIds';
+            const ids = [...(m[arrKey] || [])];
+            if (ids.length < 2) return;
+            const targetIdx = ids.findIndex(pid => getPlayerById(clubId, pid)?.name === primaryName);
+            if (targetIdx === -1) return;
+            const targetId = ids[targetIdx];
+            const others = ids.filter((_, i) => i !== targetIdx);
+            m[arrKey] = isRightSlot ? [targetId, ...others] : [others[0], targetId, ...others.slice(1)];
+        }
+
         function handleManualServerSelect(selectedName) {
             if (!enforceRefereeSecurityLock()) return;
             const activeId = getCourtSelectedMatchId(currentAssignedCourt);
@@ -2001,7 +2014,7 @@
         function adjustLiveScore(teamNum, delta) {
             if (!enforceRefereeSecurityLock()) return;
             const now = Date.now();
-            if (now - __lastScoreTapAt < 50) return; // Đã giảm xuống 50ms để bấm nhạy hơn
+            if (now - __lastScoreTapAt < 50) return; 
             if (now < __courtSwapFreezeUntil) {
                 showToast('⏳ Đang đổi sân, vui lòng chờ 1 giây...');
                 return;
@@ -2014,18 +2027,15 @@
             
             const isSingles = (m.catKey === 'DON');
 
-            // --- BẮT ĐẦU PHẦN LOGIC MỚI ---
             if (m.status === 'FINISHED') {
                 if (delta > 0) {
                     showToast('⚠️ Nội dung đã kết thúc! Bấm Trừ (-) nếu ghi nhầm điểm.');
                     return;
                 }
-                // Nếu bấm trừ, khôi phục trận đấu về LIVE để đánh tiếp
                 m.status = 'LIVE';
             } else if (teamNum !== (m.servingTeam || 1)) {
-                return; // Normal live match: only server can score
+                return; 
             }
-            // --- KẾT THÚC PHẦN LOGIC MỚI ---
 
             const curScore = teamNum === 1 ? (parseInt(m.score1) || 0) : (parseInt(m.score2) || 0);
             if (delta < 0 && curScore <= 0) return;
@@ -2034,13 +2044,24 @@
             if (!m.courtState) syncMatchCourtStateFromLineup(m, false);
             const cs = m.courtState;
 
-            // Khi đội giao bóng ghi điểm, 2 VĐV của đội đó tự động đổi ô Phải <-> Trái
             if (teamNum === 1) {
                 m.score1 = Math.max(0, curScore + delta);
-                if (cs && !isSingles) { const tmp = cs.t1Left; cs.t1Left = cs.t1Right; cs.t1Right = tmp; }
+                if (cs && !isSingles && delta > 0) { 
+                    const tmp = cs.t1Left; cs.t1Left = cs.t1Right; cs.t1Right = tmp;
+                    syncRosterOrderByName(m, 1, cs.t1Right, true); 
+                } else if (cs && !isSingles && delta < 0) {
+                    const tmp = cs.t1Left; cs.t1Left = cs.t1Right; cs.t1Right = tmp;
+                    syncRosterOrderByName(m, 1, cs.t1Right, true); 
+                }
             } else {
                 m.score2 = Math.max(0, curScore + delta);
-                if (cs && !isSingles) { const tmp = cs.t2Left; cs.t2Left = cs.t2Right; cs.t2Right = tmp; }
+                if (cs && !isSingles && delta > 0) { 
+                    const tmp = cs.t2Left; cs.t2Left = cs.t2Right; cs.t2Right = tmp; 
+                    syncRosterOrderByName(m, 2, cs.t2Right, true);
+                } else if (cs && !isSingles && delta < 0) {
+                    const tmp = cs.t2Left; cs.t2Left = cs.t2Right; cs.t2Right = tmp;
+                    syncRosterOrderByName(m, 2, cs.t2Right, true); 
+                }
             }
 
             const scorerClub = getClubById(teamNum === 1 ? m.club1Id : m.club2Id).name;
