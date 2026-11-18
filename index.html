@@ -4327,37 +4327,36 @@
         }
 
         function initApp() {
-    applyRoleUI();
-    const winSel = document.getElementById('admin-win-by-two-select');
-    const timeInp = document.getElementById('admin-start-time-input');
-    const durSel = document.getElementById('admin-wave-duration-select');
-    if (winSel) winSel.value = appState.winByTwo ? '1' : '0';
-    if (timeInp && appState.startTime) timeInp.value = appState.startTime;
-    if (durSel && appState.waveDuration) durSel.value = String(appState.waveDuration);
-    enforceTieClinchRules();
-    teams = appState.clubs || [];
-    matches = [];
-    (appState.ties || []).forEach(t => (t.matches || []).forEach(m => matches.push(m)));
-    renderChampionBanners();
-    renderStats();
-    renderHomeOverview();
-    renderMatchesSchedule();
-    renderStandings();
-    renderBracket();
-    renderTeams();
-    renderAdminGroupsBoard();
-    renderAdminMatchesList();
+            applyRoleUI();
+            const winSel = document.getElementById('admin-win-by-two-select');
+            const timeInp = document.getElementById('admin-start-time-input');
+            const durSel = document.getElementById('admin-wave-duration-select');
+            if (winSel) winSel.value = appState.winByTwo ? '1' : '0';
+            if (timeInp && appState.startTime) timeInp.value = appState.startTime;
+            if (durSel && appState.waveDuration) durSel.value = String(appState.waveDuration);
+            enforceTieClinchRules();
+            teams = appState.clubs || [];
+            matches = [];
+            (appState.ties || []).forEach(t => (t.matches || []).forEach(m => matches.push(m)));
+            renderChampionBanners();
+            renderStats();
+            renderHomeOverview();
+            renderMatchesSchedule();
+            renderStandings();
+            renderBracket();
+            renderTeams();
+            renderAdminGroupsBoard();
+            renderAdminMatchesList();
 
-    // -- PHẦN SỬA ĐỂ TỰ ĐỘNG ẨN POPUP KHI TRẬN ĐÃ CHỐT XONG --
-    if (currentOpenDetailModalCtx && !document.getElementById('match-detail-modal').classList.contains('hidden')) {
-        const foundTie = (appState.ties || []).find(t => t.id === currentOpenDetailModalCtx.tieId);
-        if (foundTie && foundTie.status === 'FINISHED') {
-            closeMatchDetailModal(); // Nếu cặp đấu đó đã bị khóa xong (FINISHED), tự động đóng bảng chi tiết.
-        } else {
-            openCourtDetailModal(currentOpenDetailModalCtx.courtName, currentOpenDetailModalCtx.club1Id, currentOpenDetailModalCtx.club2Id, currentOpenDetailModalCtx.tieId);
+            if (currentOpenDetailModalCtx && !document.getElementById('match-detail-modal').classList.contains('hidden')) {
+                const foundTie = (appState.ties || []).find(t => t.id === currentOpenDetailModalCtx.tieId);
+                if (foundTie && foundTie.status === 'FINISHED') {
+                    closeMatchDetailModal();
+                } else {
+                    openCourtDetailModal(currentOpenDetailModalCtx.courtName, currentOpenDetailModalCtx.club1Id, currentOpenDetailModalCtx.club2Id, currentOpenDetailModalCtx.tieId);
+                }
+            }
         }
-    }
-}
 
         window.onload = async () => { 
             initIphoneBottomDockSwipe();
