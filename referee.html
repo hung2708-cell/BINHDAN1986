@@ -1384,6 +1384,7 @@
             m.courtState.swappedEnds = tempTossSwapped;
             m.coinTossConfirmed = true;
             m.isFirstInning = true;
+            m.turnStartScore = 0;
 
             const c1 = getClubById(m.club1Id).name;
             const c2 = getClubById(m.club2Id).name;
@@ -1623,7 +1624,7 @@
             const serverNum = isSingles ? 1 : (m.serverNum || 2);
             const servingScore = servingTeam === 1 ? (parseInt(m.score1) || 0) : (parseInt(m.score2) || 0);
             const receivingScore = servingTeam === 1 ? (parseInt(m.score2) || 0) : (parseInt(m.score1) || 0);
-            const serveFromRightBox = getServeFromRightBox(servingScore, isSingles, serverNum, receivingScore, m.isFirstInning);
+            const serveFromRightBox = getServeFromRightBox(servingScore, isSingles, serverNum, receivingScore, m.isFirstInning, m.turnStartScore);
 
             const syncRosterOrderByName = (clubId, arrKey, primaryName, isRightSlot) => {
                 const ids = [...(m[arrKey] || [])];
@@ -1674,7 +1675,7 @@
             const servingScore = servingTeam === 1 ? (parseInt(m.score1) || 0) : (parseInt(m.score2) || 0);
             const receivingScore = servingTeam === 1 ? (parseInt(m.score2) || 0) : (parseInt(m.score1) || 0);
             // Người đỡ bóng hợp lệ luôn đứng ở ô cùng tính chất (Phải đỡ Phải, Trái đỡ Trái) chéo sân
-            const receiveFromRightBox = getServeFromRightBox(servingScore, isSingles, serverNum, receivingScore, m.isFirstInning);
+            const receiveFromRightBox = getServeFromRightBox(servingScore, isSingles, serverNum, receivingScore, m.isFirstInning, m.turnStartScore);
 
             const syncReceiverRosterOrder = (clubId, arrKey, primaryName, isRightSlot) => {
                 const ids = [...(m[arrKey] || [])];
@@ -2205,6 +2206,7 @@
                     m.servingTeam = curTeam === 1 ? 2 : 1;
                     m.serverNum = 1;
                     m.isFirstInning = false;
+                    m.turnStartScore = m.servingTeam === 1 ? (parseInt(m.score1) || 0) : (parseInt(m.score2) || 0);
                     const newServerClub = getClubById(m.servingTeam === 1 ? m.club1Id : m.club2Id).name;
                     recordMatchLog(m, 'SERVE_CHANGE', `Đổi giao bóng sang ${newServerClub} (Lượt 1)`);
                     showToast(`🔄 Đổi giao bóng sang ${newServerClub} (Lượt 1)!`);
@@ -2306,6 +2308,7 @@
 
             if (m.servingTeam === undefined) m.servingTeam = 1;
             if (m.serverNum === undefined) m.serverNum = isSingles ? 1 : 2;
+            if (m.turnStartScore === undefined) m.turnStartScore = (m.servingTeam === 1 ? (parseInt(m.score1) || 0) : (parseInt(m.score2) || 0));
 
             const isMatchFinished = (m.status === 'FINISHED' || m.status === 'SKIPPED');
             const fullLineup = hasMatchFullLineup(m);
@@ -2450,7 +2453,7 @@
             //   - Sân Trái (hướng sang phải): Ô Phải (Chẵn) ở DƯỚI (y = 152), Ô Trái (Lẻ) ở TRÊN (y = 58)
             //   - Sân Phải (hướng sang trái): Ô Phải (Chẵn) ở TRÊN (y = 58), Ô Trái (Lẻ) ở DƯỚI (y = 152)
             // =========================================================================
-            const serveFromRightBox = getServeFromRightBox(servingScore, isSingles, serverNum, receivingScore, m.isFirstInning);
+            const serveFromRightBox = getServeFromRightBox(servingScore, isSingles, serverNum, receivingScore, m.isFirstInning, m.turnStartScore);
             const leftServerY = serveFromRightBox ? 152 : 58;
             const rightServerY = serveFromRightBox ? 58 : 152;
             const isLeftServing = (servingTeam === leftTeamNum);
