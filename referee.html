@@ -1993,7 +1993,7 @@
 
             const activeId = getCourtSelectedMatchId(currentAssignedCourt);
             const { match: m } = findMatchById(activeId);
-            if (!m || m.status === 'FINISHED' || m.status === 'SKIPPED' || teamNum !== (m.servingTeam || 1)) return;
+            if (!m || m.status === 'SKIPPED' || teamNum !== (m.servingTeam || 1)) return;
             
             const isSingles = (m.catKey === 'DON');
             const req = getRequiredPlayerCount(m);
@@ -2133,7 +2133,7 @@
 
             const activeId = getCourtSelectedMatchId(currentAssignedCourt);
             const { match: m } = findMatchById(activeId);
-            if (!m || m.status === 'FINISHED' || m.status === 'SKIPPED') return;
+            if (!m || m.status === 'SKIPPED') return;
             const isSingles = (m.catKey === 'DON');
             if (!m.courtState) syncMatchCourtStateFromLineup(m, false);
 
@@ -2373,7 +2373,8 @@
 
                 if (m.status === 'SKIPPED') {
                     actionEl.innerHTML = `<div class="col-span-4 ref-score-btn rounded-lg bg-stone-100 border border-stone-200 text-stone-500 font-extrabold text-[11px] flex items-center justify-center">⏭️ Không đấu</div>`;
-                } else if (m.status === 'FINISHED') {
+                } else if (m.status === 'SKIPPED_BUT_FINISHED') { // Đã sửa để luôn hiện nút +/- kể cả khi xong trận
+
                     actionEl.innerHTML = `<div class="col-span-4 ref-score-btn rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-800 font-extrabold text-xs flex items-center justify-center"><i class="fa-solid fa-lock mr-1"></i> ĐÃ XONG</div>`;
                 } else if (!fullLineup) {
                     actionEl.innerHTML = `<button type="button" onclick="openMissingLineupStep()" class="col-span-4 ref-score-btn rounded-lg bg-rose-50 border border-brand-300 text-brand-700 font-extrabold text-[11px] flex items-center justify-center gap-1"><i class="fa-solid fa-user-plus"></i> Chọn VĐV</button>`;
